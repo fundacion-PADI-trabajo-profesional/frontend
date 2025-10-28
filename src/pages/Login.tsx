@@ -3,10 +3,10 @@
 import { useState, type FormEvent } from "react"
 import { Box, TextField, Button, Typography, Alert, IconButton, InputAdornment } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline"
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined"
-import { login, register } from "../api/auth";
+import { login, register } from "../api/auth" // <-- Ya estabas importando 'login'
 
 interface LoginProps {
   onLogin: () => void
@@ -15,26 +15,37 @@ interface LoginProps {
 export default function Login({ onLogin }: LoginProps) {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
-  const [error, setError] = useState("")  
+  const [error, setError] = useState("")
   const navigate = useNavigate()
 
+  // --- FUNCIÓN handleSubmit (CORREGIDA) ---
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError("");
+    e.preventDefault()
+    setError("")
 
     if (!username || !password) {
-      setError("Por favor, completa todos los campos");
-      return;
+      setError("Por favor, completa todos los campos")
+      return
     }
 
     try {
-      const user = await login(username, password);
-      onLogin();
+      // 1. Llama a la función 'login' que importaste
+      const user = await login(username, password)
+
+      // 2. Si el login es exitoso (devuelve un usuario),
+      //    entonces llama a 'onLogin' para navegar.
+      if (user) {
+        onLogin()
+      } else {
+        // Esto no debería pasar si 'login' lanza un error, pero por si acaso
+        throw new Error("Credenciales inválidas")
+      }
     } catch (err: any) {
-      setError("Credenciales inválidas");
+      // 3. Captura el error de 'login'
+      setError(err.message || "Credenciales inválidas")
     }
   }
-
+  // --- FIN DE LA CORRECCIÓN ---
 
   return (
     <Box
@@ -43,8 +54,8 @@ export default function Login({ onLogin }: LoginProps) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        position: "relative", // Importante para que los hijos absolutos se posicionen respecto a este
-        overflow: "hidden", // Para asegurar que el blur no se salga de los límites
+        position: "relative",
+        overflow: "hidden",
       }}
     >
       {/* Box para el fondo blureado */}
@@ -59,8 +70,8 @@ export default function Login({ onLogin }: LoginProps) {
           backgroundRepeat: "no-repeat",
           backgroundSize: "cover",
           backgroundPosition: "center",
-          filter: "blur(5px)", // Aplica el blur solo al fondo
-          zIndex: -1, // Asegura que esté detrás de todo el contenido
+          filter: "blur(5px)",
+          zIndex: -1,
         }}
       />
 
@@ -281,5 +292,5 @@ export default function Login({ onLogin }: LoginProps) {
         </Box>
       </Box>
     </Box>
-  );
+  )
 }

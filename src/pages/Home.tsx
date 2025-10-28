@@ -2,7 +2,9 @@
 
 import { Box, Container, Typography, Button, Grid2 as Grid } from "@mui/material"
 import LogoutIcon from "@mui/icons-material/Logout"
-
+import styles from 'frontend/src/App.css';
+import { supabase } from "../api/auth"
+const user = supabase.auth.getUser()
 interface HomeProps {
   onLogout: () => void
 }
@@ -17,9 +19,7 @@ export default function Home({ onLogout }: HomeProps) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          // AQUÍ ESTÁ EL ARREGLO:
           backgroundImage: "url(/assets/images/1366_2000.jpg)", 
-          // --------------------
           backgroundSize: "cover",
           backgroundPosition: "center",
           "&::before": {
@@ -29,7 +29,7 @@ export default function Home({ onLogout }: HomeProps) {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: "rgba(219, 159, 159, 0.3)", // El overlay
+            backgroundColor: "rgba(0, 0, 0, 0.6)", // El overlay
           },
         }}
       >
@@ -37,38 +37,47 @@ export default function Home({ onLogout }: HomeProps) {
           <Typography
             variant="h2"
             component="h1"
-            sx={{
-              fontFamily: "Georgia, serif",
-              fontWeight: 400,
+            sx={{                   // Peso bold
+              textTransform: "uppercase",           // Mayúsculas
+              textShadow: "2px 2px 5px rgba(0, 0, 0, 0.5)", // ¡La sombra!
+              
+              // Tus estilos anteriores
               color: "white",
               mb: 3,
               fontSize: { xs: "2.5rem", md: "3.5rem" },
               lineHeight: 1.3,
             }}
           >
-            Empieza tu aventura de aprendizaje en casa
-          </Typography>
+            FUNDACIÓN PADI
+          </Typography>onLogin
+
+          {/* --- SUBTÍTULO MODIFICADO --- */}
           <Typography
             variant="h6"
             sx={{
+              // Cambios aquí
+              textShadow: "2px 2px 5px rgba(0, 0, 0, 0.5)", // ¡La sombra!
+
+              // Tus estilos anteriores
               color: "white",
               mb: 4,
-              fontWeight: 400,
+              fontWeight: 400, // Peso regular (está bien)
             }}
           >
-            Solo 20 €/mes y puedes cancelar en cualquier momento
+            Somos una fundación que se dedica a mejorar las
+            oportunidades educativas de niños y niñas de nivel inicial.
           </Typography>
           <Button
             variant="contained"
             size="large"
             sx={{
-              bgcolor: "#d4e157",
+              bgcolor: "#A3BE54",
               color: "#000",
               px: 6,
               py: 2,
               fontSize: "1rem",
               fontWeight: 600,
-              borderRadius: 0,
+              borderRadius: 10,
               textTransform: "none",
               "&:hover": {
                 bgcolor: "#c0ca33",
@@ -100,6 +109,7 @@ export default function Home({ onLogout }: HomeProps) {
 
       <Container maxWidth="lg" sx={{ py: 8 }}>
         <Grid container spacing={6}>
+          {/* --- COLUMNA 1: FORMACIÓN A DOCENTES --- */}
           <Grid size={{ xs: 12, md: 4 }}>
             <Box sx={{ textAlign: "center" }}>
               <Box
@@ -109,26 +119,26 @@ export default function Home({ onLogout }: HomeProps) {
                   mb: 2,
                 }}
               >
-                🎒
+                📚
               </Box>
               <Typography
                 variant="h5"
                 component="h2"
                 sx={{
-                  fontFamily: "Georgia, serif",
-                  fontWeight: 400,
                   mb: 2,
                 }}
               >
-                Motivos semanales
+                Formación a Docentes
               </Typography>
               <Typography variant="body1" sx={{ color: "#666", lineHeight: 1.7 }}>
-                Cada programa tiene un motivo semanal y actividades propias para que tu hijo espere algo nuevo cada
-                semana.
+                Capacitamos a maestros y profesionales de la escuela para
+                implementar el programa y asegurar su sostenibilidad a largo
+                plazo.
               </Typography>
             </Box>
           </Grid>
 
+          {/* --- COLUMNA 2: EVALUACIÓN Y DETECCIÓN --- */}
           <Grid size={{ xs: 12, md: 4 }}>
             <Box sx={{ textAlign: "center" }}>
               <Box
@@ -138,26 +148,25 @@ export default function Home({ onLogout }: HomeProps) {
                   mb: 2,
                 }}
               >
-                ✨
+                🧒
               </Box>
               <Typography
                 variant="h5"
                 component="h2"
                 sx={{
-                  fontFamily: "Georgia, serif",
-                  fontWeight: 400,
                   mb: 2,
                 }}
               >
-                Tus propios materiales
+                Evaluación y Detección
               </Typography>
               <Typography variant="body1" sx={{ color: "#666", lineHeight: 1.7 }}>
-                Podrás utilizar y reciclar los materiales que ya tienes en casa para completar las actividades
-                didácticas.
+                Evaluamos a alumnos de salas de 3, 4 y 5 años con la Prueba PADI
+                para detectar a tiempo riesgos en el desarrollo.
               </Typography>
             </Box>
           </Grid>
 
+          {/* --- COLUMNA 3: TALLERES A FAMILIAS --- */}
           <Grid size={{ xs: 12, md: 4 }}>
             <Box sx={{ textAlign: "center" }}>
               <Box
@@ -167,27 +176,26 @@ export default function Home({ onLogout }: HomeProps) {
                   mb: 2,
                 }}
               >
-                🔢
+                👨‍👩‍👧‍👦
               </Box>
               <Typography
                 variant="h5"
                 component="h2"
                 sx={{
-                  fontFamily: "Georgia, serif",
-                  fontWeight: 400,
                   mb: 2,
                 }}
               >
-                Aprendizaje por edad
+                Talleres a Familias
               </Typography>
               <Typography variant="body1" sx={{ color: "#666", lineHeight: 1.7 }}>
-                Nuestros programas están diseñados para dos grupos de edades, de modo que cada lección ofrece un nivel
-                de participación adecuado.
+                Incluimos una instancia de taller para las familias sobre
+                crianza, gestión de emociones y herramientas de estimulación.
               </Typography>
             </Box>
           </Grid>
         </Grid>
 
+        {/* --- BOTÓN MODIFICADO --- */}
         <Box sx={{ textAlign: "center", mt: 6 }}>
           <Button
             variant="contained"
@@ -199,14 +207,14 @@ export default function Home({ onLogout }: HomeProps) {
               py: 2,
               fontSize: "1rem",
               fontWeight: 600,
-              borderRadius: 0,
+              borderRadius: 3,
               textTransform: "none",
               "&:hover": {
                 bgcolor: "#333",
               },
             }}
           >
-            Leer más
+            Conocer el Programa
           </Button>
         </Box>
       </Container>
@@ -214,6 +222,7 @@ export default function Home({ onLogout }: HomeProps) {
       <Box sx={{ bgcolor: "#f5f5f5", py: 8 }}>
         <Container maxWidth="lg">
           <Grid container spacing={6} alignItems="center">
+            {/* --- IMAGEN (SIN CAMBIOS) --- */}
             <Grid size={{ xs: 12, md: 6 }}>
               <Box
                 component="img"
@@ -223,25 +232,28 @@ export default function Home({ onLogout }: HomeProps) {
                   width: "100%",
                   height: "auto",
                   display: "block",
+                  // Si le habías puesto el filtro de oscuridad, iría aquí:
+                  // filter: "brightness(60%)" 
                 }}
               />
             </Grid>
+            
+            {/* --- TEXTO (MODIFICADO) --- */}
             <Grid size={{ xs: 12, md: 6 }}>
               <Typography
                 variant="h3"
                 component="h2"
                 sx={{
-                  fontFamily: "Georgia, serif",
-                  fontWeight: 400,
                   mb: 3,
                 }}
               >
-                Aumenta su confianza creativa
+                Nuestra Misión
               </Typography>
               <Typography variant="body1" sx={{ color: "#666", lineHeight: 1.8, fontSize: "1.1rem" }}>
-                Cada estímulo de actividad creativa es una oportunidad para que tu hijo adopte un nuevo desafío.
-                Mediante el aprendizaje práctico, es más probable que se comprometa con la tarea y que aumente sus
-                habilidades de resolución creativa de problemas.
+                Que todos los niños y niñas de Nivel Inicial de nuestro país
+                puedan desarrollar todas sus habilidades para acceder a la
+                Escuela Primaria y alcanzar los objetivos de aprendizaje que
+                impactarán en toda su escolaridad.
               </Typography>
             </Grid>
           </Grid>

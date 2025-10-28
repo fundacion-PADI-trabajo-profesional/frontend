@@ -1,3 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+/* en index.css o similar */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+
 body {
   min-width: 320px;
   margin: 0;
@@ -10,4 +14,24 @@ body {
 
 * {
   box-sizing: border-box;
+}
+
+.heroTitle {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 4rem; /* Ajusta el tamaño */
+  color: #FFFFFF;
+  text-transform: uppercase;
+  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+  margin: 0;
+}
+
+.heroSubtitle {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+  font-size: 1.5rem; /* Ajusta el tamaño */
+  color: #FFFFFF;
+  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+  line-height: 1.4;
+  margin-top: 10px;
 }

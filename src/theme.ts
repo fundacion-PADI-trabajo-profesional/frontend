@@ -20,12 +20,27 @@ const theme = createTheme({
       default: PADI_COLORS.grisClaro, // El fondo de la app
     },
   },
+  // --- SECCIÓN MODIFICADA ---
   typography: {
-    // Puedes agregar una fuente de Google Fonts si quieres
-    fontFamily: "Roboto, sans-serif",
+    // 1. Cambiamos la fuente principal
+    fontFamily: "'Montserrat', sans-serif",
+
+    // 2. Definimos los pesos para los títulos
+    h3: {
+      fontWeight: 600, // Ej: "Nuestra Misión"
+    },
+    h5: {
+      fontWeight: 600, // Ej: "Formación a Docentes"
+    },
+    // 3. (Opcional) Definir el peso del cuerpo de texto
+    body1: {
+      fontWeight: 400, // Texto de párrafo
+    },
+
+    // 4. Tus estilos de botón (los mantuve)
     button: {
-      textTransform: "none", // Para que los botones no estén en MAYÚSCULAS
-      fontWeight: "bold",
+      textTransform: "none",
+      fontWeight: "bold", // 'bold' para Montserrat suele ser 700
     },
   },
   components: {

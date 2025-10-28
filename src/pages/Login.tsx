@@ -3,32 +3,38 @@
 import { useState, type FormEvent } from "react"
 import { Box, TextField, Button, Typography, Alert, IconButton, InputAdornment } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
+import { useNavigate } from "react-router-dom";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline"
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined"
+import { login, register } from "../api/auth";
 
 interface LoginProps {
-  onLogin: (username: string, password: string) => boolean
+  onLogin: () => void
 }
 
 export default function Login({ onLogin }: LoginProps) {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
+  const [error, setError] = useState("")  
+  const navigate = useNavigate()
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault()
-    setError("")
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError("");
 
     if (!username || !password) {
-      setError("Por favor, completa todos los campos")
-      return
+      setError("Por favor, completa todos los campos");
+      return;
     }
 
-    const success = onLogin(username, password)
-    if (!success) {
-      setError("Credenciales incorrectas. Usa cualquier usuario y contraseña: password123")
+    try {
+      const user = await login(username, password);
+      onLogin();
+    } catch (err: any) {
+      setError("Credenciales inválidas");
     }
   }
+
 
   return (
     <Box
@@ -57,24 +63,6 @@ export default function Login({ onLogin }: LoginProps) {
           zIndex: -1, // Asegura que esté detrás de todo el contenido
         }}
       />
-    
-      <IconButton
-        sx={{
-          position: "absolute",
-          top: 20,
-          left: 20,
-          bgcolor: "rgba(0, 0, 0, 0.8)",
-          color: "white",
-          width: 56,
-          height: 56,
-          borderRadius: 3,
-          "&:hover": {
-            bgcolor: "rgba(0, 0, 0, 0.9)",
-          },
-        }}
-      >
-        <ArrowBackIcon sx={{ fontSize: 32 }} />
-      </IconButton>
 
       <Box
         sx={{
@@ -92,7 +80,7 @@ export default function Login({ onLogin }: LoginProps) {
           sx={{
             flex: 1,
             position: "relative",
-            backgroundColor:"rgba(236, 236, 236, 0.8)",
+            backgroundColor: "rgba(236, 236, 236, 0.8)",
             backgroundSize: "cover",
             backgroundPosition: "center",
             display: { xs: "none", md: "flex" },
@@ -110,9 +98,7 @@ export default function Login({ onLogin }: LoginProps) {
           }}
         >
           {/* Logo */}
-          <Box
-            
-          >
+          <Box>
             <img
               src="/assets/images/logo_sin_fondo.png"
               alt="Logo PADI Fundación"
@@ -157,7 +143,8 @@ export default function Login({ onLogin }: LoginProps) {
             <form onSubmit={handleSubmit}>
               <TextField
                 fullWidth
-                placeholder="@username"
+                placeholder="Email"
+                type="email"
                 variant="outlined"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -184,7 +171,7 @@ export default function Login({ onLogin }: LoginProps) {
                     </InputAdornment>
                   ),
                 }}
-                autoComplete="username"
+                autoComplete="email"
               />
 
               <TextField
@@ -220,7 +207,14 @@ export default function Login({ onLogin }: LoginProps) {
                 autoComplete="current-password"
               />
 
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 2,
+                }}
+              >
                 <Button
                   sx={{
                     color: "#666",
@@ -258,6 +252,19 @@ export default function Login({ onLogin }: LoginProps) {
               </Box>
             </form>
 
+            <Button
+              onClick={() => navigate("/register")}
+              variant="outlined"
+              sx={{
+                mt: 2,
+                color: "#1a1a1a",
+                borderColor: "#A3BE54",
+                "&:hover": { borderColor: "#8bc34a" },
+              }}
+            >
+              Crear cuenta nueva
+            </Button>
+
             <Typography
               variant="caption"
               sx={{
@@ -268,11 +275,11 @@ export default function Login({ onLogin }: LoginProps) {
                 fontSize: "0.75rem",
               }}
             >
-              Tip: Usa cualquier usuario y la contraseña "password123"
+              Tip: Iniciá sesión con tu email y contraseña registrados
             </Typography>
           </Box>
         </Box>
       </Box>
     </Box>
-  )
+  );
 }

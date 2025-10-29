@@ -1,18 +1,32 @@
-import { createClient } from "@supabase/supabase-js";
+// src/api/auth.ts
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL!;
-const supabaseKey = import.meta.env.VITE_SUPABASE_KEY!;
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// This URL comes from your .env file
+const API_URL = import.meta.env.VITE_API_URL;
 
+/**
+ * Sends login credentials to the backend.
+ * The backend should return { user, session, profile } on success.
+ */
 export async function login(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
+  const response = await fetch(`${API_URL}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
   });
-  if (error) throw new Error(error.message);
-  return data.user;
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || "Credenciales inválidas");
+  }
+
+  // The backend should return the profile data along with the auth user
+  // We combine them here for simplicity in the app
+  return { ...data.user, ...data.profile };
 }
 
+/**
+ * Sends new user data to the backend for registration.
+ */
 export async function register(
   email: string,
   password: string,
@@ -20,30 +34,15 @@ export async function register(
   apellido: string,
   rol: string
 ) {
-  // 1. Crear usuario en Supabase Auth
-  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-    email,
-    password,
+  const response = await fetch(`${API_URL}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password, nombre, apellido, rol }),
   });
 
-  if (signUpError) throw new Error(signUpError.message);
-
-  const user = signUpData.user;
-
-  // 2. Guardar datos extra en la tabla usuarios
-  const { error: insertError } = await supabase.from("usuarios").insert({
-    id: user.id,
-    email,
-    nombre,
-    apellido,
-    rol, 
-  });
-
-  if (insertError) throw new Error(insertError.message);
-
-  return user;
-}
-
-export async function logout() {
-  await supabase.auth.signOut();
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || "No se pudo crear la cuenta");
+  }
+  return data.user;
 }

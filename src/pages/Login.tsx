@@ -1,51 +1,66 @@
-"use client"
-
-import { useState, type FormEvent } from "react"
-import { Box, TextField, Button, Typography, Alert, IconButton, InputAdornment } from "@mui/material"
-import ArrowBackIcon from "@mui/icons-material/ArrowBack"
-import { useNavigate } from "react-router-dom"
-import PersonOutlineIcon from "@mui/icons-material/PersonOutline"
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined"
-import { login, register } from "../api/auth" // <-- Ya estabas importando 'login'
+// src/pages/Login.tsx
+import { useState, type FormEvent } from "react";
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  Alert,
+  InputAdornment,
+} from "@mui/material";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import { useNavigate } from "react-router-dom";
+import { login } from "../api/auth"; // mantiene tu implementación real de auth
 
 interface LoginProps {
-  onLogin: () => void
+  onLogin: () => void;
 }
 
 export default function Login({ onLogin }: LoginProps) {
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const navigate = useNavigate()
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-  // --- FUNCIÓN handleSubmit (CORREGIDA) ---
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    setError("")
-
+    e.preventDefault();
+    setError("");
     if (!username || !password) {
-      setError("Por favor, completa todos los campos")
-      return
+      setError("Por favor completa ambos campos");
+      return;
     }
-
+    setIsLoading(true);
     try {
-      // 1. Llama a la función 'login' que importaste
-      const user = await login(username, password)
+      // tu función `login` debería devolver user o lanzar error
+      const user = await login(username, password);
 
-      // 2. Si el login es exitoso (devuelve un usuario),
-      //    entonces llama a 'onLogin' para navegar.
+      // Si `login` no lanza error y devuelve un usuario, guardamos en localStorage
       if (user) {
-        onLogin()
+        localStorage.setItem("padiUser", JSON.stringify(user));
+        // si no hay profile, intentamos crear un profile por defecto
+        const existingProfile = localStorage.getItem("padiProfile");
+        if (!existingProfile) {
+          const profile = {
+            email: user.email,
+            nombre: user.nombre || "",
+            apellido: user.apellido || "",
+            rol: user.rol || "docente",
+          };
+          localStorage.setItem("padiProfile", JSON.stringify(profile));
+        }
+        onLogin();
+        navigate("/home");
       } else {
-        // Esto no debería pasar si 'login' lanza un error, pero por si acaso
-        throw new Error("Credenciales inválidas")
+        throw new Error("Credenciales inválidas");
       }
     } catch (err: any) {
-      // 3. Captura el error de 'login'
-      setError(err.message || "Credenciales inválidas")
+      setError(err?.message || "Error en el login");
+    } finally {
+      setIsLoading(false);
     }
-  }
-  // --- FIN DE LA CORRECCIÓN ---
+  };
 
   return (
     <Box
@@ -58,7 +73,6 @@ export default function Login({ onLogin }: LoginProps) {
         overflow: "hidden",
       }}
     >
-      {/* Box para el fondo blureado */}
       <Box
         sx={{
           position: "absolute",
@@ -86,7 +100,6 @@ export default function Login({ onLogin }: LoginProps) {
           boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
         }}
       >
-        {/* Left Side - Image with Logo */}
         <Box
           sx={{
             flex: 1,
@@ -108,17 +121,15 @@ export default function Login({ onLogin }: LoginProps) {
             },
           }}
         >
-          {/* Logo */}
           <Box>
             <img
               src="/assets/images/logo_sin_fondo.png"
               alt="Logo PADI Fundación"
-              style={{ width: "100%", height: "auto" }}
+              style={{ width: "100%", height: "auto", maxWidth: 360 }}
             />
           </Box>
         </Box>
 
-        {/* Right Side - Login Form */}
         <Box
           sx={{
             flex: 1,
@@ -164,15 +175,9 @@ export default function Login({ onLogin }: LoginProps) {
                   bgcolor: "white",
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 2,
-                    "& fieldset": {
-                      borderColor: "transparent",
-                    },
-                    "&:hover fieldset": {
-                      borderColor: "#5fb878",
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: "#5fb878",
-                    },
+                    "& fieldset": { borderColor: "transparent" },
+                    "&:hover fieldset": { borderColor: "#5fb878" },
+                    "&.Mui-focused fieldset": { borderColor: "#5fb878" },
                   },
                 }}
                 InputProps={{
@@ -197,15 +202,9 @@ export default function Login({ onLogin }: LoginProps) {
                   bgcolor: "white",
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 2,
-                    "& fieldset": {
-                      borderColor: "transparent",
-                    },
-                    "&:hover fieldset": {
-                      borderColor: "#5fb878",
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: "#5fb878",
-                    },
+                    "& fieldset": { borderColor: "transparent" },
+                    "&:hover fieldset": { borderColor: "#5fb878" },
+                    "&.Mui-focused fieldset": { borderColor: "#5fb878" },
                   },
                 }}
                 InputProps={{
@@ -257,8 +256,9 @@ export default function Login({ onLogin }: LoginProps) {
                       boxShadow: "0 4px 12px rgba(139, 195, 74, 0.3)",
                     },
                   }}
+                  disabled={isLoading}
                 >
-                  LOGIN
+                  {isLoading ? "Cargando..." : "LOGIN"}
                 </Button>
               </Box>
             </form>
@@ -292,5 +292,5 @@ export default function Login({ onLogin }: LoginProps) {
         </Box>
       </Box>
     </Box>
-  )
+  );
 }

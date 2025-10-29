@@ -1,5 +1,4 @@
-"use client";
-
+// src/pages/Register.tsx
 import { useState, type FormEvent } from "react";
 import {
   Box,
@@ -8,7 +7,6 @@ import {
   Typography,
   Alert,
   InputAdornment,
-  IconButton,
   FormControl,
   InputLabel,
   MenuItem,
@@ -18,8 +16,7 @@ import {
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import AlternateEmailIcon from "@mui/icons-material/AlternateEmail";
-import BadgeIcon from "@mui/icons-material/Badge";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack"
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { register } from "../api/auth";
 import { useNavigate } from "react-router-dom";
 
@@ -31,10 +28,9 @@ export default function Register() {
   const [rol, setRol] = useState("docente");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
-  const handleRolChange = (event: SelectChangeEvent) =>
-    setRol(event.target.value);
+  const handleRolChange = (event: SelectChangeEvent) => setRol(event.target.value);
 
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
@@ -47,17 +43,29 @@ export default function Register() {
     }
 
     try {
+      // la función register la tenés en ../api/auth
       const user = await register(email, password, nombre, apellido, rol);
-      setSuccess("Cuenta creada: " + user.email);
+
+      // Si tu register devuelve el usuario, guardamos un profile básico en localStorage
+      if (user) {
+        const profile = { email, nombre, apellido, rol };
+        localStorage.setItem("padiProfile", JSON.stringify(profile));
+        setSuccess("Cuenta creada: " + (user.email || email));
+        // opcional: guardar un padiUser (mock)
+        localStorage.setItem("padiUser", JSON.stringify({ email, nombre, apellido, rol }));
+        setTimeout(() => navigate("/login"), 1200);
+      } else {
+        setSuccess("Cuenta creada. Por favor logueate.");
+        setTimeout(() => navigate("/login"), 1200);
+      }
+
       setEmail("");
       setPassword("");
       setNombre("");
       setApellido("");
-      setRol("");
-      setTimeout(() => navigate("/login"), 2000);
-
+      setRol("docente");
     } catch (err: any) {
-      setError("No se pudo crear la cuenta: " + err.message);
+      setError("No se pudo crear la cuenta: " + (err.message || err));
     }
   };
 
@@ -186,18 +194,6 @@ export default function Register() {
               value={rol}
               label="Rol"
               onChange={handleRolChange}
-              sx={{
-                borderRadius: 2,
-                "& .MuiOutlinedInput-notchedOutline": {
-                  borderColor: "transparent",
-                },
-                "&:hover .MuiOutlinedInput-notchedOutline": {
-                  borderColor: "#5fb878",
-                },
-                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                  borderColor: "#5fb878",
-                },
-              }}
             >
               <MenuItem value="docente">Docente</MenuItem>
               <MenuItem value="director">Director</MenuItem>
@@ -205,17 +201,7 @@ export default function Register() {
             </Select>
           </FormControl>
 
-          <Button
-            type="submit"
-            variant="contained"
-            fullWidth
-            sx={{
-              py: 1.5,
-              bgcolor: "#A3BE54",
-              color: "#1a1a1a",
-              fontWeight: 600,
-            }}
-          >
+          <Button type="submit" variant="contained" fullWidth sx={{ py: 1.5, bgcolor: "#A3BE54", color: "#1a1a1a", fontWeight: 600 }}>
             Registrarse
           </Button>
         </form>

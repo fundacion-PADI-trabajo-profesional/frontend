@@ -1,26 +1,49 @@
 // src/App.tsx
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Home from "./pages/Home";
-import "./App.css";
+import "./App.css"; //
+
+// Define a type for your user object
+interface User {
+  id: string;
+  email: string;
+  nombre: string;
+  apellido: string;
+  rol: "docente" | "director" | "administrador";
+}
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    // si hay usuario en localStorage consideramos sesión iniciada
-    return !!localStorage.getItem("padiUser");
+  // State holds the full user object or null if not logged in
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const storedUser = localStorage.getItem("padiUser");
+    try {
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch {
+      return null;
+    }
   });
 
-  const handleLogin = () => {
-    setIsAuthenticated(true);
+  // This effect syncs the state with localStorage
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem("padiUser", JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem("padiUser");
+    }
+  }, [currentUser]);
+
+  // This function will be passed to Login.tsx
+  const handleLogin = (user: User) => {
+    setCurrentUser(user);
   };
 
+  // This function will be passed to Home.tsx
   const handleLogout = () => {
-    // limpiar localStorage y estado
-    localStorage.removeItem("padiUser");
-    localStorage.removeItem("padiProfile");
-    setIsAuthenticated(false);
+    setCurrentUser(null);
   };
 
   return (
@@ -29,15 +52,30 @@ function App() {
         <Route
           path="/login"
           element={
-            isAuthenticated ? <Navigate to="/home" replace /> : <Login onLogin={handleLogin} />
+            currentUser ? (
+              <Navigate to="/home" replace />
+            ) : (
+              <Login onLogin={handleLogin} />
+            )
           }
         />
         <Route
           path="/home"
-          element={isAuthenticated ? <Home onLogout={handleLogout} /> : <Navigate to="/login" replace />}
+          element={
+            currentUser ? (
+              <Home user={currentUser} onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
         />
-        <Route path="/register" element={<Register />} />
-        <Route path="*" element={<Navigate to={isAuthenticated ? "/home" : "/login"} replace />} />
+        <Route
+          path="/register"
+          element={
+            currentUser ? <Navigate to="/home" replace /> : <Register />
+          }
+        />
+        <Route path="*" element={<Navigate to={currentUser ? "/home" : "/login"} replace />} />
       </Routes>
     </BrowserRouter>
   );

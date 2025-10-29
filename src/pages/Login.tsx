@@ -27,36 +27,18 @@ export default function Login({ onLogin }: LoginProps) {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!username || !password) {
-      setError("Por favor completa ambos campos");
-      return;
-    }
     setIsLoading(true);
+
     try {
-      // tu función `login` debería devolver user o lanzar error
+      // 1. Call the API function that hits YOUR backend
       const user = await login(username, password);
 
-      // Si `login` no lanza error y devuelve un usuario, guardamos en localStorage
-      if (user) {
-        localStorage.setItem("padiUser", JSON.stringify(user));
-        // si no hay profile, intentamos crear un profile por defecto
-        const existingProfile = localStorage.getItem("padiProfile");
-        if (!existingProfile) {
-          const profile = {
-            email: user.email,
-            nombre: user.nombre || "",
-            apellido: user.apellido || "",
-            rol: user.rol || "docente",
-          };
-          localStorage.setItem("padiProfile", JSON.stringify(profile));
-        }
-        onLogin();
-        navigate("/home");
-      } else {
-        throw new Error("Credenciales inválidas");
-      }
+      // 2. If successful, call the function from App.tsx to update the global state
+      onLogin(user);
+
+      // No need to navigate here, App.tsx will handle it automatically
     } catch (err: any) {
-      setError(err?.message || "Error en el login");
+      setError(err.message || "Credenciales inválidas. Por favor, intente de nuevo.");
     } finally {
       setIsLoading(false);
     }

@@ -20,52 +20,81 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { register } from "../api/auth";
 import { useNavigate } from "react-router-dom";
 
+// export default function Register() {
+//   const [email, setEmail] = useState("");
+//   const [password, setPassword] = useState("");
+//   const [nombre, setNombre] = useState("");
+//   const [apellido, setApellido] = useState("");
+//   const [rol, setRol] = useState("docente");
+//   const [error, setError] = useState("");
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [success, setSuccess] = useState("");
+//   const navigate = useNavigate();
+
+//   const handleRolChange = (event: SelectChangeEvent) => setRol(event.target.value);
+
+//   const handleRegister = async (e: FormEvent) => {
+//     e.preventDefault();
+//     setError("");
+//     setSuccess("");
+//     setIsLoading(true);
+
+//     try {
+//       await register(
+//         formData.email,
+//         formData.password,
+//         formData.nombre,
+//         formData.apellido,
+//         formData.rol
+//       );
+//       setSuccess("¡Registro exitoso! Serás redirigido para iniciar sesión.");
+//       // Redirect to login after a short delay
+//       setTimeout(() => navigate("/login"), 2500);
+//     } catch (err: any) {
+//       setError(err.message || "Ocurrió un error durante el registro.");
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
 export default function Register() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [nombre, setNombre] = useState("");
-  const [apellido, setApellido] = useState("");
-  const [rol, setRol] = useState("docente");
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    nombre: "",
+    apellido: "",
+    rol: "docente",
+  });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleRolChange = (event: SelectChangeEvent) => setRol(event.target.value);
+  const handleChange = (e: any) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
-
-    if (!email || !password || !nombre || !apellido || !rol) {
-      setError("Completa todos los campos");
-      return;
-    }
+    setIsLoading(true);
 
     try {
-      // la función register la tenés en ../api/auth
-      const user = await register(email, password, nombre, apellido, rol);
-
-      // Si tu register devuelve el usuario, guardamos un profile básico en localStorage
-      if (user) {
-        const profile = { email, nombre, apellido, rol };
-        localStorage.setItem("padiProfile", JSON.stringify(profile));
-        setSuccess("Cuenta creada: " + (user.email || email));
-        // opcional: guardar un padiUser (mock)
-        localStorage.setItem("padiUser", JSON.stringify({ email, nombre, apellido, rol }));
-        setTimeout(() => navigate("/login"), 1200);
-      } else {
-        setSuccess("Cuenta creada. Por favor logueate.");
-        setTimeout(() => navigate("/login"), 1200);
-      }
-
-      setEmail("");
-      setPassword("");
-      setNombre("");
-      setApellido("");
-      setRol("docente");
+      await register(
+        formData.email,
+        formData.password,
+        formData.nombre,
+        formData.apellido,
+        formData.rol
+      );
+      setSuccess("¡Registro exitoso! Serás redirigido para iniciar sesión.");
+      // Redirect to login after a short delay
+      setTimeout(() => navigate("/login"), 2500);
     } catch (err: any) {
-      setError("No se pudo crear la cuenta: " + (err.message || err));
+      setError(err.message || "Ocurrió un error durante el registro.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -127,8 +156,9 @@ export default function Register() {
           <TextField
             fullWidth
             placeholder="Nombre"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
+            value={formData.nombre}
+            name = "nombre"
+            onChange={handleChange}
             sx={{ mb: 2 }}
             InputProps={{
               startAdornment: (
@@ -142,8 +172,9 @@ export default function Register() {
           <TextField
             fullWidth
             placeholder="Apellido"
-            value={apellido}
-            onChange={(e) => setApellido(e.target.value)}
+            value={formData.apellido}
+            name = "apellido"
+            onChange={handleChange}
             sx={{ mb: 2 }}
             InputProps={{
               startAdornment: (
@@ -158,8 +189,9 @@ export default function Register() {
             fullWidth
             placeholder="Email"
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={formData.email}
+            name = "email"
+            onChange={handleChange}
             sx={{ mb: 2 }}
             InputProps={{
               startAdornment: (
@@ -174,8 +206,9 @@ export default function Register() {
             fullWidth
             placeholder="Password"
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={formData.password}
+            name = "password"
+            onChange={handleChange}
             sx={{ mb: 2 }}
             InputProps={{
               startAdornment: (
@@ -191,9 +224,10 @@ export default function Register() {
             <Select
               labelId="rol-label"
               id="rol"
-              value={rol}
+              value={formData.rol}
+              name="rol"
               label="Rol"
-              onChange={handleRolChange}
+              onChange={handleChange}
             >
               <MenuItem value="docente">Docente</MenuItem>
               <MenuItem value="director">Director</MenuItem>

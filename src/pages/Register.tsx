@@ -231,7 +231,8 @@ export default function Register() {
             >
               <MenuItem value="docente">Docente</MenuItem>
               <MenuItem value="director">Director</MenuItem>
-              <MenuItem value="administrador">Administrador</MenuItem>
+              <MenuItem value="encargado_zona">Encargado de zona</MenuItem>
+              <MenuItem value="equipo_padi">Equipo PADI</MenuItem>
             </Select>
           </FormControl>
 

@@ -13,7 +13,7 @@ interface User {
   email: string;
   nombre: string;
   apellido: string;
-  rol: "docente" | "director" | "administrador";
+  rol: "docente" | "director" | "encargado_zona" | "equipo_padi";
 }
 
 function App() {
@@ -63,7 +63,7 @@ function App() {
           path="/home"
           element={
             currentUser ? (
-              <Home user={currentUser} onLogout={handleLogout} />
+              <Home onLogout={handleLogout} />
             ) : (
               <Navigate to="/login" replace />
             )

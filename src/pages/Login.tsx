@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { login } from "../api/auth"; // mantiene tu implementación real de auth
 
 interface LoginProps {
-  onLogin: () => void;
+  onLogin: (user: any) => void;
 }
 
 export default function Login({ onLogin }: LoginProps) {
@@ -31,10 +31,18 @@ export default function Login({ onLogin }: LoginProps) {
 
     try {
       // 1. Call the API function that hits YOUR backend
-      const user = await login(username, password);
+      const { user, profile } = await login(username, password);
 
-      // 2. If successful, call the function from App.tsx to update the global state
-      onLogin(user);
+      // 2. Persist profile for Home.tsx and combine for App state
+      if (profile) {
+        localStorage.setItem("padiProfile", JSON.stringify(profile));
+      } else {
+        localStorage.removeItem("padiProfile");
+      }
+
+      const combined = { ...user, ...(profile || {}) };
+      // 3. Update global state
+      onLogin(combined);
 
       // No need to navigate here, App.tsx will handle it automatically
     } catch (err: any) {

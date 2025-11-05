@@ -182,14 +182,27 @@ export default function Home({ onLogout }: HomeProps) {
       );
     }
 
-    if (role === "administrador") {
+    if (role === "encargado_zona") {
       return (
         <Container maxWidth="lg" sx={{ py: 8 }}>
           <Typography variant="h4" component="h2" sx={{ mb: 3 }}>
-            Panel de Administración
+            Panel de Encargado de Zona
           </Typography>
           <Typography variant="body1">
-            Bienvenido, Administrador. Desde aquí puede gestionar usuarios y roles.
+            Vista de zonas, colegios, aulas, estudiantes y estadísticas por colegio.
+          </Typography>
+        </Container>
+      );
+    }
+
+    if (role === "equipo_padi") {
+      return (
+        <Container maxWidth="lg" sx={{ py: 8 }}>
+          <Typography variant="h4" component="h2" sx={{ mb: 3 }}>
+            Panel Equipo PADI
+          </Typography>
+          <Typography variant="body1">
+            Vista global de zonas, colegios, aulas, estudiantes, evaluaciones y docentes.
           </Typography>
         </Container>
       );

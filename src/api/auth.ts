@@ -19,9 +19,8 @@ export async function login(email: string, password: string) {
     throw new Error(data.message || "Credenciales inválidas");
   }
 
-  // The backend should return the profile data along with the auth user
-  // We combine them here for simplicity in the app
-  return { ...data.user, ...data.profile };
+  // Backend returns { user, session, profile }
+  return { user: data.user, profile: data.profile };
 }
 
 /**

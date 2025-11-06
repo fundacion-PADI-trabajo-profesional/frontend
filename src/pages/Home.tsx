@@ -1,64 +1,59 @@
+"use client"
+
 // src/pages/Home.tsx
-import { useState, useEffect } from "react";
-import {
-  Box,
-  Container,
-  Typography,
-  Button,
-  Grid,
-  CircularProgress,
-} from "@mui/material";
-import LogoutIcon from "@mui/icons-material/Logout";
-import PersonIcon from "@mui/icons-material/Person";
-import Perfil from "./Perfil";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react"
+import { Box, Container, Typography, Button, Grid, CircularProgress } from "@mui/material"
+import LogoutIcon from "@mui/icons-material/Logout"
+import PersonIcon from "@mui/icons-material/Person"
+import Perfil from "./Perfil"
+import { useNavigate } from "react-router-dom"
 
 interface HomeProps {
-  onLogout: () => void;
+  onLogout: () => void
 }
 
 export default function Home({ onLogout }: HomeProps) {
-  const [user, setUser] = useState<any | null>(null);
-  const [profile, setProfile] = useState<any | null>(null);
-  const [loadingUser, setLoadingUser] = useState<boolean>(true);
-  const [modalOpen, setModalOpen] = useState(false);
-  const navigate = useNavigate();
+  const [user, setUser] = useState<any | null>(null)
+  const [profile, setProfile] = useState<any | null>(null)
+  const [loadingUser, setLoadingUser] = useState<boolean>(true)
+  const [modalOpen, setModalOpen] = useState(false)
+  const navigate = useNavigate()
 
   // Carga de datos desde localStorage como fallback (sin supabase)
   const loadUserData = async () => {
-    setLoadingUser(true);
+    setLoadingUser(true)
     try {
-      const storedUser = localStorage.getItem("padiUser");
-      const storedProfile = localStorage.getItem("padiProfile");
-      setUser(storedUser ? JSON.parse(storedUser) : null);
-      setProfile(storedProfile ? JSON.parse(storedProfile) : null);
+      const storedUser = localStorage.getItem("padiUser")
+      const storedProfile = localStorage.getItem("padiProfile")
+      setUser(storedUser ? JSON.parse(storedUser) : null)
+      setProfile(storedProfile ? JSON.parse(storedProfile) : null)
     } catch {
-      setUser(null);
-      setProfile(null);
+      setUser(null)
+      setProfile(null)
     } finally {
-      setLoadingUser(false);
+      setLoadingUser(false)
     }
-  };
+  }
 
   useEffect(() => {
-    loadUserData();
-  }, []);
+    loadUserData()
+  }, [])
 
-  const handleOpenModal = () => setModalOpen(true);
-  const handleCloseModal = () => setModalOpen(false);
+  const handleOpenModal = () => setModalOpen(true)
+  const handleCloseModal = () => setModalOpen(false)
 
   const handleProfileUpdate = async () => {
     // recarga desde localStorage
-    await loadUserData();
-  };
+    await loadUserData()
+  }
 
   // Si no hay usuario autenticado, redirijo a login
   useEffect(() => {
     if (!localStorage.getItem("padiUser")) {
-      navigate("/login");
+      navigate("/login")
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [])
 
   const renderRoleContent = () => {
     if (loadingUser) {
@@ -66,7 +61,7 @@ export default function Home({ onLogout }: HomeProps) {
         <Box sx={{ display: "flex", justifyContent: "center", p: 10 }}>
           <CircularProgress />
         </Box>
-      );
+      )
     }
 
     if (!profile) {
@@ -77,10 +72,10 @@ export default function Home({ onLogout }: HomeProps) {
           </Typography>
           <Typography>No pudimos cargar la información de tu perfil.</Typography>
         </Container>
-      );
+      )
     }
 
-    const role = profile.rol;
+    const role = profile.rol
 
     if (role === "docente") {
       return (
@@ -88,13 +83,26 @@ export default function Home({ onLogout }: HomeProps) {
           <Container maxWidth="lg" sx={{ py: 8 }}>
             <Grid container spacing={6}>
               <Grid item xs={12} md={4}>
-                <Box sx={{ textAlign: "center" }}>
-                  <Box sx={{ fontSize: "4rem", color: "#5c7cfa", mb: 2 }}>📚</Box>
+                <Box
+                  onClick={() => navigate("/evaluaciones")}
+                  sx={{
+                    textAlign: "center",
+                    cursor: "pointer",
+                    transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                    p: 3,
+                    borderRadius: 2,
+                    "&:hover": {
+                      transform: "translateY(-5px)",
+                      boxShadow: "0 10px 30px rgba(92, 124, 250, 0.2)",
+                    },
+                  }}
+                >
+                  <Box sx={{ fontSize: "4rem", color: "#5c7cfa", mb: 2 }}>📊</Box>
                   <Typography variant="h5" component="h2" sx={{ mb: 2 }}>
-                    Formación a Docentes
+                    Evaluaciones PADI
                   </Typography>
                   <Typography variant="body1" sx={{ color: "#666", lineHeight: 1.7 }}>
-                    Capacitamos a maestros y profesionales de la escuela para implementar el programa.
+                    Carga y gestiona los resultados de evaluaciones de tus alumnos.
                   </Typography>
                 </Box>
               </Grid>
@@ -159,14 +167,15 @@ export default function Home({ onLogout }: HomeProps) {
                     Nuestra Misión
                   </Typography>
                   <Typography variant="body1" sx={{ color: "#666", lineHeight: 1.8, fontSize: "1.1rem" }}>
-                    Que todos los niños y niñas de Nivel Inicial desarrollen sus habilidades para acceder a la Escuela Primaria.
+                    Que todos los niños y niñas de Nivel Inicial desarrollen sus habilidades para acceder a la Escuela
+                    Primaria.
                   </Typography>
                 </Grid>
               </Grid>
             </Container>
           </Box>
         </>
-      );
+      )
     }
 
     if (role === "director") {
@@ -179,7 +188,7 @@ export default function Home({ onLogout }: HomeProps) {
             Bienvenido, Director. Desde aquí puede gestionar los programas y ver estadísticas.
           </Typography>
         </Container>
-      );
+      )
     }
 
     if (role === "encargado_zona") {
@@ -192,7 +201,7 @@ export default function Home({ onLogout }: HomeProps) {
             Vista de zonas, colegios, aulas, estudiantes y estadísticas por colegio.
           </Typography>
         </Container>
-      );
+      )
     }
 
     if (role === "equipo_padi") {
@@ -205,7 +214,7 @@ export default function Home({ onLogout }: HomeProps) {
             Vista global de zonas, colegios, aulas, estudiantes, evaluaciones y docentes.
           </Typography>
         </Container>
-      );
+      )
     }
 
     return (
@@ -215,8 +224,8 @@ export default function Home({ onLogout }: HomeProps) {
         </Typography>
         <Typography>Tu cuenta tiene un rol ({profile?.rol}) que no es válido.</Typography>
       </Container>
-    );
-  };
+    )
+  }
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
@@ -242,10 +251,24 @@ export default function Home({ onLogout }: HomeProps) {
         }}
       >
         <Container maxWidth="md" sx={{ position: "relative", zIndex: 1, textAlign: "center" }}>
-          <Typography variant="h2" component="h1" sx={{ textTransform: "uppercase", textShadow: "2px 2px 5px rgba(0,0,0,0.5)", color: "white", mb: 3, fontSize: { xs: "2.5rem", md: "3.5rem" }, lineHeight: 1.3 }}>
+          <Typography
+            variant="h2"
+            component="h1"
+            sx={{
+              textTransform: "uppercase",
+              textShadow: "2px 2px 5px rgba(0,0,0,0.5)",
+              color: "white",
+              mb: 3,
+              fontSize: { xs: "2.5rem", md: "3.5rem" },
+              lineHeight: 1.3,
+            }}
+          >
             FUNDACIÓN PADI
           </Typography>
-          <Typography variant="h6" sx={{ textShadow: "2px 2px 5px rgba(0,0,0,0.5)", color: "white", mb: 4, fontWeight: 400 }}>
+          <Typography
+            variant="h6"
+            sx={{ textShadow: "2px 2px 5px rgba(0,0,0,0.5)", color: "white", mb: 4, fontWeight: 400 }}
+          >
             Somos una fundación que se dedica a mejorar las oportunidades educativas de niños y niñas de nivel inicial.
           </Typography>
           <Button
@@ -268,10 +291,19 @@ export default function Home({ onLogout }: HomeProps) {
         </Container>
 
         <Box sx={{ position: "absolute", top: 20, right: 20, zIndex: 2, display: "flex", gap: 1.5 }}>
-          <Button onClick={handleOpenModal} startIcon={<PersonIcon />} disabled={loadingUser || !user} sx={{ color: "white", bgcolor: "rgba(0,0,0,0.3)", "&:hover": { bgcolor: "rgba(0,0,0,0.5)" } }}>
+          <Button
+            onClick={handleOpenModal}
+            startIcon={<PersonIcon />}
+            disabled={loadingUser || !user}
+            sx={{ color: "white", bgcolor: "rgba(0,0,0,0.3)", "&:hover": { bgcolor: "rgba(0,0,0,0.5)" } }}
+          >
             Mi Perfil
           </Button>
-          <Button onClick={onLogout} startIcon={<LogoutIcon />} sx={{ color: "white", bgcolor: "rgba(0,0,0,0.3)", "&:hover": { bgcolor: "rgba(0,0,0,0.5)" } }}>
+          <Button
+            onClick={onLogout}
+            startIcon={<LogoutIcon />}
+            sx={{ color: "white", bgcolor: "rgba(0,0,0,0.3)", "&:hover": { bgcolor: "rgba(0,0,0,0.5)" } }}
+          >
             Cerrar Sesión
           </Button>
         </Box>
@@ -280,8 +312,14 @@ export default function Home({ onLogout }: HomeProps) {
       {renderRoleContent()}
 
       {!loadingUser && user && (
-        <Perfil open={modalOpen} onClose={handleCloseModal} user={user} profile={profile} onUpdateSuccess={handleProfileUpdate} />
+        <Perfil
+          open={modalOpen}
+          onClose={handleCloseModal}
+          user={user}
+          profile={profile}
+          onUpdateSuccess={handleProfileUpdate}
+        />
       )}
     </Box>
-  );
+  )
 }

@@ -1,0 +1,118 @@
+const API_URL = import.meta.env.VITE_API_URL
+
+interface ApiResponse<T> {
+    success: boolean
+    message: string
+    data: T
+    error?: {
+        code: string
+        description?: string
+    } | null
+}
+
+// Tipo para los datos del formulario de creación
+export interface EstudianteFormData {
+    dni: string
+    nombre: string
+    apellido: string
+    fecha_nacimiento: string // "YYYY-MM-DD"
+    genero_id: string
+    sala_id: number
+}
+
+// Tipo para el estudiante devuelto por la API (en la lista)
+export interface Estudiante {
+    id: string
+    persona_id: string
+    genero_id: string
+    grado: number | null
+    sala_id: number
+    fecha_creacion: string
+    personas: {
+        nombre: string | null
+        primer_apellido: string | null
+        segundo_apellido: string | null
+        dni: string | null
+    }
+    salas: {
+        nombre: string | null
+    }
+}
+
+// Tipo para el estudiante recién creado (respuesta del POST)
+export interface EstudianteCreado {
+    id: string;
+    persona_id: string;
+    genero_id: string;
+    grado: number | null;
+    sala_id: number;
+    fecha_creacion: string;
+    persona: {
+        id: string;
+        dni: string | null;
+        nombre: string | null;
+        primer_apellido: string | null;
+        segundo_apellido: string | null;
+        fecha_nacimiento: string | null;
+    }
+}
+
+// Tipos para los dropdowns del formulario
+export interface Genero {
+    id: string
+    descripcion: string | null
+}
+
+export interface Sala {
+    id: number
+    nombre: string | null
+    grado: number | null
+}
+
+async function handleApiResponse<T>(response: Response): Promise<T> {
+    const data: ApiResponse<T> = await response.json()
+
+    if (!response.ok || !data.success) {
+        const errorMsg = data.error?.description || data.message || "Error desconocido"
+        throw new Error(errorMsg)
+    }
+
+    return data.data
+}
+
+export const getEstudiantes = async (): Promise<Estudiante[]> => {
+    const response = await fetch(`${API_URL}/estudiantes`, {
+        headers: {
+            // Aquí deberías añadir el token de autenticación si es necesario
+            // "Authorization": `Bearer ${token}`
+        },
+    })
+    return handleApiResponse<Estudiante[]>(response)
+}
+
+export const createEstudiante = async (formData: EstudianteFormData): Promise<EstudianteCreado> => {
+    const response = await fetch(`${API_URL}/estudiantes`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            // "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(formData),
+    })
+
+    return handleApiResponse<EstudianteCreado>(response)
+}
+
+export const getGeneros = async (): Promise<Genero[]> => {
+    const response = await fetch(`${API_URL}/generos`, {
+        // headers: { "Authorization": `Bearer ${token}` }
+    });
+    return handleApiResponse<Genero[]>(response);
+}
+
+export const getSalas = async (): Promise<Sala[]> => {
+    const response = await fetch(`${API_URL}/salas`, {
+        // headers: { "Authorization": `Bearer ${token}` }
+    });
+    return handleApiResponse<Sala[]>(response);
+}

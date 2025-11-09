@@ -7,6 +7,9 @@ import LogoutIcon from "@mui/icons-material/Logout"
 import PersonIcon from "@mui/icons-material/Person"
 import Perfil from "./Perfil"
 import { useNavigate } from "react-router-dom"
+import AssignmentIcon from '@mui/icons-material/Assignment'; // Para Comisiones/Evaluaciones
+import GroupIcon from '@mui/icons-material/Group'; // Para Estudiantes
+import SchoolIcon from "@mui/icons-material/School"
 
 interface HomeProps {
   onLogout: () => void
@@ -103,6 +106,30 @@ export default function Home({ onLogout }: HomeProps) {
                   </Typography>
                   <Typography variant="body1" sx={{ color: "#666", lineHeight: 1.7 }}>
                     Carga y gestiona los resultados de evaluaciones de tus alumnos.
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Box
+                  onClick={() => navigate("/estudiantes")}
+                  sx={{
+                    textAlign: "center",
+                    cursor: "pointer",
+                    transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                    p: 3,
+                    borderRadius: 2,
+                    "&:hover": {
+                      transform: "translateY(-5px)",
+                      boxShadow: "0 10px 30px rgba(92, 124, 250, 0.2)",
+                    },
+                  }}
+                >
+                  <Box sx={{ fontSize: "4rem", color: "#5c7cfa", mb: 2 }}>🎓</Box>
+                  <Typography variant="h5" component="h2" sx={{ mb: 2 }}>
+                    Estudiantes
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: "#666", lineHeight: 1.7 }}>
+                    Accedé al listado de estudiantes y gestioná su información.
                   </Typography>
                 </Box>
               </Grid>

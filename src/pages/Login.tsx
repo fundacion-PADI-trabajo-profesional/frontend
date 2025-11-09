@@ -217,7 +217,7 @@ export default function Login({ onLogin }: LoginProps) {
               >
                 <Button
                   sx={{
-                    color: "#666",
+                    color: "#ffffffff",
                     textTransform: "none",
                     fontSize: "0.875rem",
                     "&:hover": {
@@ -226,7 +226,7 @@ export default function Login({ onLogin }: LoginProps) {
                     },
                   }}
                 >
-                  Forgot Password ?
+                  Olvidaste tu Contraseña ?
                 </Button>
                 <Button
                   type="submit"
@@ -234,7 +234,7 @@ export default function Login({ onLogin }: LoginProps) {
                   sx={{
                     py: 1.5,
                     px: 5,
-                    bgcolor: "#A3BE54",
+                    bgcolor: "#fbfbfbff",
                     color: "#1a1a1a",
                     fontSize: "1rem",
                     fontWeight: 600,
@@ -258,7 +258,7 @@ export default function Login({ onLogin }: LoginProps) {
               variant="outlined"
               sx={{
                 mt: 2,
-                color: "#1a1a1a",
+                color: "#eaeaeaff",
                 borderColor: "#A3BE54",
                 "&:hover": { borderColor: "#8bc34a" },
               }}
@@ -272,7 +272,7 @@ export default function Login({ onLogin }: LoginProps) {
                 display: "block",
                 mt: 3,
                 textAlign: "center",
-                color: "#999",
+                color: "#fffcfcff",
                 fontSize: "0.75rem",
               }}
             >

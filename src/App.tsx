@@ -8,6 +8,7 @@ import Login from "./pages/Login"
 import Register from "./pages/Register"
 import Home from "./pages/Home"
 import Evaluaciones from "./pages/Evaluaciones"
+import Estudiantes from "./pages/Estudiantes"
 import "./App.css" //
 
 // Define a type for your user object
@@ -61,6 +62,7 @@ function App() {
           element={currentUser ? <Home onLogout={handleLogout} /> : <Navigate to="/login" replace />}
         />
         <Route path="/evaluaciones" element={currentUser ? <Evaluaciones /> : <Navigate to="/login" replace />} />
+        <Route path="/estudiantes" element={currentUser ? <Estudiantes /> : <Navigate to="/login" replace />} />
         <Route path="/register" element={currentUser ? <Navigate to="/home" replace /> : <Register />} />
         <Route path="*" element={<Navigate to={currentUser ? "/home" : "/login"} replace />} />
       </Routes>

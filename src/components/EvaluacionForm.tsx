@@ -14,10 +14,12 @@ import {
   MenuItem,
   Alert,
   CircularProgress,
+  Autocomplete,
 } from "@mui/material"
 import SaveIcon from "@mui/icons-material/Save"
 import CancelIcon from "@mui/icons-material/Cancel"
 import { crearEvaluacionInstancia, actualizarEvaluacionInstancia, type EvaluacionInstancia } from "../api/evaluaciones"; // <-- IMPORTA EL TIPO Y LA NUEVA FUNCIÓN
+import { getEstudiantes, type Estudiante } from "../api/estudiantes";
 
 interface EvaluacionFormProps {
   onSuccess: () => void;
@@ -30,38 +32,63 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar }: Evaluac
     salaId: "",
     tipoId: "diagnostico",
     estadoId: "N",
-    puntaje: "",
   })
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
+  const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
+  const [loadingEstudiantes, setLoadingEstudiantes] = useState(true);
+  // Este estado controla el valor del Autocomplete (el objeto estudiante completo)
+  const [selectedEstudiante, setSelectedEstudiante] = useState<Estudiante | null>(null);
+
   useEffect(() => {
-    if (evaluacionAEditar) {
+    const loadEstudiantes = async () => {
+      try {
+        const data = await getEstudiantes();
+        setEstudiantes(data);
+      } catch (err) {
+        setError("Error al cargar la lista de estudiantes.");
+      } finally {
+        setLoadingEstudiantes(false);
+      }
+    };
+    loadEstudiantes();
+  }, []);
+
+  useEffect(() => {
+    // Solo se ejecuta si la evaluación a editar existe Y la lista de estudiantes ya se cargó
+    if (evaluacionAEditar && estudiantes.length > 0) {
+      // 1. Encontrar el objeto estudiante completo usando el ID
+      const estudiante = estudiantes.find(e => e.id === evaluacionAEditar.estudianteId) || null;
+
+      // 2. Setear el valor del Autocomplete
+      setSelectedEstudiante(estudiante);
+
+      // 3. Setear el resto del formulario
       setFormData({
         estudianteId: evaluacionAEditar.estudianteId,
-        salaId: String(evaluacionAEditar.salaId), // Convertir a string para el textfield
+        salaId: String(evaluacionAEditar.salaId),
         tipoId: evaluacionAEditar.tipoId,
         estadoId: evaluacionAEditar.estadoId,
-        puntaje: String(evaluacionAEditar.puntaje ?? ""), // Convertir a string, maneja null
       });
-      setSuccess(false); // Limpia mensajes de éxito
-      setError(null);   // Limpia mensajes de error
-    } else {
+      setSuccess(false);
+      setError(null);
+    } else if (!evaluacionAEditar) {
       // Si no hay nada para editar, limpia el formulario (modo "Crear")
       handleClear();
     }
-  }, [evaluacionAEditar]);
+  }, [evaluacionAEditar, estudiantes]);
 
   const handleClear = () => {
-     setFormData({
-        estudianteId: "",
-        salaId: "",
-        tipoId: "diagnostico",
-        estadoId: "N",
-        puntaje: "",
-      });
+    setFormData({
+      estudianteId: "",
+      salaId: "",
+      tipoId: "diagnostico",
+      estadoId: "N",
+    });
+    setSelectedEstudiante(null);
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
@@ -91,7 +118,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar }: Evaluac
         salaId: Number.parseInt(formData.salaId),
         tipoId: formData.tipoId as "diagnostico" | "seguimiento" | "cierre",
         estadoId: formData.estadoId as "N" | "C" | "R",
-        puntaje: formData.puntaje ? Number.parseInt(formData.puntaje) : null,
+        puntaje: null,
       }
 
       if (evaluacionAEditar) {
@@ -119,6 +146,8 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar }: Evaluac
     }
   }
 
+  const isLoading = loading || loadingEstudiantes; // El formulario se bloquea si carga estudiantes O si está guardando
+
   return (
     <Card>
       <CardContent>
@@ -142,16 +171,63 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar }: Evaluac
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
             {/* Estudiante ID */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="ID del Estudiante"
-                name="estudianteId"
-                value={formData.estudianteId}
-                onChange={handleChange}
-                placeholder="Ej: s1, s2, s3"
-                required
-                disabled={loading}
+            <Grid item xs={12}>
+              <Autocomplete
+                id="estudiante-autocomplete"
+                // El valor es el objeto estudiante completo
+                value={selectedEstudiante}
+                // La lista de opciones
+                options={estudiantes}
+                loading={loadingEstudiantes}
+                disabled={isLoading}
+                // Cómo mostrar el nombre en el dropdown (Ej: "Gomez, Juan (12345678)")
+                getOptionLabel={(option) =>
+                  `${option.personas.primer_apellido}, ${option.personas.nombre} (${option.personas.dni})`
+                }
+                // Para que la búsqueda funcione comparando IDs
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                // QUÉ HACER CUANDO SE SELECCIONA UN ALUMNO
+                onChange={(event, newValue: Estudiante | null) => {
+                  // 1. Actualiza el valor del Autocomplete
+                  setSelectedEstudiante(newValue);
+                  // 2. Actualiza el formData con el ID para el backend
+                  setFormData((prev) => ({
+                    ...prev,
+                    estudianteId: newValue ? newValue.id : "",
+                  }));
+                }}
+                // Cómo se ve el campo de texto
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Buscar Estudiante por DNI o Nombre"
+                    required
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {loadingEstudiantes ? <CircularProgress color="inherit" size={20} /> : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
+                    }}
+                  />
+                )}
+                // Cómo se ve cada opción en el dropdown (para más claridad)
+                renderOption={(props, option) => (
+                  <Box component="li" {...props} key={option.id}>
+                    <Grid container alignItems="center">
+                      <Grid item xs>
+                        <Typography variant="body1" >
+                          {option.personas.primer_apellido}, {option.personas.nombre}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          DNI: {option.personas.dni}
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                )}
               />
             </Grid>
 
@@ -203,22 +279,6 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar }: Evaluac
                 <MenuItem value="C">Completada</MenuItem>
                 <MenuItem value="R">Revisada</MenuItem>
               </TextField>
-            </Grid>
-
-            {/* Puntaje */}
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Puntaje (opcional)"
-                name="puntaje"
-                type="number"
-                value={formData.puntaje}
-                onChange={handleChange}
-                placeholder="Ej: 85, 90"
-                inputProps={{ min: "0", max: "100", step: "1" }}
-                helperText="Rango: 0-100"
-                disabled={loading}
-              />
             </Grid>
 
             {/* Buttons */}

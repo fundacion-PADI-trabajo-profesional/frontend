@@ -104,6 +104,20 @@ export async function getEvaluacionInstanciaById(id: string): Promise<Evaluacion
 
 // 4. ACTUALIZA TUS FUNCIONES DE "CREAR" Y "ACTUALIZAR"
 
+export async function getEvaluacionesInstanciasByEstudiante(
+  estudianteId: string,
+  opts?: { limit?: number; offset?: number }
+): Promise<EvaluacionInstancia[]> {
+  const params = new URLSearchParams();
+  params.set("estudianteId", estudianteId);
+  if (opts?.limit !== undefined) params.set("limit", String(opts.limit));
+  if (opts?.offset !== undefined) params.set("offset", String(opts.offset));
+  const res = await fetch(`${API_URL}/evaluaciones-instancias?${params.toString()}`);
+  if (!res.ok) throw new Error("Error al cargar el historial");
+  const resData = await res.json();
+  return (resData.data || []).map(mapToCamelCase);
+}
+
 export async function crearEvaluacionInstancia(
   data: Omit<EvaluacionInstancia, "id" | "createdAt">,
 ): Promise<EvaluacionInstancia> {

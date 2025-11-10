@@ -25,9 +25,10 @@ interface EvaluacionFormProps {
   onSuccess: () => void;
   evaluacionAEditar?: EvaluacionInstancia | null;
   profile: any | null;
+  prefillEstudianteId?: string;
 }
 
-export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile }: EvaluacionFormProps) {
+export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, prefillEstudianteId }: EvaluacionFormProps) {
   const [formData, setFormData] = useState({
     estudianteId: "",
     salaId: "",
@@ -81,6 +82,19 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile }
       handleClear();
     }
   }, [evaluacionAEditar, estudiantes]);
+
+  // Prefill si venimos desde Estudiantes (evaluarAhora)
+  useEffect(() => {
+    if (!evaluacionAEditar && prefillEstudianteId && estudiantes.length > 0) {
+      const estudiante = estudiantes.find(e => e.id === prefillEstudianteId) || null;
+      setSelectedEstudiante(estudiante);
+      setFormData((prev) => ({
+        ...prev,
+        estudianteId: estudiante ? estudiante.id : "",
+        salaId: estudiante ? String(estudiante.sala_id) : "",
+      }));
+    }
+  }, [prefillEstudianteId, estudiantes, evaluacionAEditar]);
 
   const handleClear = () => {
     setFormData({

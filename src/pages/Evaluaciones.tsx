@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { Box, Container, Typography, Button, Tabs, Tab } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import EvaluacionesList from "../components/EvaluacionesList"
 import EvaluacionForm from "../components/EvaluacionForm"
 import type { EvaluacionInstancia } from "../api/evaluaciones"; // <--- IMPORTA EL TIPO
@@ -39,6 +39,8 @@ export default function Evaluaciones() {
   const [evaluacionAEditar, setEvaluacionAEditar] = useState<EvaluacionInstancia | null>(null);
   const [refreshKey, setRefreshKey] = useState(0); // Para refrescar la lista
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const [prefillEstudianteId, setPrefillEstudianteId] = useState<string | null>(null)
 
   useEffect(() => {
     // Load profile from localStorage
@@ -49,6 +51,15 @@ export default function Evaluaciones() {
       navigate("/home")
     }
   }, [navigate])
+
+  // Si venimos desde Estudiantes con ?evaluarAhora=<id>, abrir pestaña "Nueva Evaluación" y prellenar
+  useEffect(() => {
+    const evaluarAhora = searchParams.get("evaluarAhora")
+    if (evaluarAhora) {
+      setPrefillEstudianteId(evaluarAhora)
+      setTabValue(1)
+    }
+  }, [searchParams])
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue)
@@ -132,6 +143,7 @@ export default function Evaluaciones() {
             onSuccess={handleSuccess} // <-- Prop de éxito actualizada
             evaluacionAEditar={evaluacionAEditar} // <-- Pasa la evaluación a editar
             profile={profile}
+            prefillEstudianteId={prefillEstudianteId || undefined}
           />
         </TabPanel>
       </Container>

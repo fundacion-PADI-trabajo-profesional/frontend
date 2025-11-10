@@ -24,9 +24,10 @@ import { getEstudiantes, type Estudiante } from "../api/estudiantes";
 interface EvaluacionFormProps {
   onSuccess: () => void;
   evaluacionAEditar?: EvaluacionInstancia | null;
+  profile: any | null;
 }
 
-export default function EvaluacionForm({ onSuccess, evaluacionAEditar }: EvaluacionFormProps) {
+export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile }: EvaluacionFormProps) {
   const [formData, setFormData] = useState({
     estudianteId: "",
     salaId: "",
@@ -109,12 +110,16 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar }: Evaluac
 
     try {
       // Validate form
-      if (!formData.estudianteId || !formData.salaId) {
-        throw new Error("Por favor completa todos los campos requeridos")
+      //if (!formData.estudianteId || !formData.salaId) {
+      //  throw new Error("Por favor completa todos los campos requeridos")
+      //}
+      if (!formData.estudianteId || !formData.salaId || !profile?.id) {
+        throw new Error("Por favor completa todos los campos requeridos (faltan datos del estudiante, sala o profesor)")
       }
 
       const payload = {
         estudianteId: formData.estudianteId,
+        profesorId: profile.id,
         salaId: Number.parseInt(formData.salaId),
         tipoId: formData.tipoId as "diagnostico" | "seguimiento" | "cierre",
         estadoId: formData.estadoId as "N" | "C" | "R",

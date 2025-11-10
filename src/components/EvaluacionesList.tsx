@@ -133,7 +133,7 @@ export default function EvaluacionesList({ onEditar }: {
       <Table>
         <TableHead sx={{ bgcolor: "#f5f5f5" }}>
           <TableRow>
-            <TableCell sx={{ fontWeight: 700 }}>Estudiante ID</TableCell>
+            <TableCell sx={{ fontWeight: 700 }}>Estudiante</TableCell>
             <TableCell align="center" sx={{ fontWeight: 700 }}>
               Sala
             </TableCell>
@@ -150,7 +150,7 @@ export default function EvaluacionesList({ onEditar }: {
         <TableBody>
           {evaluaciones.map((evaluacion) => (
             <TableRow key={evaluacion.id} hover>
-              <TableCell>{evaluacion.estudianteId}</TableCell>
+              <TableCell>{evaluacion.estudianteNombre || evaluacion.estudianteId}</TableCell>
               <TableCell align="center">{evaluacion.salaId}</TableCell>
               <TableCell>{getTipoLabel(evaluacion.tipoId)}</TableCell>
               <TableCell>

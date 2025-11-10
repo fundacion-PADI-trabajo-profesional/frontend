@@ -131,6 +131,7 @@ export default function Evaluaciones() {
           <EvaluacionForm
             onSuccess={handleSuccess} // <-- Prop de éxito actualizada
             evaluacionAEditar={evaluacionAEditar} // <-- Pasa la evaluación a editar
+            profile={profile}
           />
         </TabPanel>
       </Container>

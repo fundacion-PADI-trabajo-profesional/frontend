@@ -69,7 +69,16 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante }: Estudi
         handleMenuClose();
     }
     const handleVerMas = () => {
-        console.log("Ver más:", selectedStudent?.id)
+        if (selectedStudent) {
+            const nombre = selectedStudent.personas?.nombre || ""
+            const apellido = selectedStudent.personas?.primer_apellido || ""
+            const nombreCompleto = [apellido, nombre].filter(Boolean).join(", ")
+            const q = new URLSearchParams({
+                estudianteId: selectedStudent.id,
+                nombre: nombreCompleto,
+            })
+            navigate(`/historial-estudiante?${q.toString()}`)
+        }
         handleMenuClose();
     }
 

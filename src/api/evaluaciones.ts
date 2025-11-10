@@ -3,6 +3,7 @@ const API_URL = import.meta.env.VITE_API_URL
 export interface EvaluacionInstancia {
   id: string
   estudianteId: string
+  estudianteNombre?: string
   profesorId: string
   salaId: number
   tipoId: "diagnostico" | "seguimiento" | "cierre"
@@ -19,9 +20,14 @@ export interface Evaluacion {
 
 // Mapea los datos del backend (snake_case) a la interfaz del frontend (camelCase)
 function mapToCamelCase(data: any): EvaluacionInstancia {
+  const nombre = data?.estudiantes?.personas?.nombre ?? ""
+  const apellido = data?.estudiantes?.personas?.primer_apellido ?? ""
+  const estudianteNombre =
+    [apellido, nombre].filter(Boolean).join(", ") || undefined
   return {
     id: data.id,
     estudianteId: data.estudiante_id, // Mapeo
+    estudianteNombre,
     profesorId: data.profesor_id,     // Mapeo
     salaId: data.sala_id,           // Mapeo
     tipoId: data.tipo_id,           // Mapeo

@@ -7,9 +7,10 @@ import LogoutIcon from "@mui/icons-material/Logout"
 import PersonIcon from "@mui/icons-material/Person"
 import Perfil from "./Perfil"
 import { useNavigate } from "react-router-dom"
-import AssignmentIcon from '@mui/icons-material/Assignment'; // Para Comisiones/Evaluaciones
-import GroupIcon from '@mui/icons-material/Group'; // Para Estudiantes
-import SchoolIcon from "@mui/icons-material/School"
+// import AssignmentIcon from '@mui/icons-material/Assignment';
+// import GroupIcon from '@mui/icons-material/Group';
+// import SchoolIcon from "@mui/icons-material/School"
+// import { getDocentes, type Docente } from "../api/docentes"
 
 interface HomeProps {
   onLogout: () => void
@@ -20,6 +21,10 @@ export default function Home({ onLogout }: HomeProps) {
   const [profile, setProfile] = useState<any | null>(null)
   const [loadingUser, setLoadingUser] = useState<boolean>(true)
   const [modalOpen, setModalOpen] = useState(false)
+  // Reservado para futuros contadores/resúmenes de docentes si se requiere en el dashboard
+  // const [docentes, setDocentes] = useState<Docente[]>([])
+  // const [loadingDocentes, setLoadingDocentes] = useState<boolean>(false)
+  // const [errorDocentes, setErrorDocentes] = useState<string | null>(null)
   const navigate = useNavigate()
 
   // Carga de datos desde localStorage como fallback (sin supabase)
@@ -41,6 +46,29 @@ export default function Home({ onLogout }: HomeProps) {
   useEffect(() => {
     loadUserData()
   }, [])
+
+  // Cargar docentes cuando el rol sea director (Rules of Hooks: sólo top-level)
+  // Carga de docentes para métricas (si más adelante mostramos KPIs en el dashboard)
+  // useEffect(() => {
+  //   let mounted = true
+  //   const load = async () => {
+  //     if (profile?.rol !== "director") return
+  //     try {
+  //       setLoadingDocentes(true)
+  //       setErrorDocentes(null)
+  //       const data = await getDocentes()
+  //       if (mounted) setDocentes(data)
+  //     } catch (e: any) {
+  //       if (mounted) setErrorDocentes(e.message || "Error al cargar docentes")
+  //     } finally {
+  //       if (mounted) setLoadingDocentes(false)
+  //     }
+  //   }
+  //   load()
+  //   return () => {
+  //     mounted = false
+  //   }
+  // }, [profile?.rol])
 
   const handleOpenModal = () => setModalOpen(true)
   const handleCloseModal = () => setModalOpen(false)
@@ -211,9 +239,36 @@ export default function Home({ onLogout }: HomeProps) {
           <Typography variant="h4" component="h2" sx={{ mb: 3 }}>
             Panel del Director
           </Typography>
-          <Typography variant="body1">
-            Bienvenido, Director. Desde aquí puede gestionar los programas y ver estadísticas.
+          <Typography variant="body1" sx={{ mb: 4 }}>
+            Bienvenido, Director. Desde aquí puede gestionar y visualizar recursos de tu institución.
           </Typography>
+          <Grid container spacing={4}>
+            <Grid item xs={12} md={4}>
+              <Box
+                onClick={() => navigate("/docentes")}
+                sx={{
+                  textAlign: "center",
+                  cursor: "pointer",
+                  transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                  p: 3,
+                  borderRadius: 2,
+                  border: "1px solid #e0e0e0",
+                  "&:hover": {
+                    transform: "translateY(-5px)",
+                    boxShadow: "0 10px 30px rgba(92, 124, 250, 0.2)",
+                  },
+                }}
+              >
+                <Box sx={{ fontSize: "3rem", mb: 1 }}>👩‍🏫</Box>
+                <Typography variant="h6" component="h3" sx={{ mb: 1, fontWeight: 700 }}>
+                  Docentes
+                </Typography>
+                <Typography variant="body2" sx={{ color: "#666" }}>
+                  Ver y gestionar docentes
+                </Typography>
+              </Box>
+            </Grid>
+          </Grid>
         </Container>
       )
     }

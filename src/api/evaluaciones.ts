@@ -118,6 +118,20 @@ export async function getEvaluacionesInstanciasByEstudiante(
   return (resData.data || []).map(mapToCamelCase);
 }
 
+export async function getEvaluacionesInstanciasByProfesor(
+  profesorId: string,
+  opts?: { limit?: number; offset?: number }
+): Promise<EvaluacionInstancia[]> {
+  const params = new URLSearchParams();
+  params.set("profesorId", profesorId);
+  if (opts?.limit !== undefined) params.set("limit", String(opts.limit));
+  if (opts?.offset !== undefined) params.set("offset", String(opts.offset));
+  const res = await fetch(`${API_URL}/evaluaciones-instancias?${params.toString()}`);
+  if (!res.ok) throw new Error("Error al cargar evaluaciones del docente");
+  const resData = await res.json();
+  return (resData.data || []).map(mapToCamelCase);
+}
+
 export async function crearEvaluacionInstancia(
   data: Omit<EvaluacionInstancia, "id" | "createdAt">,
 ): Promise<EvaluacionInstancia> {

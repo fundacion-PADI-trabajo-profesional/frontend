@@ -9,7 +9,6 @@ interface ApiResponse<T> {
 
 export interface Docente {
   id: string
-  email: string
   nombre: string
   apellido: string
 }

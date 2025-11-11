@@ -10,6 +10,7 @@ import Home from "./pages/Home"
 import Evaluaciones from "./pages/Evaluaciones"
 import Estudiantes from "./pages/Estudiantes"
 import HistorialEstudiante from "./pages/HistorialEstudiante"
+import EvaluacionesDocente from "./pages/EvaluacionesDocente"
 import DocentesPage from "./pages/Docentes"
 import "./App.css" //
 
@@ -67,6 +68,7 @@ function App() {
         <Route path="/estudiantes" element={currentUser ? <Estudiantes /> : <Navigate to="/login" replace />} />
         <Route path="/historial-estudiante" element={currentUser ? <HistorialEstudiante /> : <Navigate to="/login" replace />} />
         <Route path="/register" element={currentUser ? <Navigate to="/home" replace /> : <Register />} />
+        <Route path="/evaluaciones-docente" element={currentUser ? <EvaluacionesDocente /> : <Navigate to="/login" replace />} />
         <Route path="/docentes" element={currentUser ? <DocentesPage /> : <Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to={currentUser ? "/home" : "/login"} replace />} />
       </Routes>

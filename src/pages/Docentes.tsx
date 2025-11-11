@@ -5,6 +5,7 @@ import { Box, Container, Typography, Table, TableHead, TableRow, TableCell, Tabl
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import { useNavigate } from "react-router-dom"
 import { getDocentes, type Docente } from "../api/docentes"
+// import { getEvaluacionesInstanciasByProfesor } from "../api/evaluaciones"
 
 export default function DocentesPage() {
   const [items, setItems] = useState<Docente[]>([])
@@ -60,15 +61,20 @@ export default function DocentesPage() {
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700 }}>Apellido</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Nombre</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Email</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Acciones</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {items.map((d) => (
-                  <TableRow key={d.id} hover>
+                  <TableRow
+                    key={d.id}
+                    hover
+                    sx={{ cursor: "pointer" }}
+                    onClick={() => navigate(`/evaluaciones-docente?profesorId=${d.id}&nombre=${encodeURIComponent(`${d.apellido}, ${d.nombre}`)}`)}
+                  >
                     <TableCell>{d.apellido}</TableCell>
                     <TableCell>{d.nombre}</TableCell>
-                    <TableCell>{d.email}</TableCell>
+                    <TableCell>Ver evaluaciones</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

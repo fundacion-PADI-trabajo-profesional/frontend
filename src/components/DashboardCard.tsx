@@ -1,0 +1,51 @@
+import { Box, Typography, Paper } from "@mui/material";
+
+interface DashboardCardProps {
+    title: string;
+    description: string;
+    icon: string; // Emoji o componente Icon
+    onClick: () => void;
+    color?: string; // Color de acento
+}
+
+export default function DashboardCard({ title, description, icon, onClick, color = "#5c7cfa" }: DashboardCardProps) {
+    return (
+        <Paper
+            elevation={0}
+            onClick={onClick}
+            sx={{
+                p: 3,
+                height: "100%",
+                borderRadius: 3,
+                cursor: "pointer",
+                border: "1px solid #e0e0e0",
+                transition: "all 0.3s ease",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: "0 12px 24px rgba(0,0,0,0.1)",
+                    borderColor: color,
+                },
+            }}
+        >
+            <Box sx={{
+                fontSize: "2.5rem",
+                mb: 2,
+                bgcolor: `${color}15`, // Color con opacidad baja para el fondo del icono
+                p: 1.5,
+                borderRadius: 2,
+                lineHeight: 1
+            }}>
+                {icon}
+            </Box>
+            <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
+                {title}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+                {description}
+            </Typography>
+        </Paper>
+    );
+}

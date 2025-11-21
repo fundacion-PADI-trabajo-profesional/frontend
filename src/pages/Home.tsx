@@ -1,407 +1,145 @@
-"use client"
-
-// src/pages/Home.tsx
-import { useState, useEffect } from "react"
-import { Box, Container, Typography, Button, Grid, CircularProgress } from "@mui/material"
-import LogoutIcon from "@mui/icons-material/Logout"
-import PersonIcon from "@mui/icons-material/Person"
-import Perfil from "./Perfil"
-import { useNavigate } from "react-router-dom"
-// import AssignmentIcon from '@mui/icons-material/Assignment';
-// import GroupIcon from '@mui/icons-material/Group';
-// import SchoolIcon from "@mui/icons-material/School"
-// import { getDocentes, type Docente } from "../api/docentes"
+import { useState, useEffect } from "react";
+import { Box, CircularProgress, Container, Typography, AppBar, Toolbar, Button, Avatar, Chip } from "@mui/material";
+import LogoutIcon from "@mui/icons-material/Logout";
+import PersonIcon from "@mui/icons-material/Person";
+import { useNavigate } from "react-router-dom";
+import Perfil from "./Perfil";
+import DocenteDashboard from "./dashboards/DocenteDashboard";
+import DirectivoDashboard from "./dashboards/DirectivoDashboard";
+import AdminDashboard from "./dashboards/AdminDashboard";
 
 interface HomeProps {
-  onLogout: () => void
+  onLogout: () => void;
 }
 
 export default function Home({ onLogout }: HomeProps) {
-  const [user, setUser] = useState<any | null>(null)
-  const [profile, setProfile] = useState<any | null>(null)
-  const [loadingUser, setLoadingUser] = useState<boolean>(true)
-  const [modalOpen, setModalOpen] = useState(false)
-  // Reservado para futuros contadores/resúmenes de docentes si se requiere en el dashboard
-  // const [docentes, setDocentes] = useState<Docente[]>([])
-  // const [loadingDocentes, setLoadingDocentes] = useState<boolean>(false)
-  // const [errorDocentes, setErrorDocentes] = useState<string | null>(null)
-  const navigate = useNavigate()
+  const [user, setUser] = useState<any | null>(null);
+  const [profile, setProfile] = useState<any | null>(null);
+  const [loadingUser, setLoadingUser] = useState<boolean>(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const navigate = useNavigate();
 
-  // Carga de datos desde localStorage como fallback (sin supabase)
   const loadUserData = async () => {
-    setLoadingUser(true)
+    setLoadingUser(true);
     try {
-      const storedUser = localStorage.getItem("padiUser")
-      const storedProfile = localStorage.getItem("padiProfile")
-      setUser(storedUser ? JSON.parse(storedUser) : null)
-      setProfile(storedProfile ? JSON.parse(storedProfile) : null)
+      const storedUser = localStorage.getItem("padiUser");
+      const storedProfile = localStorage.getItem("padiProfile");
+      setUser(storedUser ? JSON.parse(storedUser) : null);
+      setProfile(storedProfile ? JSON.parse(storedProfile) : null);
     } catch {
-      setUser(null)
-      setProfile(null)
+      setUser(null);
+      setProfile(null);
     } finally {
-      setLoadingUser(false)
+      setLoadingUser(false);
     }
-  }
+  };
 
   useEffect(() => {
-    loadUserData()
-  }, [])
+    loadUserData();
+  }, []);
 
-  // Cargar docentes cuando el rol sea director (Rules of Hooks: sólo top-level)
-  // Carga de docentes para métricas (si más adelante mostramos KPIs en el dashboard)
-  // useEffect(() => {
-  //   let mounted = true
-  //   const load = async () => {
-  //     if (profile?.rol !== "director") return
-  //     try {
-  //       setLoadingDocentes(true)
-  //       setErrorDocentes(null)
-  //       const data = await getDocentes()
-  //       if (mounted) setDocentes(data)
-  //     } catch (e: any) {
-  //       if (mounted) setErrorDocentes(e.message || "Error al cargar docentes")
-  //     } finally {
-  //       if (mounted) setLoadingDocentes(false)
-  //     }
-  //   }
-  //   load()
-  //   return () => {
-  //     mounted = false
-  //   }
-  // }, [profile?.rol])
-
-  const handleOpenModal = () => setModalOpen(true)
-  const handleCloseModal = () => setModalOpen(false)
-
-  const handleProfileUpdate = async () => {
-    // recarga desde localStorage
-    await loadUserData()
-  }
-
-  // Si no hay usuario autenticado, redirijo a login
+  // Redirección si no hay usuario
   useEffect(() => {
     if (!localStorage.getItem("padiUser")) {
-      navigate("/login")
+      navigate("/login");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [navigate]);
 
-  const renderRoleContent = () => {
-    if (loadingUser) {
-      return (
-        <Box sx={{ display: "flex", justifyContent: "center", p: 10 }}>
-          <CircularProgress />
-        </Box>
-      )
-    }
+  const handleProfileUpdate = async () => {
+    await loadUserData();
+  };
 
-    if (!profile) {
-      return (
-        <Container maxWidth="lg" sx={{ py: 8, textAlign: "center" }}>
-          <Typography variant="h5" color="error">
-            Error de Perfil
-          </Typography>
-          <Typography>No pudimos cargar la información de tu perfil.</Typography>
-        </Container>
-      )
-    }
-
-    const role = profile.rol
-
-    if (role === "docente") {
-      return (
-        <>
-          <Container maxWidth="lg" sx={{ py: 8 }}>
-            <Grid container spacing={6}>
-              <Grid item xs={12} md={4}>
-                <Box
-                  onClick={() => navigate("/evaluaciones")}
-                  sx={{
-                    textAlign: "center",
-                    cursor: "pointer",
-                    transition: "transform 0.3s ease, box-shadow 0.3s ease",
-                    p: 3,
-                    borderRadius: 2,
-                    "&:hover": {
-                      transform: "translateY(-5px)",
-                      boxShadow: "0 10px 30px rgba(92, 124, 250, 0.2)",
-                    },
-                  }}
-                >
-                  <Box sx={{ fontSize: "4rem", color: "#5c7cfa", mb: 2 }}>📊</Box>
-                  <Typography variant="h5" component="h2" sx={{ mb: 2 }}>
-                    Evaluaciones PADI
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: "#666", lineHeight: 1.7 }}>
-                    Carga y gestiona los resultados de evaluaciones de tus alumnos.
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Box
-                  onClick={() => navigate("/estudiantes")}
-                  sx={{
-                    textAlign: "center",
-                    cursor: "pointer",
-                    transition: "transform 0.3s ease, box-shadow 0.3s ease",
-                    p: 3,
-                    borderRadius: 2,
-                    "&:hover": {
-                      transform: "translateY(-5px)",
-                      boxShadow: "0 10px 30px rgba(92, 124, 250, 0.2)",
-                    },
-                  }}
-                >
-                  <Box sx={{ fontSize: "4rem", color: "#5c7cfa", mb: 2 }}>🎓</Box>
-                  <Typography variant="h5" component="h2" sx={{ mb: 2 }}>
-                    Estudiantes
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: "#666", lineHeight: 1.7 }}>
-                    Accedé al listado de estudiantes y gestioná su información.
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Box sx={{ textAlign: "center" }}>
-                  <Box sx={{ fontSize: "4rem", color: "#5c7cfa", mb: 2 }}>🧒</Box>
-                  <Typography variant="h5" component="h2" sx={{ mb: 2 }}>
-                    Evaluación y Detección
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: "#666", lineHeight: 1.7 }}>
-                    Evaluamos a alumnos con la Prueba PADI para detectar riesgos.
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Box sx={{ textAlign: "center" }}>
-                  <Box sx={{ fontSize: "4rem", color: "#5c7cfa", mb: 2 }}>👨‍👩‍👧‍👦</Box>
-                  <Typography variant="h5" component="h2" sx={{ mb: 2 }}>
-                    Talleres a Familias
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: "#666", lineHeight: 1.7 }}>
-                    Talleres para familias sobre crianza y gestión emocional.
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
-
-            <Box sx={{ textAlign: "center", mt: 6 }}>
-              <Button
-                variant="contained"
-                size="large"
-                sx={{
-                  bgcolor: "#000",
-                  color: "#fff",
-                  px: 6,
-                  py: 2,
-                  fontSize: "1rem",
-                  fontWeight: 600,
-                  borderRadius: 3,
-                  textTransform: "none",
-                  "&:hover": { bgcolor: "#333" },
-                }}
-              >
-                Conocer el Programa
-              </Button>
-            </Box>
-          </Container>
-
-          <Box sx={{ bgcolor: "#f5f5f5", py: 8 }}>
-            <Container maxWidth="lg">
-              <Grid container spacing={6} alignItems="center">
-                <Grid item xs={12} md={6}>
-                  <Box
-                    component="img"
-                    src="/assets/images/1366_2000.jpg"
-                    alt="Creative learning"
-                    sx={{ width: "100%", height: "auto", display: "block" }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="h3" component="h2" sx={{ mb: 3 }}>
-                    Nuestra Misión
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: "#666", lineHeight: 1.8, fontSize: "1.1rem" }}>
-                    Que todos los niños y niñas de Nivel Inicial desarrollen sus habilidades para acceder a la Escuela
-                    Primaria.
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Container>
-          </Box>
-        </>
-      )
-    }
-
-    if (role === "director") {
-      return (
-        <Container maxWidth="lg" sx={{ py: 8 }}>
-          <Typography variant="h4" component="h2" sx={{ mb: 3 }}>
-            Panel del Director
-          </Typography>
-          <Typography variant="body1" sx={{ mb: 4 }}>
-            Bienvenido, Director. Desde aquí puede gestionar y visualizar recursos de tu institución.
-          </Typography>
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={4}>
-              <Box
-                onClick={() => navigate("/docentes")}
-                sx={{
-                  textAlign: "center",
-                  cursor: "pointer",
-                  transition: "transform 0.3s ease, box-shadow 0.3s ease",
-                  p: 3,
-                  borderRadius: 2,
-                  border: "1px solid #e0e0e0",
-                  "&:hover": {
-                    transform: "translateY(-5px)",
-                    boxShadow: "0 10px 30px rgba(92, 124, 250, 0.2)",
-                  },
-                }}
-              >
-                <Box sx={{ fontSize: "3rem", mb: 1 }}>👩‍🏫</Box>
-                <Typography variant="h6" component="h3" sx={{ mb: 1, fontWeight: 700 }}>
-                  Docentes
-                </Typography>
-                <Typography variant="body2" sx={{ color: "#666" }}>
-                  Ver y gestionar docentes
-                </Typography>
-              </Box>
-            </Grid>
-          </Grid>
-        </Container>
-      )
-    }
-
-    if (role === "encargado_zona") {
-      return (
-        <Container maxWidth="lg" sx={{ py: 8 }}>
-          <Typography variant="h4" component="h2" sx={{ mb: 3 }}>
-            Panel de Encargado de Zona
-          </Typography>
-          <Typography variant="body1">
-            Vista de zonas, colegios, aulas, estudiantes y estadísticas por colegio.
-          </Typography>
-        </Container>
-      )
-    }
-
-    if (role === "equipo_padi") {
-      return (
-        <Container maxWidth="lg" sx={{ py: 8 }}>
-          <Typography variant="h4" component="h2" sx={{ mb: 3 }}>
-            Panel Equipo PADI
-          </Typography>
-          <Typography variant="body1">
-            Vista global de zonas, colegios, aulas, estudiantes, evaluaciones y docentes.
-          </Typography>
-        </Container>
-      )
-    }
-
+  if (loadingUser) {
     return (
-      <Container maxWidth="lg" sx={{ py: 8, textAlign: "center" }}>
-        <Typography variant="h5" color="error">
-          Rol no reconocido
-        </Typography>
-        <Typography>Tu cuenta tiene un rol ({profile?.rol}) que no es válido.</Typography>
-      </Container>
-    )
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+        <CircularProgress sx={{ color: "#A3BE54" }} />
+      </Box>
+    );
   }
 
+  if (!profile) return null;
+
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
-      <Box
-        sx={{
-          position: "relative",
-          height: "70vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundImage: "url(/assets/images/1366_2000.jpg)",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          "&::before": {
-            content: '""',
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.6)",
-          },
-        }}
-      >
-        <Container maxWidth="md" sx={{ position: "relative", zIndex: 1, textAlign: "center" }}>
-          <Typography
-            variant="h2"
-            component="h1"
-            sx={{
-              textTransform: "uppercase",
-              textShadow: "2px 2px 5px rgba(0,0,0,0.5)",
-              color: "white",
-              mb: 3,
-              fontSize: { xs: "2.5rem", md: "3.5rem" },
-              lineHeight: 1.3,
-            }}
-          >
-            FUNDACIÓN PADI
-          </Typography>
-          <Typography
-            variant="h6"
-            sx={{ textShadow: "2px 2px 5px rgba(0,0,0,0.5)", color: "white", mb: 4, fontWeight: 400 }}
-          >
-            Somos una fundación que se dedica a mejorar las oportunidades educativas de niños y niñas de nivel inicial.
-          </Typography>
-          <Button
-            variant="contained"
-            size="large"
-            sx={{
-              bgcolor: "#A3BE54",
-              color: "#000",
-              px: 6,
-              py: 2,
-              fontSize: "1rem",
-              fontWeight: 600,
-              borderRadius: 10,
-              textTransform: "none",
-              "&:hover": { bgcolor: "#c0ca33" },
-            }}
-          >
-            Ver los programas
-          </Button>
-        </Container>
+    <Box sx={{ minHeight: "100vh", bgcolor: "#f4f6f8" }}>
+      {/* --- NAVBAR SUPERIOR (Común para todos) --- */}
+      <AppBar position="static" sx={{ bgcolor: "white", color: "#333", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+        <Toolbar>
+          {/* Logo Chico */}
+          <Box
+            component="img"
+            src="/assets/images/logo_sin_fondo.png"
+            alt="PADI"
+            sx={{ height: 40, mr: 2, cursor: "pointer" }}
+            onClick={() => navigate("/")} // Reset al home
+          />
 
-        <Box sx={{ position: "absolute", top: 20, right: 20, zIndex: 2, display: "flex", gap: 1.5 }}>
-          <Button
-            onClick={handleOpenModal}
-            startIcon={<PersonIcon />}
-            disabled={loadingUser || !user}
-            sx={{ color: "white", bgcolor: "rgba(0,0,0,0.3)", "&:hover": { bgcolor: "rgba(0,0,0,0.5)" } }}
-          >
-            Mi Perfil
-          </Button>
-          <Button
-            onClick={onLogout}
-            startIcon={<LogoutIcon />}
-            sx={{ color: "white", bgcolor: "rgba(0,0,0,0.3)", "&:hover": { bgcolor: "rgba(0,0,0,0.5)" } }}
-          >
-            Cerrar Sesión
-          </Button>
-        </Box>
-      </Box>
+          <Box sx={{ flexGrow: 1 }} />
 
-      {renderRoleContent()}
+          {/* Info Usuario */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ textAlign: "right", display: { xs: "none", sm: "block" } }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
+                {profile.nombre} {profile.apellido}
+              </Typography>
+              <Chip
+                label={profile.rol.replace("_", " ").toUpperCase()}
+                size="small"
+                sx={{ height: 20, fontSize: "0.65rem", bgcolor: "#A3BE54", color: "white" }}
+              />
+            </Box>
 
-      {!loadingUser && user && (
+            <Avatar sx={{ bgcolor: "#e0e0e0", color: "#666" }}>
+              {profile.nombre?.charAt(0) || <PersonIcon />}
+            </Avatar>
+
+            <Button
+              size="small"
+              startIcon={<PersonIcon />}
+              onClick={() => setModalOpen(true)}
+              sx={{ color: "#666", textTransform: "none" }}
+            >
+              Perfil
+            </Button>
+            <Button
+              size="small"
+              startIcon={<LogoutIcon />}
+              onClick={onLogout}
+              color="error"
+              sx={{ textTransform: "none" }}
+            >
+              Salir
+            </Button>
+          </Box>
+        </Toolbar>
+      </AppBar>
+
+      {/* --- CONTENIDO SEGÚN ROL --- */}
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        {profile.rol === "docente" && <DocenteDashboard />}
+
+        {profile.rol === "director" && <DirectivoDashboard />}
+
+        {/* Podés separarlos si querés, por ahora los agrupo */}
+        {(profile.rol === "encargado_zona" || profile.rol === "equipo_padi") && (
+          <AdminDashboard rol={profile.rol} />
+        )}
+
+        {/* Mensaje por defecto si el rol está roto */}
+        {!["docente", "director", "encargado_zona", "equipo_padi"].includes(profile.rol) && (
+          <Typography color="error">Rol de usuario desconocido: {profile.rol}</Typography>
+        )}
+      </Container>
+
+      {/* Modal de Perfil */}
+      {user && (
         <Perfil
           open={modalOpen}
-          onClose={handleCloseModal}
+          onClose={() => setModalOpen(false)}
           user={user}
           profile={profile}
           onUpdateSuccess={handleProfileUpdate}
         />
       )}
     </Box>
-  )
+  );
 }

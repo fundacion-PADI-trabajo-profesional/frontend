@@ -1,4 +1,3 @@
-// src/pages/Login.tsx
 import { useState, type FormEvent } from "react";
 import {
   Box,
@@ -11,7 +10,7 @@ import {
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useNavigate } from "react-router-dom";
-import { login } from "../api/auth"; // mantiene tu implementación real de auth
+import { login } from "../api/auth";
 
 interface LoginProps {
   onLogin: (user: any) => void;
@@ -30,10 +29,8 @@ export default function Login({ onLogin }: LoginProps) {
     setIsLoading(true);
 
     try {
-      // 1. Call the API function that hits YOUR backend
       const { user, profile } = await login(username, password);
 
-      // 2. Persist profile for Home.tsx and combine for App state
       if (profile) {
         localStorage.setItem("padiProfile", JSON.stringify(profile));
       } else {
@@ -41,10 +38,7 @@ export default function Login({ onLogin }: LoginProps) {
       }
 
       const combined = { ...user, ...(profile || {}) };
-      // 3. Update global state
       onLogin(combined);
-
-      // No need to navigate here, App.tsx will handle it automatically
     } catch (err: any) {
       setError(err.message || "Credenciales inválidas. Por favor, intente de nuevo.");
     } finally {
@@ -63,6 +57,7 @@ export default function Login({ onLogin }: LoginProps) {
         overflow: "hidden",
       }}
     >
+      {/* IMAGEN DE FONDO */}
       <Box
         sx={{
           position: "absolute",
@@ -70,80 +65,84 @@ export default function Login({ onLogin }: LoginProps) {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundImage: "url(/assets/images/niniosTristes.jpeg)",
+          backgroundImage: "url(/assets/images/chicos-mascaras.jpeg)",
           backgroundRepeat: "no-repeat",
           backgroundSize: "cover",
           backgroundPosition: "center",
-          filter: "blur(5px)",
           zIndex: -1,
+          "&::after": {
+            content: '""',
+            position: "absolute",
+            top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.2)",
+          }
         }}
       />
 
+      {/* CONTENEDOR PRINCIPAL */}
       <Box
         sx={{
           display: "flex",
           width: "100%",
-          maxWidth: 1200,
+          maxWidth: 1000,
           margin: "auto",
           borderRadius: 4,
           overflow: "hidden",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+          boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
+          flexDirection: { xs: "column", md: "row" },
         }}
       >
+        {/* SECCIÓN IZQUIERDA (LOGO) */}
         <Box
           sx={{
             flex: 1,
-            position: "relative",
-            backgroundColor: "rgba(236, 236, 236, 0.8)",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            display: { xs: "none", md: "flex" },
+            display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            "&::before": {
-              content: '""',
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.1)",
-            },
+            p: 4,
+            bgcolor: "rgba(255, 255, 255, 0.9)",
+            backdropFilter: "blur(10px)",
           }}
         >
           <Box>
             <img
               src="/assets/images/logo_sin_fondo.png"
               alt="Logo PADI Fundación"
-              style={{ width: "100%", height: "auto", maxWidth: 360 }}
+              style={{
+                width: "100%",
+                height: "auto",
+                maxWidth: 300,
+                filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.1))"
+              }}
             />
           </Box>
         </Box>
 
+        {/* SECCIÓN DERECHA (FORMULARIO) */}
         <Box
           sx={{
             flex: 1,
-            bgcolor: "rgba(101, 148, 79, 0.6)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             p: { xs: 4, sm: 6 },
+            bgcolor: "rgba(255, 255, 255, 0.65)",
+            backdropFilter: "blur(25px)",
           }}
         >
           <Box sx={{ width: "100%", maxWidth: 400 }}>
+
             <Typography
-              variant="h3"
-              component="h1"
+              variant="h5"
               sx={{
-                fontFamily: "system-ui, -apple-system, sans-serif",
-                fontWeight: 600,
-                mb: 4,
-                color: "#1a1a1a",
                 textAlign: "center",
-                fontSize: { xs: "2rem", sm: "2.5rem" },
+                mb: 4,
+                color: "#333",
+                fontWeight: 600,
+                textShadow: "0 1px 1px rgba(255,255,255,0.8)"
               }}
             >
-              Welcome !
+              Ingresá a tu cuenta PADI
             </Typography>
 
             {error && (
@@ -162,18 +161,25 @@ export default function Login({ onLogin }: LoginProps) {
                 onChange={(e) => setUsername(e.target.value)}
                 sx={{
                   mb: 2,
-                  bgcolor: "white",
+                  bgcolor: "rgba(255, 255, 255, 0.8)",
+                  borderRadius: 2,
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 2,
                     "& fieldset": { borderColor: "transparent" },
                     "&:hover fieldset": { borderColor: "#5fb878" },
                     "&.Mui-focused fieldset": { borderColor: "#5fb878" },
                   },
+                  "& input:-webkit-autofill": {
+                    WebkitBoxShadow: "0 0 0 1000px rgba(255, 255, 255, 0.8) inset",
+                    WebkitTextFillColor: "#000",
+                    transition: "background-color 5000s ease-in-out 0s",
+                  }
                 }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <PersonOutlineIcon sx={{ color: "#A3BE54" }} />
+                      <PersonOutlineIcon sx={{ color: "#555" }} />
                     </InputAdornment>
                   ),
                 }}
@@ -188,19 +194,26 @@ export default function Login({ onLogin }: LoginProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 sx={{
-                  mb: 3,
-                  bgcolor: "white",
+                  mb: 2,
+                  bgcolor: "rgba(255, 255, 255, 0.8)",
+                  borderRadius: 2,
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 2,
                     "& fieldset": { borderColor: "transparent" },
                     "&:hover fieldset": { borderColor: "#5fb878" },
                     "&.Mui-focused fieldset": { borderColor: "#5fb878" },
                   },
+                  "& input:-webkit-autofill": {
+                    WebkitBoxShadow: "0 0 0 1000px rgba(255, 255, 255, 0.8) inset",
+                    WebkitTextFillColor: "#000",
+                    transition: "background-color 5000s ease-in-out 0s",
+                  }
                 }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <LockOutlinedIcon sx={{ color: "#A3BE54" }} />
+                      <LockOutlinedIcon sx={{ color: "#555" }} />
                     </InputAdornment>
                   ),
                 }}
@@ -211,73 +224,75 @@ export default function Login({ onLogin }: LoginProps) {
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 2,
+                  justifyContent: "flex-end",
+                  mb: 1
                 }}
               >
                 <Button
                   sx={{
-                    color: "#ffffffff",
+                    color: "#444",
                     textTransform: "none",
-                    fontSize: "0.875rem",
+                    fontSize: "0.85rem",
+                    fontWeight: 500,
                     "&:hover": {
                       bgcolor: "transparent",
-                      color: "#A3BE54",
+                      color: "#000",
+                      textDecoration: "underline"
                     },
                   }}
                 >
-                  Olvidaste tu Contraseña ?
-                </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  sx={{
-                    py: 1.5,
-                    px: 5,
-                    bgcolor: "#fbfbfbff",
-                    color: "#1a1a1a",
-                    fontSize: "1rem",
-                    fontWeight: 600,
-                    borderRadius: 2,
-                    textTransform: "uppercase",
-                    boxShadow: "none",
-                    "&:hover": {
-                      bgcolor: "#8bc34a",
-                      boxShadow: "0 4px 12px rgba(139, 195, 74, 0.3)",
-                    },
-                  }}
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Cargando..." : "LOGIN"}
+                  ¿Olvidaste tu contraseña?
                 </Button>
               </Box>
+
+              <Button
+                type="submit"
+                variant="contained"
+                sx={{
+                  py: 1.5,
+                  mt: 2,
+                  width: "100%",
+                  maxWidth: "200px", // ACORTADO
+                  mx: "auto",        // CENTRADO
+                  display: "block",
+                  bgcolor: "#65944F",
+                  color: "white",
+                  fontSize: "1rem",
+                  fontWeight: 600,
+                  borderRadius: 30, // ESTILO PILL
+                  textTransform: "none",
+                  boxShadow: "0 4px 14px 0 rgba(101, 148, 79, 0.39)",
+                  transition: "0.3s",
+                  "&:hover": {
+                    bgcolor: "#558040",
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 6px 20px 0 rgba(101, 148, 79, 0.29)",
+                  },
+                }}
+                disabled={isLoading}
+              >
+                {isLoading ? "Cargando..." : "Iniciar Sesión"}
+              </Button>
             </form>
 
-            <Button
-              onClick={() => navigate("/register")}
-              variant="outlined"
-              sx={{
-                mt: 2,
-                color: "#eaeaeaff",
-                borderColor: "#A3BE54",
-                "&:hover": { borderColor: "#8bc34a" },
-              }}
-            >
-              Crear cuenta nueva
-            </Button>
+            <Box sx={{ mt: 4, textAlign: 'center' }}>
+              <Typography variant="body2" sx={{ color: "#444", display: "inline", mr: 1, fontWeight: 500 }}>
+                ¿No tenés cuenta?
+              </Typography>
+              <Button
+                onClick={() => navigate("/register")}
+                sx={{
+                  color: "#65944F",
+                  fontWeight: 'bold',
+                  textTransform: 'none',
+                  p: 0,
+                  "&:hover": { bgcolor: "transparent", textDecoration: "underline" },
+                }}
+              >
+                Crear cuenta nueva
+              </Button>
+            </Box>
 
-            <Typography
-              variant="caption"
-              sx={{
-                display: "block",
-                mt: 3,
-                textAlign: "center",
-                color: "#fffcfcff",
-                fontSize: "0.75rem",
-              }}
-            >
-              Tip: Iniciá sesión con tu email y contraseña registrados
-            </Typography>
           </Box>
         </Box>
       </Box>

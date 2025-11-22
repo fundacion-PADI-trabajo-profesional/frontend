@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { Box, TextField, Button, Grid, Alert, Typography } from "@mui/material";
-// Nota: Asegurate de borrar 'password' de la interface CreateEncargadoDto en api/encargados.ts también si querés ser estricto, 
-// o simplemente mandalo vacío desde acá.
 import { type CreateEncargadoDto } from "../api/encargados-zona";
 
 interface Props {
@@ -15,6 +13,7 @@ export default function EncargadoForm({ onSubmit, onCancel, loading }: Props) {
         nombre: "",
         apellido: "",
         email: "",
+        zona: "",
     });
     const [error, setError] = useState("");
 
@@ -26,7 +25,7 @@ export default function EncargadoForm({ onSubmit, onCancel, loading }: Props) {
         e.preventDefault();
         setError("");
 
-        if (!formData.nombre || !formData.apellido || !formData.email) {
+        if (!formData.nombre || !formData.apellido || !formData.email || !formData.zona) {
             setError("Todos los campos son obligatorios");
             return;
         }
@@ -71,7 +70,16 @@ export default function EncargadoForm({ onSubmit, onCancel, loading }: Props) {
                         disabled={loading}
                     />
                 </Grid>
-                {/* ELIMINAMOS EL INPUT DE PASSWORD */}
+                <Grid item xs={12}>
+                    <TextField
+                        fullWidth
+                        placeholder="Zona Asignada"
+                        name="zona"
+                        value={formData.zona}
+                        onChange={handleChange}
+                        disabled={loading}
+                    />
+                </Grid>
             </Grid>
 
             <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 3 }}>

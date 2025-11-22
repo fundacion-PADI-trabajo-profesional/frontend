@@ -5,13 +5,15 @@ export interface Encargado {
     nombre: string;
     apellido: string;
     email: string;
+    zona: string | null;
 }
 
 export interface CreateEncargadoDto {
     nombre: string;
     apellido: string;
     email: string;
-    password: string;
+    password?: string;
+    zona: string;
 }
 
 export async function getEncargados(): Promise<Encargado[]> {

@@ -16,6 +16,7 @@ import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import AlternateEmailIcon from "@mui/icons-material/AlternateEmail";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import MapIcon from "@mui/icons-material/Map";
 import { register } from "../api/auth";
 import { useNavigate } from "react-router-dom";
 
@@ -27,6 +28,7 @@ export default function Register() {
     nombre: "",
     apellido: "",
     rol: "",
+    zona: "",
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -48,6 +50,11 @@ export default function Register() {
       return;
     }
 
+    if (formData.rol === "encargado_zona" && !formData.zona) {
+      setError("Por favor, indicá la zona asignada.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -56,7 +63,8 @@ export default function Register() {
         formData.password,
         formData.nombre,
         formData.apellido,
-        formData.rol
+        formData.rol,
+        formData.zona
       );
       setSuccess("¡Registro exitoso! Serás redirigido para iniciar sesión.");
       setTimeout(() => navigate("/login"), 2500);
@@ -272,6 +280,24 @@ export default function Register() {
               <MenuItem value="equipo_padi">Equipo PADI</MenuItem>
             </Select>
           </FormControl>
+
+          {formData.rol === "encargado_zona" && (
+            <TextField
+              fullWidth
+              placeholder="Zona Asignada"
+              value={formData.zona}
+              name="zona"
+              onChange={handleChange}
+              sx={commonInputSx}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <MapIcon sx={{ color: "#555" }} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          )}
 
           <Button
             type="submit"

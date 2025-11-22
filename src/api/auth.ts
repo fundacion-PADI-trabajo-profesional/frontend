@@ -31,12 +31,13 @@ export async function register(
   password: string,
   nombre: string,
   apellido: string,
-  rol: string
+  rol: string,
+  zona?: string
 ) {
   const response = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password, nombre, apellido, rol }),
+    body: JSON.stringify({ email, password, nombre, apellido, rol, zona }),
   });
 
   const data = await response.json();

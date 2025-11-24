@@ -2,24 +2,29 @@ import { useState, useEffect } from "react";
 import { Box, Container, Typography, Button, CircularProgress, Alert } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // Faltaba este import
 
-// Componentes
 import EscuelasList from "../components/EscuelasList";
 import EscuelaForm from "../components/EscuelaForm";
-import PageHeader from "../components/PageHeader"; // <--- IMPORTANTE
+import PageHeader from "../components/PageHeader";
 import { getEscuelas, Escuela } from "../api/escuelas";
+import AsignarDocentesModal from "../components/AsignarDocentesModal";
 
 type ViewState = "list" | "form" | "success";
 
 export default function Escuelas() {
+    // --- Estados Generales ---
     const [view, setView] = useState<ViewState>("list");
     const [escuelas, setEscuelas] = useState<Escuela[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
 
-    const navigate = useNavigate();
+    // --- Estados para el Modal de Asignación ---
+    const [modalAsignacionOpen, setModalAsignacionOpen] = useState(false);
+    const [escuelaSeleccionada, setEscuelaSeleccionada] = useState<Escuela | null>(null);
+
+    const navigate = useNavigate(); // Hook de navegación
 
     // Cargar escuelas
     useEffect(() => {
@@ -41,7 +46,23 @@ export default function Escuelas() {
         }
     };
 
-    // --- Navegación ---
+    // --- Manejo del Modal de Docentes ---
+    const handleOpenAsignacion = (escuela: Escuela) => {
+        setEscuelaSeleccionada(escuela);
+        setModalAsignacionOpen(true);
+    };
+
+    const handleCloseAsignacion = () => {
+        setModalAsignacionOpen(false);
+        setEscuelaSeleccionada(null);
+    };
+
+    // Se llama cuando el modal hace un cambio (agrega/quita docente) para refrescar la lista de fondo
+    const handleUpdateData = () => {
+        setRefreshKey(prev => prev + 1);
+    };
+
+    // --- Navegación de Vistas ---
     const handleGoToForm = () => setView("form");
 
     const handleBackToList = () => {
@@ -54,7 +75,7 @@ export default function Escuelas() {
         setRefreshKey(prev => prev + 1);
     };
 
-    // --- Renderizado del contenido ---
+    // --- Renderizado del contenido principal ---
     const renderContent = () => {
         switch (view) {
             case "list":
@@ -75,7 +96,11 @@ export default function Escuelas() {
                             <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
                         ) : (
                             <Box sx={{ mt: 3 }}>
-                                <EscuelasList escuelas={escuelas} />
+                                {/* Pasamos la función para abrir el modal */}
+                                <EscuelasList
+                                    escuelas={escuelas}
+                                    onManageDocentes={handleOpenAsignacion}
+                                />
                             </Box>
                         )}
                     </>
@@ -143,7 +168,7 @@ export default function Escuelas() {
                     <Container maxWidth="lg">
                         <Button
                             startIcon={<ArrowBackIcon />}
-                            onClick={handleBackToList}
+                            onClick={handleBackToList} // Usamos la función handleBackToList
                             sx={{ color: "#5c7cfa", textTransform: "none", fontSize: '1rem' }}
                         >
                             Volver a escuelas
@@ -152,10 +177,16 @@ export default function Escuelas() {
                 </Box>
             )}
 
-            {/* Contenido Principal */}
             <Container maxWidth="lg" sx={{ py: 4 }}>
                 {renderContent()}
             </Container>
+
+            <AsignarDocentesModal
+                open={modalAsignacionOpen}
+                onClose={handleCloseAsignacion}
+                escuela={escuelaSeleccionada}
+                onUpdate={handleUpdateData}
+            />
         </Box>
     );
 }

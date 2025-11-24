@@ -1,15 +1,17 @@
 import {
     Table, TableBody, TableCell, TableContainer, TableHead,
-    TableRow, Paper, IconButton, Chip, Typography, Box
+    TableRow, Paper, IconButton, Chip, Typography, Box, Tooltip
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { Escuela } from "../api/escuelas";
+import GroupIcon from '@mui/icons-material/Group';
 
 interface Props {
     escuelas: Escuela[];
+    onManageDocentes: (escuela: Escuela) => void;
 }
 
-export default function EscuelasList({ escuelas }: Props) {
+export default function EscuelasList({ escuelas, onManageDocentes }: Props) {
 
     const listaEscuelas = Array.isArray(escuelas) ? escuelas : [];
 
@@ -49,6 +51,15 @@ export default function EscuelasList({ escuelas }: Props) {
                                         }
                                     </TableCell>
                                     <TableCell align="right">
+                                        <Tooltip title="Ver Docentes Asignados">
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => onManageDocentes(escuela)}
+                                                sx={{ mr: 1, color: '#445361ff' }}
+                                            >
+                                                <GroupIcon fontSize="small" />
+                                            </IconButton>
+                                        </Tooltip>
                                         <IconButton size="small">
                                             <EditIcon fontSize="small" />
                                         </IconButton>

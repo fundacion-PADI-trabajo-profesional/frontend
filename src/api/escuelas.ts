@@ -20,7 +20,14 @@ export interface Escuela {
             nombre: string;
             apellido: string;
         }
-    }
+    };
+    profesores?: {
+        id: string;
+        personas: {
+            nombre: string;
+            primer_apellido: string;
+        }
+    }[];
 }
 
 export interface CreateEscuelaDto {
@@ -44,4 +51,14 @@ export const createEscuela = async (data: CreateEscuelaDto): Promise<Escuela> =>
     const response = await api.post("/escuelas", payload);
 
     return response.data.data;
+};
+
+export const asignarDocente = async (escuelaId: string, profesorId: string) => {
+    const response = await api.post("/escuelas/asignar", { escuelaId, profesorId });
+    return response.data;
+};
+
+export const desasignarDocente = async (escuelaId: string, profesorId: string) => {
+    const response = await api.post("/escuelas/desasignar", { escuelaId, profesorId });
+    return response.data;
 };

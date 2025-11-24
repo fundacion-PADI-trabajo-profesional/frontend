@@ -29,7 +29,15 @@ export default function Login({ onLogin }: LoginProps) {
     setIsLoading(true);
 
     try {
-      const { user, profile } = await login(username, password);
+      const { user, profile, session } = await login(username, password);
+
+      if (session && session.access_token) {
+        localStorage.setItem("token", session.access_token);
+      }
+
+      if (profile && profile.rol) {
+        localStorage.setItem("userRole", profile.rol);
+      }
 
       if (profile) {
         localStorage.setItem("padiProfile", JSON.stringify(profile));

@@ -1,7 +1,7 @@
 // src/pages/EncargadosZona.tsx
 import { useEffect, useState } from "react";
 import {
-    Box, Container, Table, TableBody, TableCell, TableContainer,
+    Container, Table, TableBody, TableCell, TableContainer,
     TableHead, TableRow, Paper, IconButton, Dialog, DialogTitle,
     DialogContent, CircularProgress, Alert
 } from "@mui/material";

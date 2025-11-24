@@ -15,6 +15,7 @@ import DocentesPage from "./pages/Docentes"
 import DirectivosPage from "./pages/Directivos"
 import EncargadosZona from "./pages/EncargadosZona";
 import "./App.css" //
+import Escuelas from "./pages/Escuelas"
 
 // Define a type for your user object
 interface User {
@@ -75,6 +76,7 @@ function App() {
         <Route path="*" element={<Navigate to={currentUser ? "/home" : "/login"} replace />} />
         <Route path="/directivos" element={currentUser ? <DirectivosPage /> : <Navigate to="/login" replace />} />
         <Route path="/zonas" element={<EncargadosZona />} />
+        <Route path="/escuelas" element={<Escuelas />} />
       </Routes>
     </BrowserRouter>
   )

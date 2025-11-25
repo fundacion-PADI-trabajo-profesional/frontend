@@ -21,9 +21,8 @@ function getEstadoLabel(estado: string) {
 }
 function getTipoLabel(tipo: string) {
   switch (tipo) {
-    case "diagnostico": return "Diagnóstico"
-    case "seguimiento": return "Seguimiento"
-    case "cierre": return "Cierre"
+    case "Evaluacion Inicial": return "Evaluación Inicial"
+    case "Evaluacion de Cierre": return "Evaluacion de Cierre"
     default: return tipo
   }
 }

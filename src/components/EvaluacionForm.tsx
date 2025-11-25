@@ -116,6 +116,18 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
     }))
   }
 
+  const handleEstudianteChange = (newValue: Estudiante | null) => {
+    // 1. Actualiza el valor del Autocomplete
+    setSelectedEstudiante(newValue);
+    // 2. Actualiza el formData con el ID, y con la Sala del estudiante seleccionado
+    setFormData((prev) => ({
+      ...prev,
+      estudianteId: newValue ? newValue.id : "",
+      // *** MODIFICACIÓN CLAVE: Autocarga la sala del estudiante al seleccionar ***
+      salaId: newValue ? String(newValue.sala_id) : "", // Asumo que el campo es 'grado'
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -135,9 +147,9 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
         estudianteId: formData.estudianteId,
         profesorId: profile.id,
         salaId: Number.parseInt(formData.salaId),
-        tipoId: formData.tipoId as "inicial" | "cierre",
-        estadoId: formData.estadoId as "N" | "C" | "R",
+        tipoId: formData.tipoId as "Evaluacion Inicial" | "Evaluacion de Cierre",
         puntaje: null,
+        estadoId: formData.estadoId as "N" | "C" | "R",
       }
 
       if (evaluacionAEditar) {
@@ -146,8 +158,22 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
         console.log("[v0] Evaluación actualizada:", payload);
       } else {
         // --- MODO CREAR ---
-        await crearEvaluacionInstancia(payload);
-        console.log("[v0] Evaluación creada:", payload);
+
+        // 1. Obtener el DNI del estudiante seleccionado
+        if (!selectedEstudiante || !selectedEstudiante.personas || !selectedEstudiante.personas.dni) {
+          throw new Error("El estudiante seleccionado no tiene un DNI válido.");
+        }
+
+        // 2. Construir el payload EXACTAMENTE como lo pide el Backend (snake_case)
+        const payloadBackend = {
+          dni: selectedEstudiante.personas.dni, // Usamos DNI, no ID
+          profesor_id: profile.id,              // snake_case: profesor_id
+          tipo_id: formData.tipoId,             // snake_case: tipo_id
+        }
+
+        // 3. Enviar
+        await crearEvaluacionInstancia(payloadBackend);
+        console.log("[v0] Evaluación creada:", payloadBackend);
       }
 
       setSuccess(true)
@@ -259,8 +285,8 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
                 type="number"
                 value={formData.salaId}
                 onChange={handleChange}
-                placeholder="Ej: 1, 2, 3"
-                inputProps={{ min: "1", step: "1" }}
+                placeholder="Ej: 3, 4, 5"
+                inputProps={{ min: "3", step: "1" }}
                 required
                 disabled={loading}
               />
@@ -282,22 +308,29 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
               </TextField>
             </Grid>
 
-            {/* Estado */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                select
-                label="Estado"
-                name="estadoId"
-                value={formData.estadoId}
-                onChange={handleChange}
-                disabled={loading}
-              >
-                <MenuItem value="N">No iniciada</MenuItem>
-                <MenuItem value="C">Completada</MenuItem>
-                <MenuItem value="R">Revisada</MenuItem>
-              </TextField>
-            </Grid>
+            {/* Estado - SE QUITA DEL FORMULARIO DE CREACIÓN */}
+            {/* El estado inicial DEBE ser 'N' (No iniciada) y es definido en el backend */}
+            {/* Dejamos este campo visible si estamos EDITANDO, si no, se oculta */}
+            {evaluacionAEditar && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Estado"
+                  name="estadoId"
+                  value={formData.estadoId}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                >
+                  <MenuItem value="N">No iniciada</MenuItem>
+                  <MenuItem value="E">En Progreso</MenuItem>
+                  <MenuItem value="C">Completada</MenuItem>
+                  <MenuItem value="R">Revisada</MenuItem>
+                  <MenuItem value="A">Aprobada</MenuItem>
+                  <MenuItem value="D">Desaprobada</MenuItem>
+                </TextField>
+              </Grid>
+            )}
 
             {/* Buttons */}
             <Grid item xs={12}>

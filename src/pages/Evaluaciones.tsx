@@ -70,6 +70,17 @@ export default function Evaluaciones() {
   }
 
   const handleEditar = (evaluacion: EvaluacionInstancia) => {
+    // Si la evaluación es 'No iniciada' ('N') o 'En Progreso' ('E'),
+    // el objetivo del "Editar" es ir a la pantalla de detalle/continuar.
+    // Como no tenemos el componente de detalle, por ahora simulamos la edición
+    // redirigiendo al formulario (como estaba) o lanzando una acción.
+
+    // --- NUEVO FLUJO ---
+    // En un proyecto real, aquí navegarías a: navigate(`/evaluaciones/${evaluacion.id}/detalle`)
+
+    // MANTENEMOS EL COMPORTAMIENTO ACTUAL POR EL MOMENTO (volver a la pestaña 1),
+    // pero con la lógica de edición. La implementación de la vista de detalle
+    // (`EvaluacionDetalle.tsx`) sería el siguiente paso.
     setEvaluacionAEditar(evaluacion); // Guarda la evaluación a editar
     setTabValue(1); // Cambia a la pestaña del formulario
   };
@@ -131,7 +142,7 @@ export default function Evaluaciones() {
 
         {/* Evaluaciones List Tab */}
         <TabPanel value={tabValue} index={0}>
-          <EvaluacionesList 
+          <EvaluacionesList
             key={refreshKey} // <-- Clave para forzar refresh
             onEditar={handleEditar} // <-- Prop para iniciar edición
           />

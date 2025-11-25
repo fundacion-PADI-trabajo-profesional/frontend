@@ -20,8 +20,8 @@ import EditIcon from "@mui/icons-material/Edit"
 import DeleteIcon from "@mui/icons-material/Delete"
 import { getEvaluacionesInstancias, eliminarEvaluacionInstancia, type EvaluacionInstancia } from "../api/evaluaciones"
 
-export default function EvaluacionesList({ onEditar }: { 
-  onEditar: (evaluacion: EvaluacionInstancia) => void 
+export default function EvaluacionesList({ onEditar }: {
+  onEditar: (evaluacion: EvaluacionInstancia) => void
 }) {
   const [evaluaciones, setEvaluaciones] = useState<EvaluacionInstancia[]>([])
   const [loading, setLoading] = useState(true)
@@ -88,12 +88,10 @@ export default function EvaluacionesList({ onEditar }: {
 
   const getTipoLabel = (tipo: string) => {
     switch (tipo) {
-      case "diagnostico":
-        return "Diagnóstico"
-      case "seguimiento":
-        return "Seguimiento"
-      case "cierre":
-        return "Cierre"
+      case "Evaluacion Inicial":
+        return "Evaluación Inicial"
+      case "Evaluacion de Cierre":
+        return "Evaluacion de Cierre"
       default:
         return tipo
     }

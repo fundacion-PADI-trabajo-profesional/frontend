@@ -32,7 +32,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
   const [formData, setFormData] = useState({
     estudianteId: "",
     salaId: "",
-    tipoId: "diagnostico",
+    tipoId: "inicial",
     estadoId: "N",
   })
 
@@ -100,7 +100,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
     setFormData({
       estudianteId: "",
       salaId: "",
-      tipoId: "diagnostico",
+      tipoId: "inicial",
       estadoId: "N",
     });
     setSelectedEstudiante(null);
@@ -135,7 +135,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
         estudianteId: formData.estudianteId,
         profesorId: profile.id,
         salaId: Number.parseInt(formData.salaId),
-        tipoId: formData.tipoId as "diagnostico" | "seguimiento" | "cierre",
+        tipoId: formData.tipoId as "inicial" | "cierre",
         estadoId: formData.estadoId as "N" | "C" | "R",
         puntaje: null,
       }
@@ -277,9 +277,8 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
                 onChange={handleChange}
                 disabled={loading}
               >
-                <MenuItem value="diagnostico">Diagnóstico</MenuItem>
-                <MenuItem value="seguimiento">Seguimiento</MenuItem>
-                <MenuItem value="cierre">Cierre</MenuItem>
+                <MenuItem value="inicial">Evaluacion Inicial</MenuItem>
+                <MenuItem value="cierre">Evaluacion de Cierre</MenuItem>
               </TextField>
             </Grid>
 

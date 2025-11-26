@@ -59,9 +59,14 @@ export default function Evaluaciones() {
   // Si venimos desde Estudiantes con ?evaluarAhora=<id>, abrir pestaña "Nueva Evaluación" y prellenar
   useEffect(() => {
     const evaluarAhora = searchParams.get("evaluarAhora")
+    const crear = searchParams.get("crear") // <--- LEER EL NUEVO PARÁMETRO
+
     if (evaluarAhora) {
       setPrefillEstudianteId(evaluarAhora)
-      setTabValue(1)
+      setTabValue(1) // Cambia a pestaña "Nueva Evaluación"
+    } else if (crear === "true") {
+      setPrefillEstudianteId(null) // Nos aseguramos de limpiar cualquier ID previo
+      setTabValue(1) // Cambia a pestaña "Nueva Evaluación"
     }
   }, [searchParams])
 

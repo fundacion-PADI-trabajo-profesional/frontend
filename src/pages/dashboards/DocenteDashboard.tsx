@@ -15,7 +15,7 @@ export default function DocenteDashboard() {
             </Typography>
 
             <Grid container spacing={3}>
-                {/* NUEVO: Mis Comisiones */}
+                {/* Mis Comisiones */}
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard
                         title="Mis Comisiones"
@@ -26,6 +26,7 @@ export default function DocenteDashboard() {
                     />
                 </Grid>
 
+                {/* Mis Alumnos */}
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard
                         title="Mis Alumnos"
@@ -36,13 +37,15 @@ export default function DocenteDashboard() {
                     />
                 </Grid>
 
+                {/* Tomar Evaluación - CORREGIDO */}
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard
                         title="Tomar Evaluación"
                         description="Iniciar nueva prueba PADI."
                         icon="📝"
                         color="#A3BE54"
-                        onClick={() => navigate("/evaluaciones/nueva")}
+                        // CAMBIO AQUÍ: Usamos el parámetro ?crear=true
+                        onClick={() => navigate("/evaluaciones?crear=true")}
                     />
                 </Grid>
             </Grid>

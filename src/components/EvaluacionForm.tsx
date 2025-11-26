@@ -28,12 +28,19 @@ interface EvaluacionFormProps {
   prefillEstudianteId?: string;
 }
 
+const getCurrentMonth = () => {
+  const now = new Date();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  return `${now.getFullYear()}-${month}`;
+};
+
 export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, prefillEstudianteId }: EvaluacionFormProps) {
   const [formData, setFormData] = useState({
     estudianteId: "",
     salaId: "",
     tipoId: "inicial",
     estadoId: "N",
+    fechaCreacion: getCurrentMonth(),
   })
 
   const [loading, setLoading] = useState(false)
@@ -74,6 +81,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
         salaId: String(evaluacionAEditar.salaId),
         tipoId: evaluacionAEditar.tipoId,
         estadoId: evaluacionAEditar.estadoId,
+        fechaCreacion: getCurrentMonth(),
       });
       setSuccess(false);
       setError(null);
@@ -102,6 +110,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
       salaId: "",
       tipoId: "inicial",
       estadoId: "N",
+      fechaCreacion: getCurrentMonth(),
     });
     setSelectedEstudiante(null);
   }
@@ -169,6 +178,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
           dni: selectedEstudiante.personas.dni, // Usamos DNI, no ID
           profesor_id: profile.id,              // snake_case: profesor_id
           tipo_id: formData.tipoId,             // snake_case: tipo_id
+          fecha_creacion: formData.fechaCreacion,
         }
 
         // 3. Enviar
@@ -306,6 +316,23 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
                 <MenuItem value="inicial">Evaluacion Inicial</MenuItem>
                 <MenuItem value="cierre">Evaluacion de Cierre</MenuItem>
               </TextField>
+            </Grid>
+
+            {/* FECHA DE CREACIÓN --- */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Mes y Año de Evaluación"
+                name="fechaCreacion"
+                type="month" // Input nativo de navegador para mes/año
+                value={formData.fechaCreacion}
+                onChange={handleChange}
+                InputLabelProps={{
+                  shrink: true, // Necesario para que la etiqueta no tape el valor
+                }}
+                required
+                disabled={isLoading}
+              />
             </Grid>
 
             {/* Estado - SE QUITA DEL FORMULARIO DE CREACIÓN */}

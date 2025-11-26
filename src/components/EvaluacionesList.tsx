@@ -132,24 +132,24 @@ export default function EvaluacionesList({ onEditar }: {
         <TableHead sx={{ bgcolor: "#f5f5f5" }}>
           <TableRow>
             <TableCell sx={{ fontWeight: 700 }}>Estudiante</TableCell>
-            <TableCell align="center" sx={{ fontWeight: 700 }}>
-              Sala
-            </TableCell>
+            <TableCell align="center" sx={{ fontWeight: 700 }}>Sala</TableCell>
             <TableCell sx={{ fontWeight: 700 }}>Tipo</TableCell>
             <TableCell sx={{ fontWeight: 700 }}>Estado</TableCell>
-            <TableCell align="right" sx={{ fontWeight: 700 }}>
-              Puntaje
-            </TableCell>
-            <TableCell align="center" sx={{ fontWeight: 700 }}>
-              Acciones
-            </TableCell>
+            <TableCell align="right" sx={{ fontWeight: 700 }}>Puntaje</TableCell>
+            <TableCell align="center" sx={{ fontWeight: 700 }}>Acciones</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {evaluaciones.map((evaluacion) => (
-            <TableRow key={evaluacion.id} hover>
+            <TableRow
+              key={evaluacion.id}
+              hover
+              // AQUÍ ESTÁ LA SOLUCIÓN AL CLICK
+              onClick={() => onEditar(evaluacion)}
+              sx={{ cursor: 'pointer' }}
+            >
               <TableCell>{evaluacion.estudianteNombre || evaluacion.estudianteId}</TableCell>
-              <TableCell align="center">{evaluacion.salaId}</TableCell>
+              <TableCell align="center">{evaluacion.salaId || evaluacion.salaId}</TableCell>
               <TableCell>{getTipoLabel(evaluacion.tipoId)}</TableCell>
               <TableCell>
                 <Chip
@@ -162,15 +162,12 @@ export default function EvaluacionesList({ onEditar }: {
               <TableCell align="right">{evaluacion.puntaje ?? "-"}</TableCell>
               <TableCell align="center">
                 <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-                  <Button size="small" variant="outlined" startIcon={<EditIcon />} sx={{ textTransform: "none" }} onClick={() => onEditar(evaluacion)}>
-                    Editar
-                  </Button>
                   <Button
                     size="small"
                     variant="outlined"
                     color="error"
                     startIcon={<DeleteIcon />}
-                    onClick={() => handleDelete(evaluacion.id)}
+                    onClick={(e) => { e.stopPropagation(); handleDelete(evaluacion.id); }}
                     sx={{ textTransform: "none" }}
                   >
                     Eliminar

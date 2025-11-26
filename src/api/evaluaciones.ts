@@ -18,6 +18,7 @@ export interface CreateEvaluacionPayload {
   dni: string
   profesor_id: string
   tipo_id: string
+  fecha_creacion: string
 }
 
 export interface Evaluacion {

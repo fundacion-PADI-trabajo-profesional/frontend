@@ -9,6 +9,7 @@ import { useNavigate, useSearchParams } from "react-router-dom"
 import EvaluacionesList from "../components/EvaluacionesList"
 import EvaluacionForm from "../components/EvaluacionForm"
 import type { EvaluacionInstancia } from "../api/evaluaciones"; // <--- IMPORTA EL TIPO
+import EvaluacionDetalle from "../components/EvaluacionDetalle"
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -41,6 +42,9 @@ export default function Evaluaciones() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [prefillEstudianteId, setPrefillEstudianteId] = useState<string | null>(null)
+  // Estado para controlar qué evaluación se está VIENDO en detalle
+  const [evaluacionSeleccionadaId, setEvaluacionSeleccionadaId] = useState<string | null>(null);
+
 
   useEffect(() => {
     // Load profile from localStorage
@@ -108,9 +112,52 @@ export default function Evaluaciones() {
     )
   }
 
+  const handleVerEvaluacion = (evaluacion: EvaluacionInstancia) => {
+    // Guardamos el ID de la evaluación seleccionada
+    setEvaluacionSeleccionadaId(evaluacion.id);
+    // Ocultamos tabs para centrar la vista en el detalle (opcional, o podemos dejar el tab activo)
+  };
+
+  const handleVolverALista = () => {
+    setEvaluacionSeleccionadaId(null);
+    setRefreshKey(prev => prev + 1); // Refrescar por si hubo cambios de estado
+  };
+
+  const handleSuccessForm = () => {
+    setTabValue(0);
+    setEvaluacionAEditar(null);
+    setRefreshKey(prev => prev + 1);
+  };
+
+  if (profile && profile.rol !== "docente") {
+    // ... (Código de acceso denegado igual) ...
+    return null; // Abreviado para ejemplo
+  }
+
+  // Si hay una evaluación seleccionada, mostramos SU DETALLE ocupando todo el área de contenido
+  if (evaluacionSeleccionadaId) {
+    return (
+      <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
+        {/* Header simple para el detalle */}
+        <Box sx={{ bgcolor: "#f5f5f5", py: 2, borderBottom: "1px solid #e0e0e0" }}>
+          <Container maxWidth="lg">
+            <Typography variant="body2" color="text.secondary">Evaluaciones / Detalle del Alumno</Typography>
+          </Container>
+        </Box>
+
+        <Container maxWidth="sm" sx={{ py: 4 }}>
+          <EvaluacionDetalle
+            evaluacionId={evaluacionSeleccionadaId}
+            onBack={handleVolverALista}
+          />
+        </Container>
+      </Box>
+    )
+  }
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
-      {/* Header */}
+      {/* Header Principal */}
       <Box sx={{ bgcolor: "#f5f5f5", py: 4, borderBottom: "1px solid #e0e0e0" }}>
         <Container maxWidth="lg">
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
@@ -131,7 +178,7 @@ export default function Evaluaciones() {
         </Container>
       </Box>
 
-      {/* Main Content */}
+      {/* Contenido Tabs */}
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
           <Tabs value={tabValue} onChange={handleTabChange} aria-label="evaluaciones tabs">
@@ -140,19 +187,17 @@ export default function Evaluaciones() {
           </Tabs>
         </Box>
 
-        {/* Evaluaciones List Tab */}
         <TabPanel value={tabValue} index={0}>
           <EvaluacionesList
-            key={refreshKey} // <-- Clave para forzar refresh
-            onEditar={handleEditar} // <-- Prop para iniciar edición
+            key={refreshKey}
+            onEditar={handleVerEvaluacion} // <--- Ahora pasamos la función que abre el detalle
           />
         </TabPanel>
 
-        {/* New Evaluacion Form Tab */}
         <TabPanel value={tabValue} index={1}>
           <EvaluacionForm
-            onSuccess={handleSuccess} // <-- Prop de éxito actualizada
-            evaluacionAEditar={evaluacionAEditar} // <-- Pasa la evaluación a editar
+            onSuccess={handleSuccessForm}
+            evaluacionAEditar={null} // Por ahora solo creación en esta pestaña
             profile={profile}
             prefillEstudianteId={prefillEstudianteId || undefined}
           />

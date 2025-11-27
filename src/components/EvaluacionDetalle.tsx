@@ -11,7 +11,8 @@ import {
     IconButton,
     CircularProgress,
     Button,
-    Paper
+    Paper,
+    Alert
 } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import ChevronRightIcon from "@mui/icons-material/ChevronRight"
@@ -22,11 +23,14 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 
 import { getEvaluacionInstanciaById, type EvaluacionInstancia } from "../api/evaluaciones"
+import EvaluacionWizard from "./EvaluacionWizard";
 
 interface Props {
     evaluacionId: string
     onBack: () => void
 }
+
+// Helper functions (calcularEdad, getAreaIcon, getStatusColor - mantienen su lógica)
 
 const calcularEdad = (fechaNac: string | null | undefined) => {
     if (!fechaNac) return "-";
@@ -39,7 +43,6 @@ const calcularEdad = (fechaNac: string | null | undefined) => {
     }
     const meses = (hoy.getMonth() + 12 * hoy.getFullYear()) - (nac.getMonth() + 12 * nac.getFullYear());
     const mesesRestantes = meses % 12;
-
     return `${edad} años, ${mesesRestantes} meses`;
 }
 
@@ -54,44 +57,70 @@ const getAreaIcon = (areaId: string) => {
 }
 
 const getStatusColor = (estadoId: string) => {
-    if (estadoId === 'N') return { bg: '#FEF3C7', text: '#D97706', label: 'No iniciado' };
-    if (estadoId === 'E') return { bg: '#DBEAFE', text: '#2563EB', label: 'En Progreso' };
-    if (estadoId === 'C') return { bg: '#D1FAE5', text: '#059669', label: 'Completado' };
-    return { bg: '#F3F4F6', text: '#374151', label: estadoId };
+    if (estadoId === 'N') return { bg: '#FEF3C7', text: '#D97706', label: 'No iniciado', color: 'warning' };
+    if (estadoId === 'E') return { bg: '#DBEAFE', text: '#2563EB', label: 'En Progreso', color: 'info' };
+    if (estadoId === 'C') return { bg: '#D1FAE5', text: '#059669', label: 'Completado', color: 'success' };
+    if (estadoId === 'A') return { bg: '#D1FAE5', text: '#059669', label: 'Aprobada', color: 'success' };
+    if (estadoId === 'D') return { bg: '#fee2e2', text: '#ef4444', label: 'Desaprobada', color: 'error' };
+    return { bg: '#F3F4F6', text: '#374151', label: estadoId, color: 'default' };
 }
+
 
 export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
     const [loading, setLoading] = useState(true)
     const [data, setData] = useState<EvaluacionInstancia | null>(null)
     const [error, setError] = useState<string | null>(null)
 
-    useEffect(() => {
-        const load = async () => {
-            try {
-                setLoading(true)
-                const res = await getEvaluacionInstanciaById(evaluacionId)
-                setData(res)
-            } catch (err: any) {
-                setError(err.message)
-            } finally {
-                setLoading(false)
-            }
+    // ESTADOS PARA EL WIZARD
+    const [wizardOpen, setWizardOpen] = useState(false)
+    const [selectedArea, setSelectedArea] = useState<{ id: string, nombre: string } | null>(null)
+
+
+    // Carga inicial y recarga
+    const loadEvaluationData = async () => {
+        try {
+            setLoading(true)
+            const res = await getEvaluacionInstanciaById(evaluacionId)
+            setData(res)
+        } catch (err: any) {
+            setError(err.message)
+        } finally {
+            setLoading(false)
         }
-        load()
+    }
+
+    useEffect(() => {
+        loadEvaluationData()
     }, [evaluacionId])
+
+
+    // Handler para abrir el Wizard
+    const handleAreaClick = (areaId: string, areaNombre: string) => {
+        // Solo permitir iniciar si no está completado
+        const areaStatus = data?.areas?.find(a => a.id === areaId)?.estadoId;
+        if (areaStatus === 'C') {
+            console.log("Área ya completada. No se permite reanudar.");
+            return;
+        }
+
+        setSelectedArea({ id: areaId, nombre: areaNombre })
+        setWizardOpen(true)
+    }
+
+    // Handler para cerrar el wizard y refrescar
+    const handleWizardClose = () => {
+        setWizardOpen(false)
+        setSelectedArea(null)
+        // Recargamos los datos para actualizar el estado del área y la evaluación general
+        loadEvaluationData();
+    }
 
     if (loading) return <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
     if (error) return <Box sx={{ p: 4 }}><Typography color="error">{error}</Typography><Button onClick={onBack}>Volver</Button></Box>
+    if (!data || !data.estudiante) return <Box sx={{ p: 4 }}><Typography>No se encontraron datos del estudiante.</Typography></Box>;
 
-    // --- CORRECCIÓN CLAVE AQUÍ ---
-    // Verificamos explícitamente data.estudiante. 
-    // Si no existe, no renderizamos el componente (o mostramos un error).
-    if (!data || !data.estudiante) {
-        return <Box sx={{ p: 4 }}><Typography>No se encontraron datos del estudiante.</Typography></Box>;
-    }
-
-    // A partir de aquí, TypeScript sabe que data.estudiante NO es undefined
     const fechaCreacion = new Date(data.createdAt).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    const overallStatus = getStatusColor(data.estadoId);
 
     return (
         <Box>
@@ -104,9 +133,20 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                     Evaluación {data.tipoId === 'inicial' ? 'Inicial' : 'de Cierre'}
                 </Typography>
                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#666' }}>
-                    Sala {data.salaId || data.salaId}
+                    Sala {data.salaNombre || data.salaId}
                 </Typography>
             </Box>
+
+            {/* ALERT DE APROBACIÓN GENERAL */}
+            {data.estadoId !== 'N' && data.estadoId !== 'E' && (
+                <Alert severity={overallStatus.color as 'success' | 'error'} sx={{ mb: 3 }}>
+                    <Typography sx={{ fontWeight: 'bold' }}>ESTADO GENERAL: {overallStatus.label}</Typography>
+                    {data.puntaje !== null && data.puntaje !== undefined && (
+                        <Typography variant="body2">Puntaje Total Obtenido: {data.puntaje.toFixed(2)}%</Typography>
+                    )}
+                </Alert>
+            )}
+
 
             {/* Student Card */}
             <Card sx={{
@@ -152,6 +192,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
             </Card>
 
             {/* Areas List */}
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Áreas de Evaluación</Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {data.areas?.map((area) => {
                     const statusStyle = getStatusColor(area.estadoId);
@@ -167,13 +208,16 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                                 alignItems: 'center',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s',
+                                // Deshabilitar el click si ya está completada
+                                opacity: area.estadoId === 'C' ? 0.7 : 1,
                                 '&:hover': {
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                                    borderColor: 'transparent'
+                                    boxShadow: area.estadoId !== 'C' ? '0 4px 12px rgba(0,0,0,0.08)' : 'none',
+                                    borderColor: area.estadoId !== 'C' ? 'transparent' : '#eee'
                                 }
                             }}
-                            onClick={() => console.log("Ir a preguntas del area", area.id)}
+                            onClick={() => handleAreaClick(area.id, area.nombre)}
                         >
+                            {/* Icon Box */}
                             <Box sx={{
                                 mr: 2,
                                 p: 1.5,
@@ -184,9 +228,13 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                                 {getAreaIcon(area.id)}
                             </Box>
 
+                            {/* Text Info */}
                             <Box sx={{ flexGrow: 1 }}>
                                 <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
                                     {area.nombre}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    {area.descripcion}
                                 </Typography>
                                 <Chip
                                     label={statusStyle.label}
@@ -194,18 +242,34 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                                     sx={{
                                         mt: 0.5,
                                         height: 20,
-                                        fontSize: '0.7rem',
+                                        fontSize: '0.75rem',
                                         fontWeight: 600,
                                         bgcolor: statusStyle.bg,
                                         color: statusStyle.text
                                     }}
                                 />
+                                {area.estadoId === 'E' && (
+                                    <Typography variant="caption" sx={{ ml: 1, color: '#999' }}>
+                                        (Retomar)
+                                    </Typography>
+                                )}
                             </Box>
+
+                            {/* Action Arrow */}
                             <ChevronRightIcon sx={{ color: '#999' }} />
                         </Paper>
                     )
                 })}
             </Box>
+
+            {/* WIZARD MODAL (Aparece al hacer click en un área) */}
+            <EvaluacionWizard
+                open={wizardOpen}
+                onClose={handleWizardClose}
+                evaluacionId={evaluacionId}
+                areaId={selectedArea?.id || ""}
+                areaNombre={selectedArea?.nombre || ""}
+            />
         </Box>
     )
 }

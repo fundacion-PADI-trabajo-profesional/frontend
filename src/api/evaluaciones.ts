@@ -4,6 +4,28 @@ const API_URL = import.meta.env.VITE_API_URL
 
 // --- 1. INTERFACES ---
 
+export interface PreguntaBase {
+  id: string;
+  titulo?: string;
+  consigna: string;
+  materiales?: string;
+  numero: number;
+  aprueba_con?: string; // Ej: '2/3'
+  puntaje?: number;
+  grupopregunta?: string;
+}
+
+export interface RespuestaPrevia {
+  pregunta_id: string;
+  respuesta: number | null; // 1 (Si), 0 (No), null (No respondida)
+}
+
+export interface PreguntasResponse {
+  preguntas: PreguntaBase[];
+  respuestas: RespuestaPrevia[];
+  evaluacionAreaId: string;
+}
+
 export interface AreaDetalle {
   id: string
   instanciaId: string
@@ -102,6 +124,44 @@ function mapToCamelCase(data: any): EvaluacionInstancia {
     createdAt: new Date(data.fecha_creacion),
     areas: areasMapped
   }
+}
+
+// ----------------------------------------------------------------------
+// 3. FUNCIONES DEL WIZARD (FASE 2)
+// ----------------------------------------------------------------------
+
+/**
+ * GET: Obtiene la lista de preguntas y respuestas previas para un área.
+ */
+export async function getPreguntasArea(evaluacionId: string, areaId: string): Promise<PreguntasResponse> {
+  const res = await fetch(`${API_URL}/evaluaciones/${evaluacionId}/areas/${areaId}/preguntas`)
+  if (!res.ok) throw new Error("Error al cargar preguntas")
+  const json = await res.json()
+  // El backend ya devuelve el objeto PreguntasResponse listo
+  return json.data
+}
+
+/**
+ * POST: Envía las respuestas de un paso del cuestionario y actualiza el estado.
+ */
+export async function enviarRespuestas(
+  evaluacionId: string,
+  areaId: string,
+  questions: { id: string, answer: number | null }[]
+): Promise<void> {
+  const res = await fetch(`${API_URL}/evaluaciones/${evaluacionId}/respuestas`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ areaId, questions })
+  })
+
+  // Leemos la respuesta por si hay un error en el backend
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}))
+    const msg = errorData.error?.description || errorData.message || "Error al guardar respuestas."
+    throw new Error(msg)
+  }
+  // Si la respuesta es 200/OK, no devolvemos nada (void)
 }
 
 // --------------------------------------------------------------------------

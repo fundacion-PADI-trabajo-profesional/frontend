@@ -7,8 +7,10 @@ const API_URL = import.meta.env.VITE_API_URL
 export interface PreguntaBase {
   id: string;
   titulo?: string;
+  tipoPregunta?: string;
   consigna: string;
   materiales?: string;
+  detalle?: string;
   numero: number;
   aprueba_con?: string; // Ej: '2/3'
   puntaje?: number;

@@ -39,7 +39,7 @@ const Transition = React.forwardRef(function Transition(
 
 interface Props {
     open: boolean
-    onClose: () => void // Se llama al cerrar (X) o terminar
+    onClose: () => void
     evaluacionId: string
     areaId: string
     areaNombre: string
@@ -54,7 +54,7 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
 
     // Data
     const [preguntas, setPreguntas] = useState<PreguntaBase[]>([])
-    const [respuestas, setRespuestas] = useState<Record<string, number | null>>({}) // Mapa: preguntaId -> 1 (Si), 0 (No), null
+    const [respuestas, setRespuestas] = useState<Record<string, number | null>>({})
 
     // Control del wizard
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
@@ -69,18 +69,9 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                     setPreguntas(data.preguntas || [])
 
                     const map: Record<string, number | null> = {}
-                    let firstUnansweredIndex = 0;
-
                     data.respuestas.forEach(r => {
                         map[r.pregunta_id] = r.respuesta;
-                        // Si la respuesta es null, es la primera sin responder (para retomar)
-                        if (r.respuesta === null) {
-                            if (firstUnansweredIndex === 0) {
-                                // Solo actualiza si aún está en 0 (la primera pregunta)
-                                // En un sistema real, necesitaríamos un orden claro aquí. Usaremos el orden de las preguntas.
-                            }
-                        }
-                    });
+                    })
                     setRespuestas(map);
 
                     // Encontrar el primer índice sin respuesta (para retomar)
@@ -90,40 +81,34 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                     if (unansweredId) {
                         const index = allQuestionIds.indexOf(unansweredId);
                         setCurrentQuestionIndex(index > 0 ? index : 0);
-                    } else {
-                        // Si todo está respondido, empezar desde 0 pero ir al FINISH
-                        setCurrentQuestionIndex(0);
-                        if (data.preguntas.length > 0 && data.respuestas.length > 0) {
-                            // Si la cantidad de respuestas no coincide con el total de preguntas, 
-                            // o si la última respuesta fue la última pregunta, esto es complejo. 
-                            // Asumiremos que si hay respuestas, se puede empezar la INTRO.
-                        }
+                    } else if (data.preguntas.length > 0 && data.respuestas.length === data.preguntas.length) {
+                        // Si todo está respondido, empezar en finish
+                        setStep("FINISH");
                     }
                 })
                 .catch(err => {
                     console.error("Error cargando preguntas:", err);
-                    setStep("FINISH"); // Mover al final o mostrar error
+                    // setStep("FINISH"); // O mostrar error
                 })
                 .finally(() => setLoading(false))
         }
     }, [open, evaluacionId, areaId])
 
-    // Lógica de guardado al avanzar o al cerrar (para "En Progreso")
-    const saveAnswersAndAdvance = async (isFinalSave: boolean, nextIndex: number | 'CLOSE') => {
+
+    // Función de guardado que recibe el ID y el valor exacto a guardar
+    const saveAnswersAndAdvance = async (isFinalSave: boolean, nextIndex: number | 'CLOSE', questionId: string, answerValue: number | null) => {
         setSaving(true);
 
-        // 1. Preparar el payload de guardado (solo la respuesta actual)
-        const preguntaActual = preguntas[currentQuestionIndex];
-
+        // 1. Preparar el payload (usando el valor directo)
         const payload = [
-            { id: preguntaActual.id, answer: respuestas[preguntaActual.id] }
+            { id: questionId, answer: answerValue }
         ];
 
         try {
             await enviarRespuestas(evaluacionId, areaId, payload);
 
             if (nextIndex === 'CLOSE') {
-                onClose(); // Cerrar y refrescar la vista padre (EvaluacionDetalle)
+                onClose();
             } else if (nextIndex === preguntas.length) {
                 setStep("FINISH");
             } else {
@@ -132,8 +117,7 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
 
         } catch (e) {
             console.error("Error al guardar la respuesta:", e);
-            // Si falla, el usuario no debería avanzar para no perder data.
-            alert("Fallo al guardar la respuesta. Revisa tu conexión.");
+            alert("Fallo al guardar la respuesta. Revisa tu conexión y el estado del servidor.");
         } finally {
             setSaving(false);
         }
@@ -141,22 +125,33 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
 
     // Guardar respuesta y avanzar
     const handleAnswer = async (value: number) => {
-        // 1. Actualizar estado local
-        const preguntaActual = preguntas[currentQuestionIndex]
-        const newRespuestas = { ...respuestas, [preguntaActual.id]: value }
-        setRespuestas(newRespuestas)
+        // 1. Obtener pregunta actual
+        const preguntaActual = preguntas[currentQuestionIndex];
 
-        // 2. Determinar si es la última pregunta
+        // 2. Actualizar estado local (para reflejar visualmente)
+        const newRespuestas = { ...respuestas, [preguntaActual.id]: value };
+        setRespuestas(newRespuestas);
+
+        // 3. Determinar si es la última pregunta y el índice siguiente
         const isLastQuestion = currentQuestionIndex === preguntas.length - 1;
         const nextIndex = currentQuestionIndex + 1;
 
-        // 3. Guardar en backend y avanzar
-        await saveAnswersAndAdvance(isLastQuestion, nextIndex);
+        // 4. Guardar en backend y avanzar usando el valor directo (VALUE)
+        await saveAnswersAndAdvance(isLastQuestion, nextIndex, preguntaActual.id, value);
     }
 
     // Handler para el botón 'Atrás'
     const handleGoBack = () => {
         setCurrentQuestionIndex(prev => Math.max(0, prev - 1));
+    }
+
+
+    // Handler para cerrar: asegura que se guarde el progreso actual (si se salió sin responder la última)
+    const handleCloseDialog = () => {
+        const preguntaActual = preguntas[currentQuestionIndex];
+        const answerValue = respuestas[preguntaActual.id];
+        // Si la respuesta actual es nula, guardamos null. Si no, guardamos el último valor conocido.
+        saveAnswersAndAdvance(false, 'CLOSE', preguntaActual.id, answerValue);
     }
 
 
@@ -170,13 +165,13 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
         <Dialog
             fullScreen
             open={open}
-            onClose={() => saveAnswersAndAdvance(false, 'CLOSE')} // Guardar al cerrar (En progreso)
+            onClose={handleCloseDialog} // <- Usamos el handler que guarda
             TransitionComponent={Transition}
         >
             {/* HEADER TIPO APP */}
             <Box sx={{ px: 2, py: 1, display: 'flex', alignItems: 'center', borderBottom: '1px solid #eee' }}>
                 {/* Usamos el handler de cierre que guarda antes de salir */}
-                <IconButton edge="start" color="inherit" onClick={() => saveAnswersAndAdvance(false, 'CLOSE')} aria-label="close" disabled={saving}>
+                <IconButton edge="start" color="inherit" onClick={handleCloseDialog} aria-label="close" disabled={saving}>
                     <CloseIcon />
                 </IconButton>
                 <Typography sx={{ ml: 2, flex: 1, fontWeight: 700 }} variant="h6" component="div">
@@ -255,6 +250,26 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                             <Card sx={{ flex: 1, borderRadius: 4, display: 'flex', flexDirection: 'column', mb: 2 }}>
                                 <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 4 }}>
 
+                                    <Box sx={{ mb: 2 }}>
+                                        {preguntaActual.tipoPregunta && (
+                                            <Box
+                                                component="span"
+                                                sx={{
+                                                    px: 1.5,
+                                                    py: 0.5,
+                                                    borderRadius: 1,
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: 700,
+                                                    // Estilo condicional basado en el tipo
+                                                    bgcolor: preguntaActual.tipoPregunta === 'Evaluable' ? '#DBEAFE' : '#FFFBEB', // Azul o Amarillo claro
+                                                    color: preguntaActual.tipoPregunta === 'Evaluable' ? '#2563EB' : '#D97706', // Azul oscuro o Naranja
+                                                }}
+                                            >
+                                                {preguntaActual.tipoPregunta}
+                                            </Box>
+                                        )}
+                                    </Box>
+
                                     {/* Consigna */}
                                     <Typography variant="h5" sx={{ fontWeight: 600, mb: 4, lineHeight: 1.4 }}>
                                         {preguntaActual.consigna || preguntaActual.titulo || "¿Cumple con el criterio?"}
@@ -265,11 +280,23 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                         **Criterio:** Aprueba con {preguntaActual.aprueba_con}
                                     </Typography>
 
-                                    {preguntaActual.materiales && (
+                                    {/* --- NUEVO: MOSTRAR DETALLE DE LA PREGUNTA (Ejemplos, Notas) --- */}
+                                    {preguntaActual.detalle && (
+                                        <Alert severity="info" sx={{ mb: 2, bgcolor: '#e0f7fa', color: '#006064' }}>
+                                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                                **Nota:** {preguntaActual.detalle}
+                                            </Typography>
+                                        </Alert>
+                                    )}
+
+                                    {/* --- NUEVO: MOSTRAR MATERIALES --- */}
+                                    {preguntaActual.materiales && preguntaActual.materiales !== '-' && (
                                         <Typography variant="body2" sx={{ bgcolor: '#fffbeb', p: 1, borderRadius: 1, color: '#d97706' }}>
-                                            Material: {preguntaActual.materiales}
+                                            🛠️ **Materiales:** {preguntaActual.materiales}
                                         </Typography>
                                     )}
+                                    {/* Si el campo materiales es '-' o null y no se debe mostrar nada, este bloque lo omite. */}
+
 
                                 </CardContent>
 

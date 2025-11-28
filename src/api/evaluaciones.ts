@@ -38,6 +38,7 @@ export interface AreaDetalle {
   estadoDescripcion: string
   puntaje: number | null
   observacion: string | null
+  totalPuntosPosibles?: number;
 }
 
 export interface EstudianteDetalle {
@@ -253,4 +254,16 @@ export async function eliminarEvaluacionInstancia(id: string): Promise<void> {
     method: "DELETE",
   })
   if (!res.ok) throw new Error("Error al eliminar la evaluación")
+}
+
+/**
+ * GET: Obtiene todas las preguntas y respuestas previas para un área (ideal para revisión).
+ * Reutilizaremos la estructura de respuesta de getPreguntasArea.
+ */
+export async function getRespuestasParaRevision(evaluacionId: string, areaId: string): Promise<PreguntasResponse> {
+  // Usamos el mismo endpoint que carga las preguntas, pero el backend lo usará para revisión.
+  const res = await fetch(`${API_URL}/evaluaciones/${evaluacionId}/areas/${areaId}/preguntas`);
+  if (!res.ok) throw new Error("Error al cargar respuestas para revisión.");
+  const json = await res.json();
+  return json.data;
 }

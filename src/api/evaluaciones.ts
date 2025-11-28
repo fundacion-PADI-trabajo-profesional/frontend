@@ -37,8 +37,10 @@ export interface AreaDetalle {
   estadoId: string
   estadoDescripcion: string
   puntaje: number | null
+  aciertosIndividuales?: number;
   observacion: string | null
   totalPuntosPosibles?: number;
+  totalPreguntas?: number;
 }
 
 export interface EstudianteDetalle {
@@ -95,7 +97,9 @@ function mapToCamelCase(data: any): EvaluacionInstancia {
       estadoId: item.estado_id,
       estadoDescripcion: item.estados_evaluacion?.descripcion || "",
       puntaje: item.puntaje,
-      observacion: item.observacion
+      aciertosIndividuales: item.aciertos_individuales,
+      observacion: item.observacion,
+      totalPreguntas: item.totalPreguntas // <--- CAPTURAMOS EL TOTAL DE PREGUNTAS ACTIVAS
     })).sort((a: any, b: any) => a.orden - b.orden)
   }
 

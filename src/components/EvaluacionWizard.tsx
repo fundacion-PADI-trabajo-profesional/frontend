@@ -206,13 +206,6 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                     Vas a evaluar el área de <strong>{areaNombre}</strong>. Esta sección se cerrará automáticamente al finalizar la última pregunta, actualizando el puntaje y el estado.
                                 </Typography>
 
-                                {/* Contenido de Disclaimer, Materiales, etc. */}
-                                <Box sx={{ bgcolor: '#fffbeb', p: 2, borderRadius: 2, mb: 3 }}>
-                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: '#D97706' }}>Materiales de Referencia:</Typography>
-                                    <Typography variant="body2">{preguntas.length > 0 ? preguntas[0].materiales || 'No especificado' : 'Cargando materiales...'}</Typography>
-                                    {/* Mostrar primer material como referencia */}
-                                </Box>
-
                                 <Button
                                     variant="contained"
                                     fullWidth
@@ -277,14 +270,14 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
 
                                     {/* Detalle / Criterio de aprobación */}
                                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                        **Criterio:** Aprueba con {preguntaActual.aprueba_con}
+                                        Criterio: Aprueba con {preguntaActual.aprueba_con}
                                     </Typography>
 
                                     {/* --- NUEVO: MOSTRAR DETALLE DE LA PREGUNTA (Ejemplos, Notas) --- */}
                                     {preguntaActual.detalle && (
                                         <Alert severity="info" sx={{ mb: 2, bgcolor: '#e0f7fa', color: '#006064' }}>
                                             <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                                **Nota:** {preguntaActual.detalle}
+                                                Nota: {preguntaActual.detalle}
                                             </Typography>
                                         </Alert>
                                     )}
@@ -292,7 +285,7 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                     {/* --- NUEVO: MOSTRAR MATERIALES --- */}
                                     {preguntaActual.materiales && preguntaActual.materiales !== '-' && (
                                         <Typography variant="body2" sx={{ bgcolor: '#fffbeb', p: 1, borderRadius: 1, color: '#d97706' }}>
-                                            🛠️ **Materiales:** {preguntaActual.materiales}
+                                            🛠️ Materiales: {preguntaActual.materiales}
                                         </Typography>
                                     )}
                                     {/* Si el campo materiales es '-' o null y no se debe mostrar nada, este bloque lo omite. */}

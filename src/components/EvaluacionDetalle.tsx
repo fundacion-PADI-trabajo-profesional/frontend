@@ -100,14 +100,14 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
 
 
     // Handler para abrir el Wizard
-    const handleAreaClick = (areaId: string, areaNombre: string, currentScore: number, totalQuestions: number, statusId: string) => {
-
+    const handleAreaClick = (areaId: string, areaNombre: string, statusId: string, aciertosIndividuales: number, totalQuestions: number) => {
+        // ... (lógica para abrir revisión o wizard)
         if (statusId === 'A' || statusId === 'D' || statusId === 'C') {
             // Si está completada/aprobada/desaprobada, abre la vista de revisión
             setRevisionData({
                 id: areaId,
                 nombre: areaNombre,
-                score: currentScore,
+                score: aciertosIndividuales,
                 total: totalQuestions,
                 statusId: statusId
             });
@@ -216,9 +216,11 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {data.areas?.map((area) => {
                     const statusStyle = getStatusColor(area.estadoId);
-                    const currentScore = area.puntaje !== null ? area.puntaje : 0;
-                    const totalPuntosPosibles = area.totalPuntosPosibles || 6;
+                    const aciertosLogrados = area.aciertosIndividuales !== null && area.aciertosIndividuales !== undefined
+                        ? area.aciertosIndividuales
+                        : (area.puntaje !== null ? area.puntaje : 0);
 
+                    const totalPreguntasActivas = area.totalPreguntas || area.totalPuntosPosibles || 6;
                     return (
                         <Paper
                             key={area.id}
@@ -238,7 +240,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                                     borderColor: area.estadoId !== 'C' ? 'transparent' : '#eee'
                                 }
                             }}
-                            onClick={() => handleAreaClick(area.id, area.nombre, currentScore, totalPuntosPosibles, area.estadoId)}
+                            onClick={() => handleAreaClick(area.id, area.nombre, area.estadoId, aciertosLogrados, totalPreguntasActivas)}
                         >
 
                             {/* Icon Box */}
@@ -279,7 +281,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                                 )}
                                 {(area.estadoId === 'A' || area.estadoId === 'D' || area.estadoId === 'C') && (
                                     <Typography variant="caption" sx={{ ml: 1, color: '#666', fontWeight: 'bold' }}>
-                                        ({currentScore} / {totalPuntosPosibles} ítems aprobados)
+                                        ({aciertosLogrados} / {totalPreguntasActivas} respuestas logradas)
                                     </Typography>
                                 )}
                             </Box>

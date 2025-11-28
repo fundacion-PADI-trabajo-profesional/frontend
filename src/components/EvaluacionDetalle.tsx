@@ -24,6 +24,7 @@ import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 
 import { getEvaluacionInstanciaById, type EvaluacionInstancia } from "../api/evaluaciones"
 import EvaluacionWizard from "./EvaluacionWizard";
+import EvaluacionRevision from "./EvaluacionRevision";
 
 interface Props {
     evaluacionId: string
@@ -75,6 +76,10 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
     const [wizardOpen, setWizardOpen] = useState(false)
     const [selectedArea, setSelectedArea] = useState<{ id: string, nombre: string } | null>(null)
 
+    //estados para revision de rtas
+    const [revisionOpen, setRevisionOpen] = useState(false);
+    const [revisionData, setRevisionData] = useState<{ id: string, nombre: string, score: number, total: number, statusId: string } | null>(null);
+
 
     // Carga inicial y recarga
     const loadEvaluationData = async () => {
@@ -95,16 +100,30 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
 
 
     // Handler para abrir el Wizard
-    const handleAreaClick = (areaId: string, areaNombre: string) => {
-        // Solo permitir iniciar si no está completado
-        const areaStatus = data?.areas?.find(a => a.id === areaId)?.estadoId;
-        if (areaStatus === 'C') {
-            console.log("Área ya completada. No se permite reanudar.");
+    const handleAreaClick = (areaId: string, areaNombre: string, currentScore: number, totalQuestions: number, statusId: string) => {
+
+        if (statusId === 'A' || statusId === 'D' || statusId === 'C') {
+            // Si está completada/aprobada/desaprobada, abre la vista de revisión
+            setRevisionData({
+                id: areaId,
+                nombre: areaNombre,
+                score: currentScore,
+                total: totalQuestions,
+                statusId: statusId
+            });
+            setRevisionOpen(true);
             return;
         }
 
-        setSelectedArea({ id: areaId, nombre: areaNombre })
-        setWizardOpen(true)
+        // Si es 'N' o 'E', abre el Wizard
+        setSelectedArea({ id: areaId, nombre: areaNombre });
+        setWizardOpen(true);
+    }
+
+    // Handler para cerrar la Revisión
+    const handleRevisionClose = () => {
+        setRevisionOpen(false);
+        setRevisionData(null);
     }
 
     // Handler para cerrar el wizard y refrescar
@@ -118,6 +137,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
     if (loading) return <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
     if (error) return <Box sx={{ p: 4 }}><Typography color="error">{error}</Typography><Button onClick={onBack}>Volver</Button></Box>
     if (!data || !data.estudiante) return <Box sx={{ p: 4 }}><Typography>No se encontraron datos del estudiante.</Typography></Box>;
+    const areas = data.areas || [];
 
     const fechaCreacion = new Date(data.createdAt).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
     const overallStatus = getStatusColor(data.estadoId);
@@ -196,6 +216,9 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {data.areas?.map((area) => {
                     const statusStyle = getStatusColor(area.estadoId);
+                    const currentScore = area.puntaje !== null ? area.puntaje : 0;
+                    const totalPuntosPosibles = area.totalPuntosPosibles || 6;
+
                     return (
                         <Paper
                             key={area.id}
@@ -215,8 +238,9 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                                     borderColor: area.estadoId !== 'C' ? 'transparent' : '#eee'
                                 }
                             }}
-                            onClick={() => handleAreaClick(area.id, area.nombre)}
+                            onClick={() => handleAreaClick(area.id, area.nombre, currentScore, totalPuntosPosibles, area.estadoId)}
                         >
+
                             {/* Icon Box */}
                             <Box sx={{
                                 mr: 2,
@@ -253,6 +277,11 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                                         (Retomar)
                                     </Typography>
                                 )}
+                                {(area.estadoId === 'A' || area.estadoId === 'D' || area.estadoId === 'C') && (
+                                    <Typography variant="caption" sx={{ ml: 1, color: '#666', fontWeight: 'bold' }}>
+                                        ({currentScore} / {totalPuntosPosibles} ítems aprobados)
+                                    </Typography>
+                                )}
                             </Box>
 
                             {/* Action Arrow */}
@@ -270,6 +299,19 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                 areaId={selectedArea?.id || ""}
                 areaNombre={selectedArea?.nombre || ""}
             />
+            {/* REVISIÓN MODAL */}
+            {revisionData && (
+                <EvaluacionRevision
+                    open={revisionOpen}
+                    onClose={handleRevisionClose}
+                    evaluacionId={evaluacionId}
+                    areaId={revisionData.id}
+                    areaNombre={revisionData.nombre}
+                    score={revisionData.score}
+                    total={revisionData.total}
+                    statusId={revisionData.statusId}
+                />
+            )}
         </Box>
     )
 }

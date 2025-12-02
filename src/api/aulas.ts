@@ -21,6 +21,15 @@ export interface Aula {
     nombre: string | null;
     grado: number | null;
   };
+  profesores_aulas?: {
+    profesor_id: string;
+    profesor: {
+      personas?: {
+        nombre: string | null;
+        primer_apellido: string | null;
+      } | null;
+    };
+  }[];
 }
 
 export interface CreateAulaDto {
@@ -52,6 +61,36 @@ export const updateAula = async (id: string, data: Partial<CreateAulaDto>): Prom
 export const deleteAula = async (id: string): Promise<void> => {
   const { usuario_id, rol } = getUserData();
   await api.delete(`/aulas/${id}?usuario_id=${usuario_id}&rol=${rol}`);
+};
+
+export interface AulaDocente {
+  profesor_id: string;
+  profesor: {
+    personas?: {
+      nombre: string | null;
+      primer_apellido: string | null;
+    } | null;
+  };
+}
+
+export const getAulaDocentes = async (aulaId: string): Promise<AulaDocente[]> => {
+  const { usuario_id, rol } = getUserData();
+  const response = await api.get(`/aulas/${aulaId}/docentes?usuario_id=${usuario_id}&rol=${rol}`);
+  return response.data.data || [];
+};
+
+export const asignarDocenteAula = async (aulaId: string, profesorId: string) => {
+  const { usuario_id, rol } = getUserData();
+  const payload = { profesor_id: profesorId, usuario_id, rol };
+  const response = await api.post(`/aulas/${aulaId}/asignar-docente`, payload);
+  return response.data;
+};
+
+export const desasignarDocenteAula = async (aulaId: string, profesorId: string) => {
+  const { usuario_id, rol } = getUserData();
+  const payload = { profesor_id: profesorId, usuario_id, rol };
+  const response = await api.post(`/aulas/${aulaId}/desasignar-docente`, payload);
+  return response.data;
 };
 
 

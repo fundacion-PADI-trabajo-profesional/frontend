@@ -18,14 +18,29 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
-import { Aula, getAulas, createAula, updateAula, deleteAula } from "../api/aulas";
+import {
+  Aula,
+  getAulas,
+  createAula,
+  updateAula,
+  deleteAula,
+  getAulaDocentes,
+  asignarDocenteAula,
+  desasignarDocenteAula,
+  AulaDocente,
+} from "../api/aulas";
 import { getSalas, Sala } from "../api/estudiantes";
+import { getDocentes, Docente } from "../api/docentes";
 
 type Mode = "list" | "create" | "edit";
 
 export default function AulasPage() {
   const [aulas, setAulas] = useState<Aula[]>([]);
   const [salas, setSalas] = useState<Sala[]>([]);
+  const [docentes, setDocentes] = useState<Docente[]>([]);
+  const [selectedAulaForDocentes, setSelectedAulaForDocentes] = useState<Aula | null>(null);
+  const [aulaDocentes, setAulaDocentes] = useState<AulaDocente[]>([]);
+  const [selectedDocenteId, setSelectedDocenteId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("list");
@@ -42,9 +57,14 @@ export default function AulasPage() {
       setLoading(true);
       setError(null);
       try {
-        const [aulasData, salasData] = await Promise.all([getAulas(), getSalas()]);
+        const [aulasData, salasData, docentesData] = await Promise.all([
+          getAulas(),
+          getSalas(),
+          getDocentes(),
+        ]);
         setAulas(aulasData);
         setSalas(salasData);
+        setDocentes(docentesData);
       } catch (e: any) {
         setError(e.message || "Error al cargar aulas");
       } finally {
@@ -118,6 +138,52 @@ export default function AulasPage() {
       setMode("list");
     } catch (e: any) {
       setError(e.message || "Error al eliminar el aula");
+    }
+  };
+
+  const openDocentesDialog = async (aula: Aula) => {
+    try {
+      const data = await getAulaDocentes(aula.id);
+      setSelectedAulaForDocentes(aula);
+      setAulaDocentes(data);
+      setSelectedDocenteId("");
+    } catch (e: any) {
+      setError(e.message || "Error al cargar docentes del aula");
+    }
+  };
+
+  const closeDocentesDialog = () => {
+    setSelectedAulaForDocentes(null);
+    setAulaDocentes([]);
+    setSelectedDocenteId("");
+  };
+
+  const docentesDisponiblesParaAula = docentes.filter(
+    (d) => !aulaDocentes.some((ad) => ad.profesor_id === d.id),
+  );
+
+  const handleAsignarDocente = async () => {
+    if (!selectedAulaForDocentes || !selectedDocenteId) return;
+    try {
+      await asignarDocenteAula(selectedAulaForDocentes.id, selectedDocenteId);
+      const data = await getAulaDocentes(selectedAulaForDocentes.id);
+      setAulaDocentes(data);
+      setSelectedDocenteId("");
+    } catch (e: any) {
+      setError(e.message || "Error al asignar docente al aula");
+    }
+  };
+
+  const handleDesasignarDocente = async (profesorId: string) => {
+    if (!selectedAulaForDocentes) return;
+    const ok = window.confirm("¿Quitar a este docente del aula?");
+    if (!ok) return;
+    try {
+      await desasignarDocenteAula(selectedAulaForDocentes.id, profesorId);
+      const data = await getAulaDocentes(selectedAulaForDocentes.id);
+      setAulaDocentes(data);
+    } catch (e: any) {
+      setError(e.message || "Error al desasignar docente del aula");
     }
   };
 
@@ -253,6 +319,13 @@ export default function AulasPage() {
                           >
                             Editar
                           </Button>
+                              <Button
+                                size="small"
+                                sx={{ textTransform: "none", mr: 1 }}
+                                onClick={() => openDocentesDialog(a)}
+                              >
+                                Docentes
+                              </Button>
                           <Button
                             size="small"
                             color="error"
@@ -273,6 +346,109 @@ export default function AulasPage() {
 
         {mode !== "list" && renderForm()}
       </Container>
+
+      {/* Diálogo simple de gestión de docentes por aula */}
+      {selectedAulaForDocentes && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            bgcolor: "rgba(0,0,0,0.4)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1300,
+          }}
+        >
+          <Box
+            sx={{
+              bgcolor: "#fff",
+              p: 3,
+              borderRadius: 2,
+              minWidth: 400,
+              maxWidth: 500,
+            }}
+          >
+            <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+              Docentes del aula
+            </Typography>
+            <Typography variant="body2" sx={{ mb: 2, color: "#666" }}>
+              {renderSalaLabel(selectedAulaForDocentes)} - {selectedAulaForDocentes.comision} (
+              {selectedAulaForDocentes.turno})
+            </Typography>
+
+            <Box sx={{ mb: 2, maxHeight: 200, overflowY: "auto" }}>
+              {aulaDocentes.length === 0 ? (
+                <Typography variant="body2" sx={{ color: "#777" }}>
+                  No hay docentes asignados a esta aula.
+                </Typography>
+              ) : (
+                aulaDocentes.map((ad) => (
+                  <Box
+                    key={ad.profesor_id}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 0.5,
+                    }}
+                  >
+                    <Typography variant="body2">
+                      {ad.profesor.personas?.nombre || "Sin nombre"}{" "}
+                      {ad.profesor.personas?.primer_apellido || ""}
+                    </Typography>
+                    <Button
+                      size="small"
+                      color="error"
+                      sx={{ textTransform: "none" }}
+                      onClick={() => handleDesasignarDocente(ad.profesor_id)}
+                    >
+                      Quitar
+                    </Button>
+                  </Box>
+                ))
+              )}
+            </Box>
+
+            <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Agregar docente"
+                value={selectedDocenteId}
+                onChange={(e) => setSelectedDocenteId(e.target.value)}
+              >
+                {docentesDisponiblesParaAula.map((d) => (
+                  <MenuItem key={d.id} value={d.id}>
+                    {d.apellido}, {d.nombre}
+                  </MenuItem>
+                ))}
+                {docentesDisponiblesParaAula.length === 0 && (
+                  <MenuItem disabled>No hay más docentes disponibles</MenuItem>
+                )}
+              </TextField>
+              <Button
+                variant="contained"
+                sx={{ textTransform: "none" }}
+                disabled={!selectedDocenteId}
+                onClick={handleAsignarDocente}
+              >
+                Asignar
+              </Button>
+            </Box>
+
+            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+              <Button sx={{ textTransform: "none" }} onClick={closeDocentesDialog}>
+                Cerrar
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 }

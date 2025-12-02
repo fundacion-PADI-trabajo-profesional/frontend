@@ -1,15 +1,20 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Box, Container, Typography, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, CircularProgress, Alert, Button } from "@mui/material"
+import { Box, Container, Typography, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, CircularProgress, Alert, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import { useNavigate } from "react-router-dom"
-import { getDirectivos, type Directivo } from "../api/directivos"
+import { getDirectivos, type Directivo, asignarEscuelaADirectivo } from "../api/directivos"
+import { getEscuelas, type Escuela } from "../api/escuelas"
 
 export default function DirectivosPage() {
     const [items, setItems] = useState<Directivo[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [escuelas, setEscuelas] = useState<Escuela[]>([])
+    const [selectedDirectivo, setSelectedDirectivo] = useState<Directivo | null>(null)
+    const [selectedEscuelaId, setSelectedEscuelaId] = useState<string>("")
+    const [dialogOpen, setDialogOpen] = useState(false)
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -17,8 +22,12 @@ export default function DirectivosPage() {
             setLoading(true)
             setError(null)
             try {
-                const data = await getDirectivos()
-                setItems(data)
+                const [directivosData, escuelasData] = await Promise.all([
+                    getDirectivos(),
+                    getEscuelas(),
+                ])
+                setItems(directivosData)
+                setEscuelas(escuelasData)
             } catch (e: any) {
                 setError(e.message || "Error al cargar directivos")
             } finally {
@@ -27,6 +36,30 @@ export default function DirectivosPage() {
         }
         load()
     }, [])
+
+    const openAsignarEscuela = (directivo: Directivo) => {
+        setSelectedDirectivo(directivo)
+        setSelectedEscuelaId(directivo.escuela?.id || "")
+        setDialogOpen(true)
+    }
+
+    const closeDialog = () => {
+        setDialogOpen(false)
+        setSelectedDirectivo(null)
+        setSelectedEscuelaId("")
+    }
+
+    const handleAsignar = async () => {
+        if (!selectedDirectivo || !selectedEscuelaId) return
+        try {
+            await asignarEscuelaADirectivo(selectedDirectivo.id, selectedEscuelaId)
+            const updated = await getDirectivos()
+            setItems(updated)
+            closeDialog()
+        } catch (e: any) {
+            setError(e.message || "Error al asignar escuela")
+        }
+    }
 
     return (
         <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
@@ -60,6 +93,8 @@ export default function DirectivosPage() {
                                 <TableRow>
                                     <TableCell sx={{ fontWeight: 700 }}>Apellido</TableCell>
                                     <TableCell sx={{ fontWeight: 700 }}>Nombre</TableCell>
+                                    <TableCell sx={{ fontWeight: 700 }}>Escuela asignada</TableCell>
+                                    <TableCell sx={{ fontWeight: 700 }}>Acciones</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -67,11 +102,19 @@ export default function DirectivosPage() {
                                     <TableRow
                                         key={d.id}
                                         hover
-                                        sx={{ cursor: "pointer" }}
-
                                     >
                                         <TableCell>{d.apellido}</TableCell>
                                         <TableCell>{d.nombre}</TableCell>
+                                        <TableCell>{d.escuela?.nombre || "Sin asignar"}</TableCell>
+                                        <TableCell>
+                                            <Button
+                                                size="small"
+                                                sx={{ textTransform: "none" }}
+                                                onClick={() => openAsignarEscuela(d)}
+                                            >
+                                                Asignar escuela
+                                            </Button>
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -79,6 +122,42 @@ export default function DirectivosPage() {
                     </TableContainer>
                 )}
             </Container>
+            <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
+                <DialogTitle>Asignar escuela a directivo</DialogTitle>
+                <DialogContent>
+                    <Typography sx={{ mb: 2 }}>
+                        {selectedDirectivo
+                            ? `Directivo: ${selectedDirectivo.apellido}, ${selectedDirectivo.nombre}`
+                            : ""}
+                    </Typography>
+                    <TextField
+                        select
+                        fullWidth
+                        label="Escuela"
+                        value={selectedEscuelaId}
+                        onChange={(e) => setSelectedEscuelaId(e.target.value)}
+                    >
+                        {escuelas.map((e) => (
+                            <MenuItem key={e.id} value={e.id}>
+                                {e.nombre} ({e.zona})
+                            </MenuItem>
+                        ))}
+                        {escuelas.length === 0 && (
+                            <MenuItem disabled>No hay escuelas disponibles</MenuItem>
+                        )}
+                    </TextField>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={closeDialog}>Cancelar</Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleAsignar}
+                        disabled={!selectedEscuelaId}
+                    >
+                        Guardar
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     )
 }

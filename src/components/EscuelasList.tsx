@@ -25,7 +25,7 @@ export default function EscuelasList({ escuelas, onManageDocentes }: Props) {
                             <TableCell sx={{ fontWeight: "bold" }}>Nombre</TableCell>
                             <TableCell sx={{ fontWeight: "bold" }}>Zona</TableCell>
                             <TableCell sx={{ fontWeight: "bold" }}>Dirección</TableCell>
-                            <TableCell sx={{ fontWeight: "bold" }}>Encargado</TableCell>
+                            <TableCell sx={{ fontWeight: "bold" }}>Director</TableCell>
                             <TableCell align="right" sx={{ fontWeight: "bold" }}>Acciones</TableCell>
                         </TableRow>
                     </TableHead>
@@ -45,8 +45,8 @@ export default function EscuelasList({ escuelas, onManageDocentes }: Props) {
                                     </TableCell>
                                     <TableCell>{escuela.direccion || "-"}</TableCell>
                                     <TableCell>
-                                        {escuela.encargado
-                                            ? `${escuela.encargado.usuario.nombre} ${escuela.encargado.usuario.apellido}`
+                                        {escuela.directivos && escuela.directivos.length > 0
+                                            ? `${escuela.directivos[0].nombre} ${escuela.directivos[0].apellido}`
                                             : <Typography variant="caption" color="text.secondary">Sin asignar</Typography>
                                         }
                                     </TableCell>

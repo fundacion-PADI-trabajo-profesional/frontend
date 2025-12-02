@@ -15,12 +15,11 @@ export interface Escuela {
     direccion?: string;
     telefono?: string;
     zona: string;
-    encargado?: {
-        usuario: {
-            nombre: string;
-            apellido: string;
-        }
-    };
+    directivos?: {
+        id: string;
+        nombre: string;
+        apellido: string;
+    }[];
     profesores?: {
         id: string;
         personas: {

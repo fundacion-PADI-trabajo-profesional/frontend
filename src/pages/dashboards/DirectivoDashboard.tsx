@@ -15,14 +15,13 @@ export default function DirectivoDashboard() {
             </Typography>
 
             <Grid container spacing={3}>
-                {/* NUEVO: Gestión de Comisiones */}
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard
-                        title="Comisiones"
-                        description="Crear salas/grados y asignar docentes."
+                        title="Gestionar Aulas"
+                        description="Crear y administrar aulas (grado, comisión, turno)."
                         icon="📂"
-                        color="#9C27B0" // Violeta
-                        onClick={() => navigate("/comisiones")}
+                        color="#9C27B0"
+                        onClick={() => navigate("/aulas")}
                     />
                 </Grid>
 

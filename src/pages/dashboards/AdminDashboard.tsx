@@ -43,17 +43,6 @@ export default function AdminDashboard({ rol }: Props) {
                     />
                 </Grid>
 
-                {/* NUEVO: Comisiones */}
-                <Grid item xs={12} sm={6} md={4}>
-                    <DashboardCard
-                        title="Comisiones"
-                        description="Ver aulas y cursos por escuela."
-                        icon="📂"
-                        color="#795548" // Marrón
-                        onClick={() => navigate("/comisiones")}
-                    />
-                </Grid>
-
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard
                         title="Directivos"

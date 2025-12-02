@@ -15,17 +15,6 @@ export default function DocenteDashboard() {
             </Typography>
 
             <Grid container spacing={3}>
-                {/* Mis Comisiones */}
-                <Grid item xs={12} sm={6} md={4}>
-                    <DashboardCard
-                        title="Mis Comisiones"
-                        description="Ver tus cursos y listados de asistencia."
-                        icon="👥"
-                        color="#FF9800" // Naranja
-                        onClick={() => navigate("/comisiones")}
-                    />
-                </Grid>
-
                 {/* Mis Alumnos */}
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard

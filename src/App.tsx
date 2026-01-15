@@ -17,6 +17,7 @@ import EncargadosZona from "./pages/EncargadosZona";
 import "./App.css" //
 import Escuelas from "./pages/Escuelas"
 import AulasPage from "./pages/Aulas"
+import Zonas from "./pages/Zonas"
 
 // Define a type for your user object
 interface User {
@@ -76,9 +77,11 @@ function App() {
         <Route path="/docentes" element={currentUser ? <DocentesPage /> : <Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to={currentUser ? "/home" : "/login"} replace />} />
         <Route path="/directivos" element={currentUser ? <DirectivosPage /> : <Navigate to="/login" replace />} />
-        <Route path="/zonas" element={<EncargadosZona />} />
+        <Route path="/encargados-zonas" element={<EncargadosZona />} />
         <Route path="/escuelas" element={<Escuelas />} />
         <Route path="/aulas" element={currentUser ? <AulasPage /> : <Navigate to="/login" replace />} />
+        <Route path="/zonas" element={currentUser ? <Zonas /> : <Navigate to="/login" replace />} />
+
       </Routes>
     </BrowserRouter>
   )

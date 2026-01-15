@@ -24,11 +24,23 @@ export default function AdminDashboard({ rol }: Props) {
                 {isEquipoPadi && (
                     <Grid item xs={12} sm={6} md={4}>
                         <DashboardCard
+                            title="Zonas"
+                            description="Crear y gestionar regiones geográficas."
+                            icon="🗺️"
+                            color="#4CAF50" // Verde para diferenciar
+                            onClick={() => navigate("/zonas")}
+                        />
+                    </Grid>
+                )}
+
+                {isEquipoPadi && (
+                    <Grid item xs={12} sm={6} md={4}>
+                        <DashboardCard
                             title="Encargados de Zona"
                             description="Gestionar y habilitar responsables zonales."
-                            icon="🗺️"
+                            icon="👤"
                             color="#673AB7"
-                            onClick={() => navigate("/zonas")}
+                            onClick={() => navigate("/encargados-zonas")}
                         />
                     </Grid>
                 )}

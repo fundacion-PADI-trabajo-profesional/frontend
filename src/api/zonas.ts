@@ -60,3 +60,34 @@ export async function getEscuelasSinZona(): Promise<any[]> {
     }
     return body.data || []
 }
+
+export async function getZonaById(id: string): Promise<any> {
+    const { rol } = getUserData();
+    const res = await fetch(`${API_URL}/zonas/${id}?rol=${rol}`)
+    const body: ApiResponse<any> = await res.json()
+    if (!res.ok || !body.success) {
+        throw new Error(body.error?.description || body.message || "Error al cargar detalle")
+    }
+    return body.data
+}
+
+export async function asignarEscuela(zonaId: string, escuelaId: string): Promise<any> {
+    const { usuario_id, rol } = getUserData();
+
+    const res = await fetch(`${API_URL}/zonas/${zonaId}/asignar-escuela`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        // Enviamos escuelaId (camelCase) para que coincida con lo que definimos en el controlador del backend
+        body: JSON.stringify({ escuelaId, usuario_id, rol }),
+    });
+
+    const body: ApiResponse<any> = await res.json();
+
+    if (!res.ok || !body.success) {
+        throw new Error(body.error?.description || body.message || "Error al asignar la escuela a la zona");
+    }
+
+    return body.data;
+}

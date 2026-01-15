@@ -9,6 +9,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import PageHeader from "../components/PageHeader";
 import ZonaForm from "../components/ZonaForm";
 import { getZonas, createZona, type Zona } from "../api/zonas";
+import EditIcon from "@mui/icons-material/Edit";
 
 export default function Zonas() {
     const [zonas, setZonas] = useState<Zona[]>([]);
@@ -103,6 +104,13 @@ export default function Zonas() {
                                         />
                                     </TableCell>
                                     <TableCell align="right">
+                                        <IconButton
+                                            size="small"
+                                            sx={{ color: "#666", mr: 1 }}
+                                            onClick={() => alert("Próximamente: Editar zona")} // Solo el botón por ahora
+                                        >
+                                            <EditIcon fontSize="small" />
+                                        </IconButton>
                                         <IconButton
                                             size="small"
                                             color="primary"

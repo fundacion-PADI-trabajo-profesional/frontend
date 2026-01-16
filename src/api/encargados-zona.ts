@@ -67,6 +67,17 @@ export async function updateEncargado(id: string, data: UpdateEncargadoDto): Pro
     return json.data;
 }
 
+export async function getCurrentEncargado(userId: string): Promise<Encargado> {
+    const response = await fetch(`${API_URL}/encargados/me?usuario_id=${userId}`);
+    const json = await response.json();
+
+    if (!json.success) {
+        throw new Error(json.message || "Error al obtener información del encargado");
+    }
+
+    return json.data;
+}
+
 export async function deleteEncargado(id: string): Promise<void> {
     const response = await fetch(`${API_URL}/encargados/${id}`, {
         method: "DELETE",

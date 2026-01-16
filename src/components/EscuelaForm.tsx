@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"; // Agregamos useEffect
 import { Box, TextField, Button, Grid, Paper, Typography, MenuItem, CircularProgress, Alert } from "@mui/material";
 import { createEscuela, CreateEscuelaDto } from "../api/escuelas";
 import { getZonas, Zona } from "../api/zonas";
+import { getCurrentEncargado } from "../api/encargados-zona";
 
 interface Props {
     onCancel: () => void;
@@ -37,15 +38,42 @@ export default function EscuelaForm({ onCancel, onSuccess }: Props) {
     useEffect(() => {
         const loadInitialData = async () => {
             const storedUser = localStorage.getItem("padiUser");
-            if (storedUser) setUserRole(JSON.parse(storedUser).rol);
+            if (storedUser) {
+                const parsedUser = JSON.parse(storedUser);
+                setUserRole(parsedUser.rol);
 
-            try {
-                const data = await getZonas(); // Traemos las zonas reales
-                setZonas(data);
-            } catch (err) {
-                setError("No se pudieron cargar las zonas de la base de datos.");
-            } finally {
-                setLoadingZonas(false);
+                if (parsedUser.rol === "encargado_zona") {
+                    // Para encargados de zona, obtener su zona asignada
+                    try {
+                        const encargadoData = await getCurrentEncargado(parsedUser.id);
+
+                        if (!encargadoData.zona) {
+                            setError("No tienes una zona asignada. Contacta al administrador para poder crear escuelas.");
+                            setLoadingZonas(false);
+                            return;
+                        }
+
+                        // Establecer la zona del encargado como default y única opción
+                        setZonas([encargadoData.zona]);
+                        setFormData(prev => ({ ...prev, zona_id: encargadoData.zona!.id }));
+                        setLoadingZonas(false);
+                    } catch (err: any) {
+                        setError("Error al obtener tu información de zona: " + err.message);
+                        setLoadingZonas(false);
+                    }
+                } else if (parsedUser.rol === "equipo_padi") {
+                    // Para equipo PADI, cargar todas las zonas
+                    try {
+                        const data = await getZonas();
+                        setZonas(data);
+                    } catch (err) {
+                        setError("No se pudieron cargar las zonas de la base de datos.");
+                    } finally {
+                        setLoadingZonas(false);
+                    }
+                } else {
+                    setLoadingZonas(false);
+                }
             }
         };
         loadInitialData();
@@ -91,8 +119,8 @@ export default function EscuelaForm({ onCancel, onSuccess }: Props) {
                         />
                     </Grid>
 
-                    {/* Mostrar campo Zona SOLO si es Equipo PADI */}
-                    {userRole === "equipo_padi" && (
+                    {/* Mostrar campo Zona para equipo_padi y encargado_zona */}
+                    {(userRole === "equipo_padi" || userRole === "encargado_zona") && (
                         <Grid item xs={12}>
                             <TextField
                                 select
@@ -102,7 +130,8 @@ export default function EscuelaForm({ onCancel, onSuccess }: Props) {
                                 required
                                 value={formData.zona_id}
                                 onChange={handleChange}
-                                disabled={loadingZonas}
+                                disabled={loadingZonas || userRole === "encargado_zona"} // Disabled para encargado
+                                helperText={userRole === "encargado_zona" ? "Tu zona asignada" : ""}
                             >
                                 {loadingZonas ? (
                                     <MenuItem disabled>Cargando zonas...</MenuItem>

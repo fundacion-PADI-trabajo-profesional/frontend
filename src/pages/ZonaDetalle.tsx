@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import PageHeader from "../components/PageHeader";
-import { getZonaById } from "../api/zonas";
+import { desvincularEscuela, getZonaById } from "../api/zonas";
 import AsignarEscuelaModal from "../components/AsignarEscuelaModal";
 
 export default function ZonaDetalle() {
@@ -17,6 +17,19 @@ export default function ZonaDetalle() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [modalOpen, setModalOpen] = useState(false);
+
+    const handleDesvincular = async (escuelaId: string, nombreEscuela: string) => {
+        if (!window.confirm(`¿Estás seguro de quitar a la escuela "${nombreEscuela}" de esta zona?`)) {
+            return;
+        }
+
+        try {
+            await desvincularEscuela(escuelaId);
+            await loadData(); // Recargamos la tabla para que desaparezca
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
 
     const loadData = async () => {
         if (!id) return;
@@ -83,7 +96,12 @@ export default function ZonaDetalle() {
                                     <TableCell sx={{ fontWeight: 500 }}>{escuela.nombre}</TableCell>
                                     <TableCell>{escuela.direccion || "Dirección no especificada"}</TableCell>
                                     <TableCell align="right">
-                                        <IconButton size="small" color="error" title="Desvincular de la zona">
+                                        <IconButton
+                                            size="small"
+                                            color="error"
+                                            title="Desvincular de la zona"
+                                            onClick={() => handleDesvincular(escuela.id, escuela.nombre)}
+                                        >
                                             <DeleteOutlineIcon fontSize="small" />
                                         </IconButton>
                                     </TableCell>

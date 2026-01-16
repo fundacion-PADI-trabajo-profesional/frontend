@@ -91,3 +91,17 @@ export async function asignarEscuela(zonaId: string, escuelaId: string): Promise
 
     return body.data;
 }
+
+export async function desvincularEscuela(escuelaId: string): Promise<any> {
+    const { rol } = getUserData();
+    const res = await fetch(`${API_URL}/escuelas/${escuelaId}/quitar-escuela`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rol }),
+    });
+    const body: ApiResponse<any> = await res.json();
+    if (!res.ok || !body.success) {
+        throw new Error(body.message || "Error al desvincular escuela");
+    }
+    return body.data;
+}

@@ -1,82 +1,83 @@
 import {
     Table, TableBody, TableCell, TableContainer, TableHead,
-    TableRow, Paper, IconButton, Chip, Typography, Box
+    TableRow, Paper, IconButton, Tooltip, Box, Chip
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import { Escuela } from "../api/escuelas";
 
 interface Props {
     escuelas: Escuela[];
     onEdit: (escuela: Escuela) => void;
+    onView: (escuela: Escuela) => void;
 }
 
-export default function EscuelasList({ escuelas, onEdit }: Props) {
-
-    const listaEscuelas = Array.isArray(escuelas) ? escuelas : [];
-
+export default function EscuelasList({ escuelas, onEdit, onView }: Props) {
     return (
-        <Box>
+        <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+            <Table>
+                <TableHead sx={{ bgcolor: "#f8f9fa" }}>
+                    <TableRow>
+                        {/* Todas las cabeceras con align="center" */}
+                        <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Institución</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Zona</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Dirección</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Acciones</TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {escuelas.map((escuela) => (
+                        <TableRow key={escuela.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                            {/* Nombre de la institución centrado */}
+                            <TableCell align="center" sx={{ fontWeight: 500 }}>
+                                {escuela.nombre}
+                            </TableCell>
 
-            <TableContainer component={Paper} sx={{ boxShadow: "0 2px 10px rgba(0,0,0,0.05)", borderRadius: 2 }}>
-                <Table>
-                    <TableHead sx={{ bgcolor: "#f9fafb" }}>
-                        <TableRow>
-                            <TableCell sx={{ fontWeight: "bold" }}>Nombre</TableCell>
-                            <TableCell sx={{ fontWeight: "bold" }}>Zona</TableCell>
-                            <TableCell sx={{ fontWeight: "bold" }}>Dirección</TableCell>
-                            <TableCell sx={{ fontWeight: "bold" }}>Director</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: "bold" }}>Acciones</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {listaEscuelas.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={5} align="center" sx={{ py: 4, color: "#888" }}>
-                                    No hay escuelas registradas aún.
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            listaEscuelas.map((escuela) => (
-                                <TableRow key={escuela.id} hover>
-                                    <TableCell sx={{ fontWeight: 500 }}>{escuela.nombre}</TableCell>
+                            {/* Chip de Zona centrado */}
+                            <TableCell align="center">
+                                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                    <Chip
+                                        label={escuela.zona?.nombre || "Sin zona"}
+                                        size="small"
+                                        variant="outlined"
+                                        color="primary"
+                                        sx={{ fontWeight: 500, borderRadius: '6px' }}
+                                    />
+                                </Box>
+                            </TableCell>
 
-                                    <TableCell>
-                                        {escuela.zona ? (
-                                            <Chip
-                                                label={escuela.zona.nombre}
-                                                size="small"
-                                                color="primary"
-                                                variant="outlined"
-                                            />
-                                        ) : (
-                                            <Typography variant="caption" color="text.secondary">
-                                                Sin zona
-                                            </Typography>
-                                        )}
-                                    </TableCell>
+                            {/* Dirección centrada */}
+                            <TableCell align="center" sx={{ color: "text.secondary" }}>
+                                {escuela.direccion || "—"}
+                            </TableCell>
 
-                                    <TableCell>{escuela.direccion || "-"}</TableCell>
-                                    <TableCell>
-                                        {escuela.directivos && escuela.directivos.length > 0
-                                            ? `${escuela.directivos[0].nombre} ${escuela.directivos[0].apellido}`
-                                            : <Typography variant="caption" color="text.secondary">Sin asignar</Typography>
-                                        }
-                                    </TableCell>
-                                    <TableCell align="right">
+                            {/* Iconos de acciones centrados */}
+                            <TableCell align="center">
+                                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                                    <Tooltip title="Ver detalles y alumnos">
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => onView(escuela)}
+                                            sx={{ color: "#5c7cfa", '&:hover': { bgcolor: "#f0f3ff" } }}
+                                        >
+                                            <VisibilityIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Editar institución">
                                         <IconButton
                                             size="small"
                                             onClick={() => onEdit(escuela)}
-                                            sx={{ color: '#000' }}
+                                            sx={{ color: "#444", '&:hover': { bgcolor: "#f5f5f5" } }}
                                         >
                                             <EditIcon fontSize="small" />
                                         </IconButton>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-        </Box>
+                                    </Tooltip>
+                                </Box>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </TableContainer>
     );
 }

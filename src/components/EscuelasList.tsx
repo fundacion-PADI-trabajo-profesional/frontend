@@ -1,17 +1,16 @@
 import {
     Table, TableBody, TableCell, TableContainer, TableHead,
-    TableRow, Paper, IconButton, Chip, Typography, Box, Tooltip
+    TableRow, Paper, IconButton, Chip, Typography, Box
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { Escuela } from "../api/escuelas";
-import GroupIcon from '@mui/icons-material/Group';
 
 interface Props {
     escuelas: Escuela[];
-    onManageDocentes: (escuela: Escuela) => void;
+    onEdit: (escuela: Escuela) => void;
 }
 
-export default function EscuelasList({ escuelas, onManageDocentes }: Props) {
+export default function EscuelasList({ escuelas, onEdit }: Props) {
 
     const listaEscuelas = Array.isArray(escuelas) ? escuelas : [];
 
@@ -41,11 +40,10 @@ export default function EscuelasList({ escuelas, onManageDocentes }: Props) {
                                 <TableRow key={escuela.id} hover>
                                     <TableCell sx={{ fontWeight: 500 }}>{escuela.nombre}</TableCell>
 
-                                    {/* --- CAMBIO AQUÍ: Celda de Zona --- */}
                                     <TableCell>
                                         {escuela.zona ? (
                                             <Chip
-                                                label={escuela.zona.nombre} // Antes era solo escuela.zona
+                                                label={escuela.zona.nombre}
                                                 size="small"
                                                 color="primary"
                                                 variant="outlined"
@@ -56,7 +54,6 @@ export default function EscuelasList({ escuelas, onManageDocentes }: Props) {
                                             </Typography>
                                         )}
                                     </TableCell>
-                                    {/* ---------------------------------- */}
 
                                     <TableCell>{escuela.direccion || "-"}</TableCell>
                                     <TableCell>
@@ -66,16 +63,11 @@ export default function EscuelasList({ escuelas, onManageDocentes }: Props) {
                                         }
                                     </TableCell>
                                     <TableCell align="right">
-                                        <Tooltip title="Ver Docentes Asignados">
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => onManageDocentes(escuela)}
-                                                sx={{ mr: 1, color: '#445361ff' }}
-                                            >
-                                                <GroupIcon fontSize="small" />
-                                            </IconButton>
-                                        </Tooltip>
-                                        <IconButton size="small">
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => onEdit(escuela)}
+                                            sx={{ color: '#000' }}
+                                        >
                                             <EditIcon fontSize="small" />
                                         </IconButton>
                                     </TableCell>

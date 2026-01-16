@@ -52,8 +52,8 @@ export default function EscuelaDetalle({ escuela, onBack, onEdit }: any) {
                             <Typography variant="h4" sx={{ fontWeight: 700, color: '#B8DB7B' }}>
                                 {escuela.estudiantes?.length || 0}
                             </Typography>
-                            <Typography variant="body2" color="text.secondary">Alumnos vinculados</Typography>
-                            <Button size="small" sx={{ mt: 1 }}>Ver lista de alumnos</Button>
+                            <Typography variant="body2" color="text.secondary">Estudiantes vinculados</Typography>
+                            <Button size="small" sx={{ mt: 1 }}>Ver lista de estudiantes</Button>
                         </Box>
                     </Grid>
                 </Grid>

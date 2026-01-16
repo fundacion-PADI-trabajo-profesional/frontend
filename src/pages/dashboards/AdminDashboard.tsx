@@ -57,6 +57,16 @@ export default function AdminDashboard({ rol }: Props) {
 
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard
+                        title="Gestionar Aulas"
+                        description="Crear y administrar aulas (grado, comisión, turno)."
+                        icon="📂"
+                        color="#9C27B0"
+                        onClick={() => navigate("/aulas")}
+                    />
+                </Grid>
+
+                <Grid item xs={12} sm={6} md={4}>
+                    <DashboardCard
                         title="Directivos"
                         description="Gestionar cuentas de directores."
                         icon="👔"
@@ -77,7 +87,7 @@ export default function AdminDashboard({ rol }: Props) {
 
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard
-                        title="Alumnos"
+                        title="Estudiantes"
                         description="Base de datos de estudiantes."
                         icon="🎒"
                         color="#2196F3"

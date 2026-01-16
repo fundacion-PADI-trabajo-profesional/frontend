@@ -18,7 +18,7 @@ export default function DocenteDashboard() {
                 {/* Mis Alumnos */}
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard
-                        title="Mis Alumnos"
+                        title="Mis Estudiantes"
                         description="Buscar estudiante específico (Global)."
                         icon="🎓"
                         color="#5c7cfa"

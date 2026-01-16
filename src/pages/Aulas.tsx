@@ -17,6 +17,7 @@ import {
   MenuItem,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import AddIcon from "@mui/icons-material/Add";
 import { useNavigate } from "react-router-dom";
 import {
   Aula,
@@ -243,10 +244,34 @@ export default function AulasPage() {
       />
 
       <Box sx={{ display: "flex", gap: 2 }}>
-        <Button variant="contained" onClick={handleSubmit} sx={{ textTransform: "none" }}>
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          sx={{
+            bgcolor: '#000',
+            color: '#fff',
+            py: 1.5,
+            px: 4,
+            textTransform: 'none',
+            fontWeight: 600,
+            '&:hover': { bgcolor: '#333' }
+          }}
+        >
           Guardar
         </Button>
-        <Button variant="outlined" onClick={handleCancel} sx={{ textTransform: "none" }}>
+        <Button
+          variant="outlined"
+          onClick={handleCancel}
+          sx={{
+            borderColor: '#000',
+            color: '#000',
+            py: 1.5,
+            px: 4,
+            textTransform: 'none',
+            fontWeight: 600,
+            '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' }
+          }}
+        >
           Cancelar
         </Button>
       </Box>
@@ -257,35 +282,70 @@ export default function AulasPage() {
     <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
       <Box sx={{ bgcolor: "#f5f5f5", py: 4, borderBottom: "1px solid #e0e0e0" }}>
         <Container maxWidth="lg">
-          <Button
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate("/home")}
-            sx={{ color: "#5c7cfa", textTransform: "none", mb: 2 }}
-          >
-            Volver a inicio
-          </Button>
-          <Typography variant="h3" component="h1" sx={{ fontWeight: 700 }}>
-            Aulas
-          </Typography>
-          <Typography variant="body1" sx={{ color: "#666" }}>
-            Gestión de aulas (grado, comisión y turno) de tu escuela.
-          </Typography>
+          {/* Fila superior: Navegación */}
+          <Box sx={{ mb: 2 }}>
+            <Button
+              startIcon={<ArrowBackIcon />}
+              onClick={() => navigate("/home")}
+              disableRipple
+              sx={{
+                color: "#5c7cfa",
+                textTransform: "none",
+                fontSize: '1rem',
+                fontWeight: 500,
+                pl: 0,
+                "&:hover": { bgcolor: "transparent", textDecoration: "underline" }
+              }}
+            >
+              Volver a inicio
+            </Button>
+          </Box>
+
+          {/* Fila principal: Título a la izquierda, botón a la derecha */}
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            {/* Bloque de Título y Subtítulo */}
+            <Box>
+              <Typography variant="h3" component="h1" sx={{ fontWeight: 700, color: "#1a1a1a", mb: 1 }}>
+                Aulas
+              </Typography>
+              <Typography variant="body1" sx={{ color: "#666" }}>
+                Gestión de aulas (grado, comisión y turno) de tu escuela.
+              </Typography>
+            </Box>
+
+            {/* Botón de Acción */}
+            {mode === "list" && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleStartCreate}
+                sx={{
+                  bgcolor: "#5fb878",
+                  color: "white",
+                  textTransform: "none",
+                  fontWeight: 600,
+                  borderRadius: 2,
+                  px: 3,
+                  py: 1,
+                  boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                  "&:hover": {
+                    bgcolor: "#000",
+                    transform: "translateY(-1px)",
+                    boxShadow: "0 6px 8px rgba(0,0,0,0.15)"
+                  },
+                  transition: "all 0.2s ease"
+                }}
+              >
+                Nueva aula
+              </Button>
+            )}
+          </Box>
         </Container>
       </Box>
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
         {mode === "list" && (
           <>
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-              <Button
-                variant="contained"
-                onClick={handleStartCreate}
-                sx={{ textTransform: "none" }}
-              >
-                Nueva aula
-              </Button>
-            </Box>
-
             {loading ? (
               <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
                 <CircularProgress />
@@ -314,22 +374,50 @@ export default function AulasPage() {
                         <TableCell>
                           <Button
                             size="small"
-                            sx={{ textTransform: "none", mr: 1 }}
+                            variant="outlined"
+                            sx={{
+                              textTransform: "none",
+                              mr: 1,
+                              borderColor: '#1976d2',
+                              color: '#1976d2',
+                              '&:hover': {
+                                bgcolor: 'rgba(25, 118, 210, 0.04)',
+                                borderColor: '#1976d2'
+                              }
+                            }}
                             onClick={() => handleStartEdit(a)}
                           >
                             Editar
                           </Button>
-                              <Button
-                                size="small"
-                                sx={{ textTransform: "none", mr: 1 }}
-                                onClick={() => openDocentesDialog(a)}
-                              >
-                                Docentes
-                              </Button>
                           <Button
                             size="small"
-                            color="error"
-                            sx={{ textTransform: "none" }}
+                            variant="outlined"
+                            sx={{
+                              textTransform: "none",
+                              mr: 1,
+                              borderColor: '#2e7d32',
+                              color: '#2e7d32',
+                              '&:hover': {
+                                bgcolor: 'rgba(46, 125, 50, 0.04)',
+                                borderColor: '#2e7d32'
+                              }
+                            }}
+                            onClick={() => openDocentesDialog(a)}
+                          >
+                            Docentes
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            sx={{
+                              textTransform: "none",
+                              borderColor: '#d32f2f',
+                              color: '#d32f2f',
+                              '&:hover': {
+                                bgcolor: 'rgba(211, 47, 47, 0.04)',
+                                borderColor: '#d32f2f'
+                              }
+                            }}
                             onClick={() => handleDelete(a)}
                           >
                             Eliminar
@@ -402,8 +490,16 @@ export default function AulasPage() {
                     </Typography>
                     <Button
                       size="small"
-                      color="error"
-                      sx={{ textTransform: "none" }}
+                      variant="outlined"
+                      sx={{
+                        textTransform: "none",
+                        borderColor: '#d32f2f',
+                        color: '#d32f2f',
+                        '&:hover': {
+                          bgcolor: 'rgba(211, 47, 47, 0.04)',
+                          borderColor: '#d32f2f'
+                        }
+                      }}
                       onClick={() => handleDesasignarDocente(ad.profesor_id)}
                     >
                       Quitar
@@ -433,7 +529,13 @@ export default function AulasPage() {
               </TextField>
               <Button
                 variant="contained"
-                sx={{ textTransform: "none" }}
+                sx={{
+                  textTransform: "none",
+                  bgcolor: '#000',
+                  color: '#fff',
+                  fontWeight: 600,
+                  '&:hover': { bgcolor: '#333' }
+                }}
                 disabled={!selectedDocenteId}
                 onClick={handleAsignarDocente}
               >
@@ -442,7 +544,17 @@ export default function AulasPage() {
             </Box>
 
             <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-              <Button sx={{ textTransform: "none" }} onClick={closeDocentesDialog}>
+              <Button
+                variant="outlined"
+                sx={{
+                  textTransform: "none",
+                  borderColor: '#000',
+                  color: '#000',
+                  fontWeight: 600,
+                  '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' }
+                }}
+                onClick={closeDocentesDialog}
+              >
                 Cerrar
               </Button>
             </Box>

@@ -70,20 +70,24 @@ function App() {
           path="/home"
           element={currentUser ? <Home onLogout={handleLogout} /> : <Navigate to="/login" replace />}
         />
+        {/* Rutas Protegidas */}
         <Route path="/evaluaciones" element={currentUser ? <Evaluaciones /> : <Navigate to="/login" replace />} />
         <Route path="/estudiantes" element={currentUser ? <Estudiantes /> : <Navigate to="/login" replace />} />
         <Route path="/historial-estudiante" element={currentUser ? <HistorialEstudiante /> : <Navigate to="/login" replace />} />
-        <Route path="/register" element={currentUser ? <Navigate to="/home" replace /> : <Register />} />
         <Route path="/evaluaciones-docente" element={currentUser ? <EvaluacionesDocente /> : <Navigate to="/login" replace />} />
         <Route path="/docentes" element={currentUser ? <DocentesPage /> : <Navigate to="/login" replace />} />
-        <Route path="*" element={<Navigate to={currentUser ? "/home" : "/login"} replace />} />
         <Route path="/directivos" element={currentUser ? <DirectivosPage /> : <Navigate to="/login" replace />} />
-        <Route path="/encargados-zonas" element={<EncargadosZona />} />
-        <Route path="/escuelas" element={<Escuelas />} />
         <Route path="/aulas" element={currentUser ? <AulasPage /> : <Navigate to="/login" replace />} />
-        <Route path="/zonas" element={currentUser ? <Zonas /> : <Navigate to="/login" replace />} />
-        <Route path="/zonas/:id" element={<ZonaDetalle />} />
 
+        {/* Rutas de Gestión (Ahora protegidas) */}
+        <Route path="/zonas" element={currentUser ? <Zonas /> : <Navigate to="/login" replace />} />
+        <Route path="/zonas/:id" element={currentUser ? <ZonaDetalle /> : <Navigate to="/login" replace />} />
+        <Route path="/escuelas" element={currentUser ? <Escuelas /> : <Navigate to="/login" replace />} />
+        <Route path="/encargados-zonas" element={currentUser ? <EncargadosZona /> : <Navigate to="/login" replace />} />
+
+        {/* Registro y Fallback */}
+        <Route path="/register" element={currentUser ? <Navigate to="/home" replace /> : <Register />} />
+        <Route path="*" element={<Navigate to={currentUser ? "/home" : "/login"} replace />} />
       </Routes>
     </BrowserRouter>
   )

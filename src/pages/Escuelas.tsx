@@ -9,8 +9,9 @@ import EscuelaForm from "../components/EscuelaForm";
 import PageHeader from "../components/PageHeader";
 import { getEscuelas, Escuela } from "../api/escuelas";
 import AsignarDocentesModal from "../components/AsignarDocentesModal";
+import EditarEscuela from "../components/EditarEscuela";
 
-type ViewState = "list" | "form" | "success";
+type ViewState = "list" | "form" | "success" | "edit";
 
 export default function Escuelas() {
     // --- Estados Generales ---
@@ -19,8 +20,7 @@ export default function Escuelas() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
-
-    // --- Estados para el Modal de Asignación ---
+    const [escuelaAEditar, setEscuelaAEditar] = useState<Escuela | null>(null);
     const [modalAsignacionOpen, setModalAsignacionOpen] = useState(false);
     const [escuelaSeleccionada, setEscuelaSeleccionada] = useState<Escuela | null>(null);
 
@@ -46,17 +46,6 @@ export default function Escuelas() {
         }
     };
 
-    // --- Manejo del Modal de Docentes ---
-    const handleOpenAsignacion = (escuela: Escuela) => {
-        setEscuelaSeleccionada(escuela);
-        setModalAsignacionOpen(true);
-    };
-
-    const handleCloseAsignacion = () => {
-        setModalAsignacionOpen(false);
-        setEscuelaSeleccionada(null);
-    };
-
     // Se llama cuando el modal hace un cambio (agrega/quita docente) para refrescar la lista de fondo
     const handleUpdateData = () => {
         setRefreshKey(prev => prev + 1);
@@ -73,6 +62,11 @@ export default function Escuelas() {
     const handleSuccess = () => {
         setView("success");
         setRefreshKey(prev => prev + 1);
+    };
+
+    const handleEdit = (escuela: Escuela) => {
+        setEscuelaAEditar(escuela);
+        setView("edit");
     };
 
     // --- Renderizado del contenido principal ---
@@ -99,11 +93,25 @@ export default function Escuelas() {
                                 {/* Pasamos la función para abrir el modal */}
                                 <EscuelasList
                                     escuelas={escuelas}
-                                    onManageDocentes={handleOpenAsignacion}
+                                    onEdit={handleEdit}
                                 />
                             </Box>
                         )}
                     </>
+                );
+
+            case "edit":
+                return (
+                    <Box sx={{ mt: 2 }}>
+                        <EditarEscuela
+                            escuela={escuelaAEditar!}
+                            onCancel={() => setView("list")}
+                            onSuccess={() => {
+                                setView("list");
+                                loadEscuelas();
+                            }}
+                        />
+                    </Box>
                 );
 
             case "form":
@@ -181,12 +189,6 @@ export default function Escuelas() {
                 {renderContent()}
             </Container>
 
-            <AsignarDocentesModal
-                open={modalAsignacionOpen}
-                onClose={handleCloseAsignacion}
-                escuela={escuelaSeleccionada}
-                onUpdate={handleUpdateData}
-            />
         </Box>
     );
 }

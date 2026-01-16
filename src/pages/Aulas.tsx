@@ -355,73 +355,73 @@ export default function AulasPage() {
             ) : aulas.length === 0 ? (
               <Typography sx={{ color: "#666" }}>No hay aulas registradas.</Typography>
             ) : (
-              <TableContainer component={Paper}>
+              <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
                 <Table>
-                  <TableHead sx={{ bgcolor: "#f5f5f5" }}>
+                  <TableHead sx={{ bgcolor: "#f8f9fa" }}>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 700 }}>Sala</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Comisión</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Turno</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Acciones</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Sala</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Comisión</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Turno</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Acciones</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {aulas.map((a) => (
-                      <TableRow key={a.id} hover>
-                        <TableCell>{renderSalaLabel(a)}</TableCell>
-                        <TableCell>{a.comision}</TableCell>
-                        <TableCell>{a.turno}</TableCell>
-                        <TableCell>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            sx={{
-                              textTransform: "none",
-                              mr: 1,
-                              borderColor: '#1976d2',
-                              color: '#1976d2',
-                              '&:hover': {
-                                bgcolor: 'rgba(25, 118, 210, 0.04)',
-                                borderColor: '#1976d2'
-                              }
-                            }}
-                            onClick={() => handleStartEdit(a)}
-                          >
-                            Editar
-                          </Button>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            sx={{
-                              textTransform: "none",
-                              mr: 1,
-                              borderColor: '#2e7d32',
-                              color: '#2e7d32',
-                              '&:hover': {
-                                bgcolor: 'rgba(46, 125, 50, 0.04)',
-                                borderColor: '#2e7d32'
-                              }
-                            }}
-                            onClick={() => openDocentesDialog(a)}
-                          >
-                            Docentes
-                          </Button>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            sx={{
-                              textTransform: "none",
-                              borderColor: '#d32f2f',
-                              color: '#d32f2f',
-                              '&:hover': {
-                                bgcolor: 'rgba(211, 47, 47, 0.04)',
-                                borderColor: '#d32f2f'
-                              }
-                            }}
-                            onClick={() => handleDelete(a)}
-                          >
-                            Eliminar
-                          </Button>
+                      <TableRow key={a.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                        <TableCell align="center" sx={{ fontWeight: 500 }}>{renderSalaLabel(a)}</TableCell>
+                        <TableCell align="center">{a.comision}</TableCell>
+                        <TableCell align="center">{a.turno}</TableCell>
+                        <TableCell align="center">
+                          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              sx={{
+                                textTransform: "none",
+                                borderColor: '#1976d2',
+                                color: '#1976d2',
+                                '&:hover': {
+                                  bgcolor: 'rgba(25, 118, 210, 0.04)',
+                                  borderColor: '#1976d2'
+                                }
+                              }}
+                              onClick={() => handleStartEdit(a)}
+                            >
+                              Editar
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              sx={{
+                                textTransform: "none",
+                                borderColor: '#2e7d32',
+                                color: '#2e7d32',
+                                '&:hover': {
+                                  bgcolor: 'rgba(46, 125, 50, 0.04)',
+                                  borderColor: '#2e7d32'
+                                }
+                              }}
+                              onClick={() => openDocentesDialog(a)}
+                            >
+                              Docentes
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              sx={{
+                                textTransform: "none",
+                                borderColor: '#d32f2f',
+                                color: '#d32f2f',
+                                '&:hover': {
+                                  bgcolor: 'rgba(211, 47, 47, 0.04)',
+                                  borderColor: '#d32f2f'
+                                }
+                              }}
+                              onClick={() => handleDelete(a)}
+                            >
+                              Eliminar
+                            </Button>
+                          </Box>
                         </TableCell>
                       </TableRow>
                     ))}

@@ -87,14 +87,14 @@ export default function DirectivosPage() {
                 ) : items.length === 0 ? (
                     <Typography sx={{ color: "#666" }}>No hay directivos registrados.</Typography>
                 ) : (
-                    <TableContainer component={Paper}>
+                    <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
                         <Table>
-                            <TableHead sx={{ bgcolor: "#f5f5f5" }}>
+                            <TableHead sx={{ bgcolor: "#f8f9fa" }}>
                                 <TableRow>
-                                    <TableCell sx={{ fontWeight: 700 }}>Apellido</TableCell>
-                                    <TableCell sx={{ fontWeight: 700 }}>Nombre</TableCell>
-                                    <TableCell sx={{ fontWeight: 700 }}>Escuela asignada</TableCell>
-                                    <TableCell sx={{ fontWeight: 700 }}>Acciones</TableCell>
+                                    <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Apellido</TableCell>
+                                    <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Nombre</TableCell>
+                                    <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Escuela asignada</TableCell>
+                                    <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Acciones</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -102,18 +102,21 @@ export default function DirectivosPage() {
                                     <TableRow
                                         key={d.id}
                                         hover
+                                        sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                                     >
-                                        <TableCell>{d.apellido}</TableCell>
-                                        <TableCell>{d.nombre}</TableCell>
-                                        <TableCell>{d.escuela?.nombre || "Sin asignar"}</TableCell>
-                                        <TableCell>
-                                            <Button
-                                                size="small"
-                                                sx={{ textTransform: "none" }}
-                                                onClick={() => openAsignarEscuela(d)}
-                                            >
-                                                Asignar escuela
-                                            </Button>
+                                        <TableCell align="center">{d.apellido}</TableCell>
+                                        <TableCell align="center">{d.nombre}</TableCell>
+                                        <TableCell align="center">{d.escuela?.nombre || "Sin asignar"}</TableCell>
+                                        <TableCell align="center">
+                                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                                <Button
+                                                    size="small"
+                                                    sx={{ textTransform: "none" }}
+                                                    onClick={() => openAsignarEscuela(d)}
+                                                >
+                                                    Asignar escuela
+                                                </Button>
+                                            </Box>
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -139,7 +142,7 @@ export default function DirectivosPage() {
                     >
                         {escuelas.map((e) => (
                             <MenuItem key={e.id} value={e.id}>
-                                {e.nombre} ({e.zona})
+                                {e.nombre} {e.zona?.nombre ? `(${e.zona.nombre})` : ''}
                             </MenuItem>
                         ))}
                         {escuelas.length === 0 && (

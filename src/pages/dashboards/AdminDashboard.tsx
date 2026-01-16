@@ -27,7 +27,7 @@ export default function AdminDashboard({ rol }: Props) {
                             title="Zonas"
                             description="Crear y gestionar regiones geográficas."
                             icon="🗺️"
-                            color="#4CAF50" // Verde para diferenciar
+                            color="#4CAF50"
                             onClick={() => navigate("/zonas")}
                         />
                     </Grid>

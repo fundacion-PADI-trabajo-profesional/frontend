@@ -40,9 +40,24 @@ export default function EscuelasList({ escuelas, onManageDocentes }: Props) {
                             listaEscuelas.map((escuela) => (
                                 <TableRow key={escuela.id} hover>
                                     <TableCell sx={{ fontWeight: 500 }}>{escuela.nombre}</TableCell>
+
+                                    {/* --- CAMBIO AQUÍ: Celda de Zona --- */}
                                     <TableCell>
-                                        <Chip label={escuela.zona} size="small" color="primary" variant="outlined" />
+                                        {escuela.zona ? (
+                                            <Chip
+                                                label={escuela.zona.nombre} // Antes era solo escuela.zona
+                                                size="small"
+                                                color="primary"
+                                                variant="outlined"
+                                            />
+                                        ) : (
+                                            <Typography variant="caption" color="text.secondary">
+                                                Sin zona
+                                            </Typography>
+                                        )}
                                     </TableCell>
+                                    {/* ---------------------------------- */}
+
                                     <TableCell>{escuela.direccion || "-"}</TableCell>
                                     <TableCell>
                                         {escuela.directivos && escuela.directivos.length > 0

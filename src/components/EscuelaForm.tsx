@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"; // Agregamos useEffect
 import { Box, TextField, Button, Grid, Paper, Typography, MenuItem, CircularProgress, Alert } from "@mui/material";
 import { createEscuela, CreateEscuelaDto } from "../api/escuelas";
+import { getZonas, Zona } from "../api/zonas";
 
 interface Props {
     onCancel: () => void;
@@ -9,27 +10,46 @@ interface Props {
 
 export default function EscuelaForm({ onCancel, onSuccess }: Props) {
     const [loading, setLoading] = useState(false);
+    const [zonas, setZonas] = useState<Zona[]>([]);
+    const [loadingZonas, setLoadingZonas] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [userRole, setUserRole] = useState("");
 
-    useEffect(() => {
-        const storedUser = localStorage.getItem("padiUser");
-        if (storedUser) {
-            const parsed = JSON.parse(storedUser);
-            console.log("Rol detectado en formulario:", parsed.rol); // Para depurar
-            setUserRole(parsed.rol);
-        } else {
-            // Fallback por si acaso
-            setUserRole(localStorage.getItem("userRole") || "");
-        }
-    }, []);
+    //    useEffect(() => {
+    //        const storedUser = localStorage.getItem("padiUser");
+    //        if (storedUser) {
+    //            const parsed = JSON.parse(storedUser);
+    //            console.log("Rol detectado en formulario:", parsed.rol); // Para depurar
+    //            setUserRole(parsed.rol);
+    //        } else {
+    //            // Fallback por si acaso
+    //            setUserRole(localStorage.getItem("userRole") || "");
+    //        }
+    //    }, []);
 
-    const [formData, setFormData] = useState<CreateEscuelaDto>({
+    const [formData, setFormData] = useState({
         nombre: "",
         direccion: "",
         telefono: "",
-        zona: "" // Inicialmente vacía
+        zona_id: ""
     });
+
+    useEffect(() => {
+        const loadInitialData = async () => {
+            const storedUser = localStorage.getItem("padiUser");
+            if (storedUser) setUserRole(JSON.parse(storedUser).rol);
+
+            try {
+                const data = await getZonas(); // Traemos las zonas reales
+                setZonas(data);
+            } catch (err) {
+                setError("No se pudieron cargar las zonas de la base de datos.");
+            } finally {
+                setLoadingZonas(false);
+            }
+        };
+        loadInitialData();
+    }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -40,19 +60,11 @@ export default function EscuelaForm({ onCancel, onSuccess }: Props) {
         setLoading(true);
         setError(null);
 
-        // Validación extra antes de enviar
-        if (userRole === "equipo_padi" && !formData.zona) {
-            setError("Debes seleccionar una zona.");
-            setLoading(false);
-            return;
-        }
-
         try {
             await createEscuela(formData);
             onSuccess();
         } catch (err: any) {
-            // Mostramos el mensaje exacto que viene del backend
-            setError(err.message || err.response?.data?.description || "Error al crear la escuela.");
+            setError(err.message || "Error al crear la escuela.");
         } finally {
             setLoading(false);
         }
@@ -84,18 +96,21 @@ export default function EscuelaForm({ onCancel, onSuccess }: Props) {
                         <Grid item xs={12}>
                             <TextField
                                 select
-                                label="Zona"
-                                name="zona"
+                                label="Seleccionar Zona Real"
+                                name="zona_id"
                                 fullWidth
-                                required // HTML require
-                                value={formData.zona}
+                                required
+                                value={formData.zona_id}
                                 onChange={handleChange}
+                                disabled={loadingZonas}
                             >
-                                <MenuItem value="Norte">Norte</MenuItem>
-                                <MenuItem value="Sur">Sur</MenuItem>
-                                <MenuItem value="Este">Este</MenuItem>
-                                <MenuItem value="Oeste">Oeste</MenuItem>
-                                <MenuItem value="Centro">Centro</MenuItem>
+                                {loadingZonas ? (
+                                    <MenuItem disabled>Cargando zonas...</MenuItem>
+                                ) : (
+                                    zonas.map((z) => (
+                                        <MenuItem key={z.id} value={z.id}>{z.nombre}</MenuItem>
+                                    ))
+                                )}
                             </TextField>
                         </Grid>
                     )}

@@ -14,7 +14,10 @@ export interface Escuela {
     nombre: string;
     direccion?: string;
     telefono?: string;
-    zona: string;
+    zona?: {
+        id: string;
+        nombre: string;
+    };
     directivos?: {
         id: string;
         nombre: string;
@@ -33,7 +36,7 @@ export interface CreateEscuelaDto {
     nombre: string;
     direccion?: string;
     telefono?: string;
-    zona?: string;
+    zona_id: string;
 }
 
 export const getEscuelas = async (): Promise<Escuela[]> => {

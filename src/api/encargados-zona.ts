@@ -5,7 +5,10 @@ export interface Encargado {
     nombre: string;
     apellido: string;
     email: string;
-    zona: string | null;
+    zona?: {
+        id: string;
+        nombre: string;
+    } | null;
 }
 
 export interface CreateEncargadoDto {
@@ -14,6 +17,13 @@ export interface CreateEncargadoDto {
     email: string;
     password?: string;
     zona: string;
+}
+
+export interface UpdateEncargadoDto {
+    nombre: string;
+    apellido: string;
+    email: string;
+    zona_id: string; // Enviamos el ID de la nueva zona
 }
 
 export async function getEncargados(): Promise<Encargado[]> {
@@ -43,4 +53,27 @@ export async function createEncargado(data: CreateEncargadoDto): Promise<Encarga
     }
 
     return json.data;
+}
+
+export async function updateEncargado(id: string, data: UpdateEncargadoDto): Promise<Encargado> {
+    const response = await fetch(`${API_URL}/encargados/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+
+    const json = await response.json();
+    if (!json.success) throw new Error(json.message || "Error al actualizar encargado");
+    return json.data;
+}
+
+export async function deleteEncargado(id: string): Promise<void> {
+    const response = await fetch(`${API_URL}/encargados/${id}`, {
+        method: "DELETE",
+    });
+
+    const json = await response.json();
+    if (!json.success) {
+        throw new Error(json.message || "Error al eliminar encargado");
+    }
 }

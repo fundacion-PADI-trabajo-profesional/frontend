@@ -55,13 +55,13 @@ export default function DocentesPage() {
         ) : items.length === 0 ? (
           <Typography sx={{ color: "#666" }}>No hay docentes registrados.</Typography>
         ) : (
-          <TableContainer component={Paper}>
+          <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
             <Table>
-              <TableHead sx={{ bgcolor: "#f5f5f5" }}>
+              <TableHead sx={{ bgcolor: "#f8f9fa" }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Apellido</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Nombre</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Acciones</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Apellido</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Nombre</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Acciones</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -69,12 +69,12 @@ export default function DocentesPage() {
                   <TableRow
                     key={d.id}
                     hover
-                    sx={{ cursor: "pointer" }}
+                    sx={{ cursor: "pointer", '&:last-child td, &:last-child th': { border: 0 } }}
                     onClick={() => navigate(`/evaluaciones-docente?profesorId=${d.id}&nombre=${encodeURIComponent(`${d.apellido}, ${d.nombre}`)}`)}
                   >
-                    <TableCell>{d.apellido}</TableCell>
-                    <TableCell>{d.nombre}</TableCell>
-                    <TableCell>Ver evaluaciones</TableCell>
+                    <TableCell align="center">{d.apellido}</TableCell>
+                    <TableCell align="center">{d.nombre}</TableCell>
+                    <TableCell align="center">Ver evaluaciones</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-    Container, Table, TableBody, TableCell, TableContainer,
+    Box, Container, Table, TableBody, TableCell, TableContainer,
     TableHead, TableRow, Paper, IconButton, Dialog, DialogTitle,
     DialogContent, CircularProgress, Alert, Chip
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import EditIcon from "@mui/icons-material/Edit";
 import PageHeader from "../components/PageHeader";
 import ZonaForm from "../components/ZonaForm";
 import { getZonas, createZona, type Zona, updateZona } from "../api/zonas";
-import EditIcon from "@mui/icons-material/Edit";
 
 export default function Zonas() {
     const [zonas, setZonas] = useState<Zona[]>([]);
@@ -71,14 +71,14 @@ export default function Zonas() {
 
             {error && <Alert severity="error" sx={{ mb: 3, mt: 2 }}>{error}</Alert>}
 
-            <TableContainer component={Paper} sx={{ mt: 3, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+            <TableContainer component={Paper} sx={{ mt: 3, borderRadius: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
                 <Table>
-                    <TableHead sx={{ bgcolor: "#f5f5f5" }}>
+                    <TableHead sx={{ bgcolor: "#f8f9fa" }}>
                         <TableRow>
-                            <TableCell sx={{ fontWeight: "bold" }}>Nombre de la Zona</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: "bold" }}>Escuelas</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: "bold" }}>Encargados</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: "bold" }}>Acciones</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Nombre de la Zona</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Escuelas</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Encargados</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Acciones</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -96,40 +96,46 @@ export default function Zonas() {
                             </TableRow>
                         ) : (
                             zonas.map((zona) => (
-                                <TableRow key={zona.id} hover>
-                                    <TableCell sx={{ fontWeight: 500 }}>{zona.nombre}</TableCell>
+                                <TableRow key={zona.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                    <TableCell align="center" sx={{ fontWeight: 500 }}>{zona.nombre}</TableCell>
                                     <TableCell align="center">
-                                        <Chip
-                                            label={`${zona._count?.escuelas || 0} escuelas`}
-                                            size="small"
-                                            variant="outlined"
-                                            sx={{ color: "#2196F3", borderColor: "#2196F3" }}
-                                        />
+                                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                            <Chip
+                                                label={`${zona._count?.escuelas || 0} escuelas`}
+                                                size="small"
+                                                variant="outlined"
+                                                sx={{ color: "#2196F3", borderColor: "#2196F3" }}
+                                            />
+                                        </Box>
                                     </TableCell>
                                     <TableCell align="center">
-                                        <Chip
-                                            label={`${zona._count?.encargados || 0} encargados`}
-                                            size="small"
-                                            variant="outlined"
-                                            sx={{ color: "#673AB7", borderColor: "#673AB7" }}
-                                        />
+                                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                            <Chip
+                                                label={`${zona._count?.encargados || 0} encargados`}
+                                                size="small"
+                                                variant="outlined"
+                                                sx={{ color: "#673AB7", borderColor: "#673AB7" }}
+                                            />
+                                        </Box>
                                     </TableCell>
-                                    <TableCell align="right">
-                                        <IconButton
-                                            size="small"
-                                            sx={{ color: "#666", mr: 1 }}
-                                            onClick={() => handleEditClick(zona)}
-                                        >
-                                            <EditIcon fontSize="small" />
-                                        </IconButton>
-                                        <IconButton
-                                            size="small"
-                                            color="primary"
-                                            onClick={() => navigate(`/zonas/${zona.id}`)}
-                                            title="Ver detalle de zona"
-                                        >
-                                            <VisibilityIcon />
-                                        </IconButton>
+                                    <TableCell align="center">
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                                            <IconButton
+                                                size="small"
+                                                sx={{ color: "#666" }}
+                                                onClick={() => handleEditClick(zona)}
+                                            >
+                                                <EditIcon fontSize="small" />
+                                            </IconButton>
+                                            <IconButton
+                                                size="small"
+                                                color="primary"
+                                                onClick={() => navigate(`/zonas/${zona.id}`)}
+                                                title="Ver detalle de zona"
+                                            >
+                                                <VisibilityIcon />
+                                            </IconButton>
+                                        </Box>
                                     </TableCell>
                                 </TableRow>
                             ))

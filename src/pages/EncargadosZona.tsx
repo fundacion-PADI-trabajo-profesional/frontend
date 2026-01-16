@@ -200,21 +200,21 @@ export default function EncargadosZona() {
                 </Box>
             </Box>
 
-            <TableContainer component={Paper} sx={{ mt: 3, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+            <TableContainer component={Paper} sx={{ mt: 3, borderRadius: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
                 <Table>
-                    <TableHead sx={{ bgcolor: "#f5f5f5" }}>
+                    <TableHead sx={{ bgcolor: "#f8f9fa" }}>
                         <TableRow>
-                            <TableCell sx={{ fontWeight: "bold" }}>Apellido</TableCell>
-                            <TableCell sx={{ fontWeight: "bold" }}>Nombre</TableCell>
-                            <TableCell sx={{ fontWeight: "bold" }}>Zona</TableCell>
-                            <TableCell sx={{ fontWeight: "bold" }}>Email</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: "bold" }}>Acciones</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Apellido</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Nombre</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Zona</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Email</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Acciones</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={4} align="center" sx={{ py: 5 }}>
+                                <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
                                     <CircularProgress />
                                 </TableCell>
                             </TableRow>
@@ -228,22 +228,24 @@ export default function EncargadosZona() {
                             </TableRow>
                         ) : (
                             encargadosFiltrados.map((encargado) => (
-                                <TableRow key={encargado.id} hover>
-                                    <TableCell>{encargado.apellido}</TableCell>
-                                    <TableCell>{encargado.nombre}</TableCell>
-                                    <TableCell>{encargado.zona?.nombre || "Sin Zona"}</TableCell>
-                                    <TableCell>{encargado.email}</TableCell>
-                                    <TableCell align="right">
-                                        <IconButton size="small" onClick={() => handleEditClick(encargado)} sx={{ mr: 1 }}>
-                                            <EditIcon fontSize="small" />
-                                        </IconButton>
-                                        <IconButton
-                                            size="small"
-                                            color="error"
-                                            onClick={() => handleDeleteClick(encargado.id, `${encargado.nombre} ${encargado.apellido}`)}
-                                        >
-                                            <DeleteIcon fontSize="small" />
-                                        </IconButton>
+                                <TableRow key={encargado.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                    <TableCell align="center">{encargado.apellido}</TableCell>
+                                    <TableCell align="center">{encargado.nombre}</TableCell>
+                                    <TableCell align="center">{encargado.zona?.nombre || "Sin Zona"}</TableCell>
+                                    <TableCell align="center">{encargado.email}</TableCell>
+                                    <TableCell align="center">
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                                            <IconButton size="small" onClick={() => handleEditClick(encargado)}>
+                                                <EditIcon fontSize="small" />
+                                            </IconButton>
+                                            <IconButton
+                                                size="small"
+                                                color="error"
+                                                onClick={() => handleDeleteClick(encargado.id, `${encargado.nombre} ${encargado.apellido}`)}
+                                            >
+                                                <DeleteIcon fontSize="small" />
+                                            </IconButton>
+                                        </Box>
                                     </TableCell>
                                 </TableRow>
                             ))

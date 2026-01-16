@@ -96,7 +96,7 @@ export default function EscuelaForm({ onCancel, onSuccess }: Props) {
                         <Grid item xs={12}>
                             <TextField
                                 select
-                                label="Seleccionar Zona Real"
+                                label="Seleccionar Zona"
                                 name="zona_id"
                                 fullWidth
                                 required

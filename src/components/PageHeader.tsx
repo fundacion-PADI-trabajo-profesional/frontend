@@ -4,12 +4,13 @@ import { Box, Container, Typography, Button } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import AddIcon from "@mui/icons-material/Add"
 import { useNavigate } from "react-router-dom"
+import { ReactNode } from "react";
 
 interface PageHeaderProps {
   backTo?: string
   backLabel?: string
   title: string
-  subtitle?: string
+  subtitle?: ReactNode;
   onAdd?: () => void
   addLabel?: string
 }

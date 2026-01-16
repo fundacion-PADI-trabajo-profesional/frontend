@@ -5,10 +5,11 @@ interface ZonaFormProps {
     onSubmit: (data: { nombre: string }) => Promise<void>;
     onCancel: () => void;
     loading: boolean;
+    initialValue?: string;
 }
 
-export default function ZonaForm({ onSubmit, onCancel, loading }: ZonaFormProps) {
-    const [nombre, setNombre] = useState("");
+export default function ZonaForm({ onSubmit, onCancel, loading, initialValue }: ZonaFormProps) {
+    const [nombre, setNombre] = useState(initialValue || "");
     const [error, setError] = useState("");
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -28,7 +29,7 @@ export default function ZonaForm({ onSubmit, onCancel, loading }: ZonaFormProps)
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
             <TextField
                 fullWidth
-                label="Nombre de la Zona (Ej: Norte, Sur, Este)"
+                label="Nombre de la Zona"
                 value={nombre}
                 onChange={(e) => {
                     setNombre(e.target.value);
@@ -49,7 +50,7 @@ export default function ZonaForm({ onSubmit, onCancel, loading }: ZonaFormProps)
                     disabled={loading}
                     sx={{ bgcolor: "#A3BE54", '&:hover': { bgcolor: "#8da548" } }}
                 >
-                    {loading ? <CircularProgress size={24} color="inherit" /> : "Crear Zona"}
+                    {loading ? <CircularProgress size={24} color="inherit" /> : "Cargar"}
                 </Button>
             </Box>
         </Box>

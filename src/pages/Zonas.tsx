@@ -8,7 +8,7 @@ import {
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import PageHeader from "../components/PageHeader";
 import ZonaForm from "../components/ZonaForm";
-import { getZonas, createZona, type Zona } from "../api/zonas";
+import { getZonas, createZona, type Zona, updateZona } from "../api/zonas";
 import EditIcon from "@mui/icons-material/Edit";
 
 export default function Zonas() {
@@ -18,6 +18,12 @@ export default function Zonas() {
     const [modalOpen, setModalOpen] = useState(false);
     const [saving, setSaving] = useState(false);
     const navigate = useNavigate();
+    const [editingZona, setEditingZona] = useState<Zona | null>(null);
+
+    const handleEditClick = (zona: Zona) => {
+        setEditingZona(zona);
+        setModalOpen(true);
+    };
 
     const loadData = async () => {
         setLoading(true);
@@ -36,11 +42,16 @@ export default function Zonas() {
         loadData();
     }, []);
 
-    const handleCreate = async (data: { nombre: string }) => {
+    const handleSave = async (data: { nombre: string }) => {
         setSaving(true);
         try {
-            await createZona(data.nombre);
+            if (editingZona) {
+                await updateZona(editingZona.id, data.nombre);
+            } else {
+                await createZona(data.nombre);
+            }
             setModalOpen(false);
+            setEditingZona(null); // Limpiar estado
             await loadData();
         } catch (err) {
             throw err;
@@ -107,7 +118,7 @@ export default function Zonas() {
                                         <IconButton
                                             size="small"
                                             sx={{ color: "#666", mr: 1 }}
-                                            onClick={() => alert("Próximamente: Editar zona")} // Solo el botón por ahora
+                                            onClick={() => handleEditClick(zona)}
                                         >
                                             <EditIcon fontSize="small" />
                                         </IconButton>
@@ -127,13 +138,16 @@ export default function Zonas() {
                 </Table>
             </TableContainer>
 
-            <Dialog open={modalOpen} onClose={() => setModalOpen(false)} maxWidth="xs" fullWidth>
-                <DialogTitle sx={{ fontWeight: "bold" }}>Crear Nueva Zona</DialogTitle>
+            <Dialog open={modalOpen} onClose={() => { setModalOpen(false); setEditingZona(null); }}>
+                <DialogTitle sx={{ fontWeight: "bold" }}>
+                    {editingZona ? "Editar Nombre de Zona" : "Crear Nueva Zona"}
+                </DialogTitle>
                 <DialogContent>
                     <ZonaForm
-                        onSubmit={handleCreate}
-                        onCancel={() => setModalOpen(false)}
+                        onSubmit={handleSave}
+                        onCancel={() => { setModalOpen(false); setEditingZona(null); }}
                         loading={saving}
+                        initialValue={editingZona?.nombre}
                     />
                 </DialogContent>
             </Dialog>

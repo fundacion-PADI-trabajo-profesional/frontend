@@ -35,6 +35,15 @@ export async function getDirectivos(): Promise<Directivo[]> {
     return body.data || []
 }
 
+export async function getDirectivosDisponibles(): Promise<Directivo[]> {
+    const res = await fetch(`${API_URL}/directivos/disponibles`)
+    const body: ApiResponse<Directivo[]> = await res.json()
+    if (!res.ok || !body.success) {
+        throw new Error(body.error?.description || body.message || "Error al cargar directivos disponibles")
+    }
+    return body.data || []
+}
+
 export async function asignarEscuelaADirectivo(directivoId: string, escuelaId: string) {
     const { usuario_id, rol } = getUserData();
     const res = await fetch(`${API_URL}/directivos/${directivoId}/asignar-escuela`, {

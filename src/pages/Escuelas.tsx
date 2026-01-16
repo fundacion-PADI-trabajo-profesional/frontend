@@ -2,27 +2,26 @@ import { useState, useEffect } from "react";
 import { Box, Container, Typography, Button, CircularProgress, Alert } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import { useNavigate } from "react-router-dom"; // Faltaba este import
+import { useNavigate } from "react-router-dom";
 
 import EscuelasList from "../components/EscuelasList";
 import EscuelaForm from "../components/EscuelaForm";
 import PageHeader from "../components/PageHeader";
 import { getEscuelas, Escuela } from "../api/escuelas";
-import AsignarDocentesModal from "../components/AsignarDocentesModal";
 import EditarEscuela from "../components/EditarEscuela";
+import EscuelaDetalle from "../components/EscuelaDetalle";
 
-type ViewState = "list" | "form" | "success" | "edit";
+type ViewState = "list" | "form" | "success" | "edit" | "details";
 
 export default function Escuelas() {
-    // --- Estados Generales ---
+
     const [view, setView] = useState<ViewState>("list");
     const [escuelas, setEscuelas] = useState<Escuela[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
     const [escuelaAEditar, setEscuelaAEditar] = useState<Escuela | null>(null);
-    const [modalAsignacionOpen, setModalAsignacionOpen] = useState(false);
-    const [escuelaSeleccionada, setEscuelaSeleccionada] = useState<Escuela | null>(null);
+    const [escuelaDetalle, setEscuelaDetalle] = useState<Escuela | null>(null);
 
     const navigate = useNavigate(); // Hook de navegación
 
@@ -46,12 +45,6 @@ export default function Escuelas() {
         }
     };
 
-    // Se llama cuando el modal hace un cambio (agrega/quita docente) para refrescar la lista de fondo
-    const handleUpdateData = () => {
-        setRefreshKey(prev => prev + 1);
-    };
-
-    // --- Navegación de Vistas ---
     const handleGoToForm = () => setView("form");
 
     const handleBackToList = () => {
@@ -69,7 +62,11 @@ export default function Escuelas() {
         setView("edit");
     };
 
-    // --- Renderizado del contenido principal ---
+    const handleViewDetails = (escuela: Escuela) => {
+        setEscuelaDetalle(escuela);
+        setView("details");
+    };
+
     const renderContent = () => {
         switch (view) {
             case "list":
@@ -90,14 +87,26 @@ export default function Escuelas() {
                             <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
                         ) : (
                             <Box sx={{ mt: 3 }}>
-                                {/* Pasamos la función para abrir el modal */}
                                 <EscuelasList
                                     escuelas={escuelas}
                                     onEdit={handleEdit}
+                                    onView={handleViewDetails}
                                 />
                             </Box>
                         )}
                     </>
+                );
+
+            case "details":
+                return (
+                    <EscuelaDetalle
+                        escuela={escuelaDetalle!}
+                        onBack={() => setView("list")}
+                        onEdit={() => {
+                            setEscuelaAEditar(escuelaDetalle);
+                            setView("edit");
+                        }}
+                    />
                 );
 
             case "edit":

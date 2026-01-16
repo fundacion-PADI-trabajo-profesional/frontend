@@ -75,3 +75,18 @@ export const deleteEscuela = async (id: string): Promise<void> => {
     const { usuario_id, rol } = getUserData();
     await api.delete(`/escuelas/${id}?rol=${rol}&usuario_id=${usuario_id}`);
 };
+
+export const asignarDirectivo = async (escuelaId: string, usuarioId: string) => {
+    const response = await api.post("/escuelas/asignar-directivo", { escuelaId, usuarioId });
+    return response.data;
+};
+
+export const desasignarDirectivo = async (usuarioId: string) => {
+    const response = await api.post("/escuelas/desasignar-directivo", { usuarioId });
+    return response.data;
+};
+
+export const getDirectivosDisponibles = async () => {
+    const response = await api.get("/directivos/disponibles");
+    return response.data.data;
+};

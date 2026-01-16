@@ -141,7 +141,7 @@ export default function Escuelas() {
                             Escuela creada con éxito
                         </Typography>
                         <Typography variant="body1" sx={{ color: '#666', mb: 4, maxWidth: 400 }}>
-                            La institución ha sido agregada al sistema y ya está disponible para asignar docentes y alumnos.
+                            La institución ha sido agregada al sistema y ya está disponible para asignar docentes y estudiantes.
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 2 }}>
                             <Button

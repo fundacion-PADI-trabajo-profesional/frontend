@@ -54,7 +54,7 @@ export default function EscuelasList({ escuelas, onEdit, onView }: Props) {
                             {/* Iconos de acciones centrados */}
                             <TableCell align="center">
                                 <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
-                                    <Tooltip title="Ver detalles y alumnos">
+                                    <Tooltip title="Ver detalles y estudiantes">
                                         <IconButton
                                             size="small"
                                             onClick={() => onView(escuela)}

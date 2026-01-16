@@ -37,7 +37,7 @@ export default function DirectivoDashboard() {
 
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard
-                        title="Gestionar Alumnos"
+                        title="Gestionar Estudiantes"
                         description="Administración de estudiantes de la escuela."
                         icon="🎒"
                         color="#2196F3"

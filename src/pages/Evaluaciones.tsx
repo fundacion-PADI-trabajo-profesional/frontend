@@ -178,7 +178,7 @@ export default function Evaluaciones() {
             Evaluaciones PADI
           </Typography>
           <Typography variant="body1" sx={{ color: "#666" }}>
-            Gestiona las evaluaciones y carga los resultados de tus alumnos
+            Gestiona las evaluaciones y carga los resultados de tus estudiantes
           </Typography>
         </Container>
       </Box>

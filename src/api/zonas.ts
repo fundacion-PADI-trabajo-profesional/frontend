@@ -105,3 +105,49 @@ export async function desvincularEscuela(escuelaId: string): Promise<any> {
     }
     return body.data;
 }
+
+export async function updateZona(id: string, nombre: string): Promise<Zona> {
+    const { usuario_id, rol } = getUserData();
+    const res = await fetch(`${API_URL}/zonas/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nombre, usuario_id, rol }),
+    });
+    const body: ApiResponse<Zona> = await res.json();
+    if (!res.ok || !body.success) {
+        throw new Error(body.error?.description || body.message || "Error al actualizar zona");
+    }
+    return body.data;
+}
+
+export async function getEncargadosSinZona(): Promise<any[]> {
+    const { rol } = getUserData();
+    const res = await fetch(`${API_URL}/encargados-sin-zona?rol=${rol}`)
+    const body: ApiResponse<any[]> = await res.json()
+    if (!res.ok || !body.success) throw new Error(body.message || "Error al cargar encargados");
+    return body.data || []
+}
+
+export async function asignarEncargadoAZona(zonaId: string, encargadoId: string): Promise<any> {
+    const { usuario_id, rol } = getUserData();
+    const res = await fetch(`${API_URL}/zonas/${zonaId}/asignar-encargado`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ encargadoId, usuario_id, rol }),
+    });
+    const body: ApiResponse<any> = await res.json();
+    if (!res.ok || !body.success) throw new Error(body.message || "Error al asignar encargado");
+    return body.data;
+}
+
+export async function desvincularEncargado(encargadoId: string): Promise<any> {
+    const { rol } = getUserData();
+    const res = await fetch(`${API_URL}/encargados/${encargadoId}/quitar-zona`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rol }),
+    });
+    const body: ApiResponse<any> = await res.json();
+    if (!res.ok || !body.success) throw new Error(body.message || "Error al desvincular encargado");
+    return body.data;
+}

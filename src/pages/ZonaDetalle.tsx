@@ -9,6 +9,10 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import PageHeader from "../components/PageHeader";
 import { desvincularEscuela, getZonaById } from "../api/zonas";
 import AsignarEscuelaModal from "../components/AsignarEscuelaModal";
+import AsignarEncargadoModal from "../components/AsignarEncargadoModal";
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import { Chip } from "@mui/material";
+import { desvincularEncargado } from "../api/zonas";
 
 export default function ZonaDetalle() {
     const { id } = useParams();
@@ -16,7 +20,8 @@ export default function ZonaDetalle() {
     const [zona, setZona] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [modalOpen, setModalOpen] = useState(false);
+    const [modalEscuelaOpen, setModalEscuelaOpen] = useState(false);
+    const [modalEncargadoOpen, setModalEncargadoOpen] = useState(false);
 
     const handleDesvincular = async (escuelaId: string, nombreEscuela: string) => {
         if (!window.confirm(`¿Estás seguro de quitar a la escuela "${nombreEscuela}" de esta zona?`)) {
@@ -57,16 +62,64 @@ export default function ZonaDetalle() {
         ? zona.encargados.map((e: any) => `${e.usuario.nombre} ${e.usuario.apellido}`).join(", ")
         : "Sin encargados asignados";
 
+    const handleDesvincularEncargado = async (encargadoId: string, nombre: string) => {
+        if (!window.confirm(`¿Deseas quitar a ${nombre} como encargado de esta zona?`)) return;
+
+        try {
+            await desvincularEncargado(encargadoId);
+            await loadData(); // Refrescar para ver los cambios
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
+
+            {/* Encabezado Principal con Gestión de Encargados */}
             <PageHeader
                 title={`Zona ${zona.nombre}`}
-                subtitle={`Encargados: ${nombresEncargados}`}
-                onAdd={() => setModalOpen(true)}
+                subtitle={
+                    <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                        <Typography variant="body2" sx={{ color: "#666", mr: 1 }}>
+                            Encargados:
+                        </Typography>
+
+                        {zona.encargados?.length > 0 ? (
+                            zona.encargados.map((enc: any) => (
+                                <Chip
+                                    key={enc.id}
+                                    label={`${enc.usuario.nombre} ${enc.usuario.apellido}`}
+                                    onDelete={() => handleDesvincularEncargado(enc.id, enc.usuario.nombre)}
+                                    size="small"
+                                    sx={{
+                                        bgcolor: "rgba(103, 58, 183, 0.1)",
+                                        color: "#673AB7",
+                                        fontWeight: 500,
+                                        '& .MuiChip-deleteIcon': { color: '#673AB7' }
+                                    }}
+                                />
+                            ))
+                        ) : (
+                            <Typography variant="body2" sx={{ color: "#999", fontStyle: "italic" }}>
+                                Sin encargados asignados
+                            </Typography>
+                        )}
+
+                        <IconButton
+                            size="small"
+                            onClick={() => setModalEncargadoOpen(true)}
+                            sx={{ color: "#673AB7", ml: 1 }}
+                        >
+                            <AddCircleOutlineIcon fontSize="small" />
+                        </IconButton>
+                    </Box>
+                }
+                onAdd={() => setModalEscuelaOpen(true)}
                 addLabel="Agregar Escuela"
             />
 
-            {/* Título de sección para la tabla */}
+            {/* Sección de Escuelas */}
             <Box sx={{ mt: 5, mb: 2 }}>
                 <Typography variant="h6" sx={{ fontWeight: 600, color: "#444" }}>
                     Escuelas Instituidas
@@ -111,14 +164,29 @@ export default function ZonaDetalle() {
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            {/* --- Modales de Gestión --- */}
+
+            {/* Modal para Vincular Escuelas */}
             {id && (
                 <AsignarEscuelaModal
-                    open={modalOpen}
-                    onClose={() => setModalOpen(false)}
+                    open={modalEscuelaOpen}
+                    onClose={() => setModalEscuelaOpen(false)}
                     zonaId={id}
-                    onSuccess={loadData} // Esto refresca la tabla automáticamente
+                    onSuccess={loadData}
                 />
             )}
+
+            {/* Modal para Asignar Encargados */}
+            {id && (
+                <AsignarEncargadoModal
+                    open={modalEncargadoOpen}
+                    onClose={() => setModalEncargadoOpen(false)}
+                    zonaId={id}
+                    onSuccess={loadData}
+                />
+            )}
+
         </Container>
     );
 }

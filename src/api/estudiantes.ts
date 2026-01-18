@@ -96,13 +96,22 @@ async function handleApiResponse<T>(response: Response): Promise<T> {
 }
 
 export const getEstudiantes = async (): Promise<Estudiante[]> => {
-    const response = await fetch(`${API_URL}/estudiantes`, {
-        headers: {
-            // Aquí deberías añadir el token de autenticación si es necesario
-            // "Authorization": `Bearer ${token}`
-        },
-    })
-    return handleApiResponse<Estudiante[]>(response)
+    // Obtenemos los datos del usuario logueado desde localStorage [cite: 1, 2]
+    const stored = localStorage.getItem("padiUser");
+    const user = stored ? JSON.parse(stored) : null;
+    
+    const params = new URLSearchParams();
+    if (user) {
+        // Enviamos el rol para que el backend sepa qué nivel de acceso aplicar [cite: 1, 15]
+        params.append("rol", user.rol);
+        // Si el usuario tiene escuela asignada, enviamos el ID [cite: 2, 18]
+        if (user.escuela_id) {
+            params.append("escuela_id", user.escuela_id);
+        }
+    }
+
+    const response = await fetch(`${API_URL}/estudiantes?${params.toString()}`);
+    return handleApiResponse<Estudiante[]>(response);
 }
 
 export const createEstudiante = async (formData: EstudianteFormData): Promise<EstudianteCreado> => {

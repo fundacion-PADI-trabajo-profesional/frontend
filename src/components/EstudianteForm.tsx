@@ -286,7 +286,7 @@ export default function EstudianteForm({ onCancel, onSuccess }: EstudianteFormPr
                                         </MenuItem>
                                         {escuelas.map((e) => (
                                             <MenuItem key={e.id} value={e.id}>
-                                                {e.id} - {e.nombre}
+                                                {e.nombre}
                                             </MenuItem>
                                         ))}
                                     </Select>

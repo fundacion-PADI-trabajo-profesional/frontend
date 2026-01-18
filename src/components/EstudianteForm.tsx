@@ -19,6 +19,7 @@ import {
 } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import { createEstudiante, getGeneros, getSalas, type EstudianteCreado, type Genero, type Sala } from "../api/estudiantes"
+import { getEscuelas, type Escuela } from "../api/escuelas";
 import { SelectChangeEvent } from '@mui/material/Select';
 
 interface EstudianteFormProps {
@@ -34,6 +35,7 @@ export default function EstudianteForm({ onCancel, onSuccess }: EstudianteFormPr
         fecha_nacimiento: "",
         genero_id: "",
         sala_id: "",
+        escuela_id: "",
     })
     const [errors, setErrors] = useState<{ [key: string]: string }>({})
     const [loading, setLoading] = useState(false)
@@ -42,14 +44,16 @@ export default function EstudianteForm({ onCancel, onSuccess }: EstudianteFormPr
     const [loadingDropdowns, setLoadingDropdowns] = useState(true)
     const [generos, setGeneros] = useState<Genero[]>([])
     const [salas, setSalas] = useState<Sala[]>([])
+    const [escuelas, setEscuelas] = useState<Escuela[]>([])
 
     // Cargar datos de dropdowns
     useEffect(() => {
         const loadDropdowns = async () => {
             try {
-                const [generosData, salasData] = await Promise.all([getGeneros(), getSalas()])
+                const [generosData, salasData, escuelasData] = await Promise.all([getGeneros(), getSalas(), getEscuelas()])
                 setGeneros(generosData)
                 setSalas(salasData)
+                setEscuelas(escuelasData)
             } catch (err: any) {
                 setError("Error al cargar datos del formulario: " + err.message)
             } finally {
@@ -73,6 +77,7 @@ export default function EstudianteForm({ onCancel, onSuccess }: EstudianteFormPr
 
         if (!formData.genero_id) newErrors.genero_id = "El género es obligatorio"
         if (!formData.sala_id) newErrors.sala_id = "La sala es obligatoria"
+        if (!formData.escuela_id) newErrors.escuela_id = "La escuela es obligatoria"
 
         setErrors(newErrors)
         return Object.keys(newErrors).length === 0
@@ -100,9 +105,11 @@ export default function EstudianteForm({ onCancel, onSuccess }: EstudianteFormPr
 
         setLoading(true)
         try {
+            console.log("ID de escuela seleccionado:", formData.escuela_id);
             const nuevoEstudiante = await createEstudiante({
                 ...formData,
                 sala_id: Number(formData.sala_id),
+                escuela_id: formData.escuela_id,
             })
             onSuccess(nuevoEstudiante)
         } catch (err: any) {
@@ -261,6 +268,29 @@ export default function EstudianteForm({ onCancel, onSuccess }: EstudianteFormPr
                                         ))}
                                     </Select>
                                     <FormHelperText>{errors.sala_id}</FormHelperText>
+                                </FormControl>
+                            </Grid>
+
+                            {/* Escuela */}
+                            <Grid item xs={12}>
+                                <FormControl fullWidth variant="filled" error={Boolean(errors.escuela_id)}>
+                                    <InputLabel id="escuela-label">Escuela / Institución</InputLabel>
+                                    <Select
+                                        labelId="escuela-label"
+                                        name="escuela_id"
+                                        value={formData.escuela_id}
+                                        onChange={handleChange}
+                                    >
+                                        <MenuItem value="" disabled>
+                                            <em>Seleccionar institución</em>
+                                        </MenuItem>
+                                        {escuelas.map((e) => (
+                                            <MenuItem key={e.id} value={e.id}>
+                                                {e.nombre}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                    <FormHelperText>{errors.escuela_id}</FormHelperText>
                                 </FormControl>
                             </Grid>
 

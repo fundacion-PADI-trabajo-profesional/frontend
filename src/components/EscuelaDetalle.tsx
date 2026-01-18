@@ -1,6 +1,7 @@
 import { Box, Typography, Grid, Paper, Divider, List, ListItem, ListItemText, Button, Chip } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 
+
 export default function EscuelaDetalle({ escuela, onBack, onEdit }: any) {
     return (
         <Box>
@@ -45,15 +46,26 @@ export default function EscuelaDetalle({ escuela, onBack, onEdit }: any) {
                         </List>
                     </Grid>
 
-                    {/* SECCIÓN ALUMNOS (Vinculados por escuela_id) */}
+                    {/* SECCIÓN ESTUDIANTES */}
                     <Grid item xs={12} md={4}>
                         <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Estudiantes</Typography>
-                        <Box sx={{ p: 2, bgcolor: '#f9f9f9', borderRadius: 2, textAlign: 'center' }}>
-                            <Typography variant="h4" sx={{ fontWeight: 700, color: '#B8DB7B' }}>
-                                {escuela.estudiantes?.length || 0}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">Estudiantes vinculados</Typography>
-                            <Button size="small" sx={{ mt: 1 }}>Ver lista de estudiantes</Button>
+                        <Box sx={{ p: 2, bgcolor: '#f9f9f9', borderRadius: 2 }}>
+                            {escuela.estudiantes && escuela.estudiantes.length > 0 ? (
+                                <List>
+                                    {escuela.estudiantes.map((est: any) => (
+                                        <ListItem key={est.id} divider>
+                                            <ListItemText 
+                                                primary={`${est.personas?.nombre} ${est.personas?.primer_apellido}`} 
+                                                secondary={`DNI: ${est.personas?.dni}`}
+                                            />
+                                        </ListItem>
+                                    ))}
+                                </List>
+                            ) : (
+                                <Typography variant="body2" color="text.secondary">
+                                    No hay estudiantes vinculados a esta institución.
+                                </Typography>
+                            )}
                         </Box>
                     </Grid>
                 </Grid>

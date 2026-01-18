@@ -18,6 +18,7 @@ export interface EstudianteFormData {
     fecha_nacimiento: string // "YYYY-MM-DD"
     genero_id: string
     sala_id: number
+    escuela_id: string
 }
 
 // Tipo para el estudiante devuelto por la API (en la lista)
@@ -67,6 +68,20 @@ export interface Sala {
     id: number
     nombre: string | null
     grado: number | null
+}
+
+// Primero, define la interfaz si no la tienes importada
+export interface EscuelaDropdown {
+    id: number;
+    nombre: string;
+}
+
+// Agrega la función de exportación
+export const getEscuelas = async (): Promise<EscuelaDropdown[]> => {
+    const response = await fetch(`${API_URL}/escuelas`, {
+        // headers: { "Authorization": `Bearer ${token}` }
+    });
+    return handleApiResponse<EscuelaDropdown[]>(response);
 }
 
 async function handleApiResponse<T>(response: Response): Promise<T> {

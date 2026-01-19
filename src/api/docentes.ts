@@ -14,12 +14,23 @@ export interface Docente {
 }
 
 export async function getDocentes(): Promise<Docente[]> {
-  const res = await fetch(`${API_URL}/docentes`)
-  const body: ApiResponse<Docente[]> = await res.json()
-  if (!res.ok || !body.success) {
-    throw new Error(body.error?.description || body.message || "Error al cargar docentes")
+  // Obtenemos los datos del usuario (id, rol, escuela_id)
+  const stored = localStorage.getItem("padiUser");
+  const user = stored ? JSON.parse(stored) : null;
+  
+  const params = new URLSearchParams();
+  if (user) {
+    params.append("rol", user.rol);
+    if (user.escuela_id) params.append("escuela_id", user.escuela_id);
   }
-  return body.data || []
+
+  const res = await fetch(`${API_URL}/docentes?${params.toString()}`);
+  const body: ApiResponse<Docente[]> = await res.json();
+  
+  if (!res.ok || !body.success) {
+    throw new Error(body.message || "Error al cargar docentes");
+  }
+  return body.data || [];
 }
 
 

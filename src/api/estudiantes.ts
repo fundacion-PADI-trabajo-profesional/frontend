@@ -30,12 +30,17 @@ export interface Estudiante {
     sala_id: number
     fecha_creacion: string
     personas: {
+        fecha_nacimiento: string | null
         nombre: string | null
         primer_apellido: string | null
         segundo_apellido: string | null
         dni: string | null
     }
     salas: {
+        nombre: string | null
+    }
+    escuela: {
+        escuela_id: string
         nombre: string | null
     }
 }
@@ -139,4 +144,17 @@ export const getSalas = async (): Promise<Sala[]> => {
         // headers: { "Authorization": `Bearer ${token}` }
     });
     return handleApiResponse<Sala[]>(response);
+}
+
+export async function updateEstudiante(id: string, data: any): Promise<Estudiante> {
+    const res = await fetch(`${API_URL}/estudiantes/${id}`, {
+        method: "PUT", // O PATCH según tu backend
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    const body = await res.json();
+    if (!res.ok || !body.success) {
+        throw new Error(body.message || "Error al actualizar estudiante");
+    }
+    return body.data;
 }

@@ -20,6 +20,7 @@ import SaveIcon from "@mui/icons-material/Save"
 import CancelIcon from "@mui/icons-material/Cancel"
 import { crearEvaluacionInstancia, actualizarEvaluacionInstancia, type EvaluacionInstancia } from "../api/evaluaciones"; // <-- IMPORTA EL TIPO Y LA NUEVA FUNCIÓN
 import { getEstudiantes, type Estudiante } from "../api/estudiantes";
+import { useSearchParams } from "react-router-dom"
 
 interface EvaluacionFormProps {
   onSuccess: () => void;
@@ -51,6 +52,19 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
   const [loadingEstudiantes, setLoadingEstudiantes] = useState(true);
   // Este estado controla el valor del Autocomplete (el objeto estudiante completo)
   const [selectedEstudiante, setSelectedEstudiante] = useState<Estudiante | null>(null);
+
+  const [searchParams] = useSearchParams();
+  const prefillSalaId = searchParams.get("salaId"); // Capturamos la sala
+
+  useEffect(() => {
+    if (prefillEstudianteId) {
+      setFormData(prev => ({
+        ...prev,
+        estudianteId: prefillEstudianteId,
+        salaId: prefillSalaId || "" // Pre-cargamos la sala si viene en la URL
+      }));
+    }
+  }, [prefillEstudianteId, prefillSalaId]);
 
   useEffect(() => {
     const loadEstudiantes = async () => {

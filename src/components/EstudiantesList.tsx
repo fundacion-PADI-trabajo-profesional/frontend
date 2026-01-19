@@ -1,55 +1,86 @@
 "use client"
 
 import {
-    Box,
-    List,
-    ListItem,
-    ListItemText,
-    Typography,
-    Paper,
-    Fab,
-    InputAdornment,
-    TextField,
-    Button,
-    IconButton,
-    Menu,
-    MenuItem,
-    ListItemIcon,
-    Divider,
+    Box, List, ListItem, ListItemText, Typography, Paper, Fab, InputAdornment,
+    TextField, Button, IconButton, Menu, MenuItem, ListItemIcon,
+    Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select
 } from "@mui/material"
+import { useState, useMemo, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import AddIcon from "@mui/icons-material/Add"
 import SearchIcon from "@mui/icons-material/Search"
 import FilterListIcon from "@mui/icons-material/FilterList"
 import MoreVertIcon from "@mui/icons-material/MoreVert"
+import AssessmentIcon from "@mui/icons-material/Assessment"
 import EditIcon from "@mui/icons-material/Edit"
 import VisibilityIcon from "@mui/icons-material/Visibility"
-import AssessmentIcon from "@mui/icons-material/Assessment"
+import { useSearchParams } from "react-router-dom"
+
 import type { Estudiante } from "../api/estudiantes"
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { getSalas, type Sala } from "../api/estudiantes"
+import { getEscuelas, type Escuela } from "../api/escuelas"
 
 interface EstudiantesListProps {
     estudiantes: Estudiante[]
-    onAddEstudiante: () => void // Función para cambiar la vista a "form"
+    onAddEstudiante: () => void
+    onEditEstudiante: (estudiante: Estudiante) => void
 }
 
-/**
- * Componente que renderiza la lista de estudiantes,
- * agrupados por sala, con búsqueda y menú de acciones.
- */
-export default function EstudiantesList({ estudiantes, onAddEstudiante }: EstudiantesListProps) {
-    const [filtro, setFiltro] = useState("")
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const [selectedStudent, setSelectedStudent] = useState<Estudiante | null>(null);
-    const navigate = useNavigate();
+export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEstudiante }: EstudiantesListProps) {
+    const navigate = useNavigate()
+    const [filtroTexto, setFiltroTexto] = useState("")
+    const [userRole, setUserRole] = useState<string>("")
+    
+    // Filtros de selección
+    const [escuelaFiltro, setEscuelaFiltro] = useState<string>("todas")
+    const [salaFiltro, setSalaFiltro] = useState<string>("todas")
+    
+    // Datos de selectores
+    const [listaEscuelas, setListaEscuelas] = useState<Escuela[]>([])
+    const [listaSalas, setListaSalas] = useState<Sala[]>([])
+    const [puedeVerEscuelas, setPuedeVerEscuelas] = useState(false)
+    
+    // UI States
+    const [openFilterDialog, setOpenFilterDialog] = useState(false)
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+    const [selectedStudent, setSelectedStudent] = useState<Estudiante | null>(null)
 
-    // --- Manejo del Menú de Acciones ---
-    const handleMenuClick = (event: React.MouseEvent<HTMLElement>, student: Estudiante) => {
-        event.stopPropagation(); // Evita que se dispare el click del ListItem
-        setAnchorEl(event.currentTarget);
-        setSelectedStudent(student);
-    };
+    const [tabValue, setTabValue] = useState(0)
+    const [searchParams] = useSearchParams()
+    const prefillEstudianteId = searchParams.get("estudianteId")
 
+    useEffect(() => {
+        // Si venimos con un ID de estudiante, saltamos directo al formulario
+        if (prefillEstudianteId) {
+            setTabValue(1);
+        }
+    }, [prefillEstudianteId]);
+
+    useEffect(() => {
+        const loadInitialData = async () => {
+            const stored = localStorage.getItem("padiUser")
+            const user = stored ? JSON.parse(stored) : null
+            if (user) setUserRole(user.rol)
+
+            try {
+                // Intentamos cargar escuelas. Si falla por permisos, el catch lo maneja. 
+                const [salasData] = await Promise.all([getSalas()])
+                setListaSalas(salasData)
+
+                // Solo intentamos cargar escuelas si el rol tiene permisos 
+                if (user?.rol === "equipo_padi" || user?.rol === "encargado_zona") {
+                    const escuelasData = await getEscuelas()
+                    setListaEscuelas(escuelasData)
+                    setPuedeVerEscuelas(true)
+                }
+            } catch (err) {
+                console.log("No se cargaron escuelas por falta de permisos o error")
+                setPuedeVerEscuelas(false)
+            }
+        }
+        loadInitialData()
+    }, [])
+ 
     const handleMenuClose = () => {
         setAnchorEl(null);
         setSelectedStudent(null);
@@ -57,179 +88,159 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante }: Estudi
 
     const handleEvaluar = () => {
         if (selectedStudent) {
-            // Navega a evaluaciones, pasando el ID del estudiante seleccionado
-            navigate(`/evaluaciones?evaluarAhora=${selectedStudent.id}`)
+            // La ruta debe ser /evaluaciones (como en App.tsx)
+            navigate(`/evaluaciones?estudianteId=${selectedStudent.id}&nombre=${selectedStudent.personas.nombre} ${selectedStudent.personas.primer_apellido}&salaId=${selectedStudent.sala_id}`);
         }
         handleMenuClose();
     };
 
-    // TODO: Implementar estas acciones
-    const handleModificar = () => {
-        console.log("Modificar comisión:", selectedStudent?.id)
-        handleMenuClose();
-    }
     const handleVerMas = () => {
         if (selectedStudent) {
-            const nombre = selectedStudent.personas?.nombre || ""
-            const apellido = selectedStudent.personas?.primer_apellido || ""
-            const nombreCompleto = [apellido, nombre].filter(Boolean).join(", ")
-            const q = new URLSearchParams({
-                estudianteId: selectedStudent.id,
-                nombre: nombreCompleto,
-            })
-            navigate(`/historial-estudiante?${q.toString()}`)
+            navigate(`/historial-estudiante?estudianteId=${selectedStudent.id}&nombre=${selectedStudent.personas.nombre} ${selectedStudent.personas.primer_apellido}`);
         }
         handleMenuClose();
+    };
+
+    const handleModificar = () => {
+        if (selectedStudent) {
+            // Cambiamos la vista a "form" y pasamos el estudiante a editar
+            // Si usas el estado 'view' en Estudiantes.tsx, asegúrate de pasarle el objeto
+            onEditEstudiante(selectedStudent); 
+        }
+        handleMenuClose();
+    };
+
+    const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, estudiante: Estudiante) => {
+        setAnchorEl(event.currentTarget)
+        setSelectedStudent(estudiante)
     }
 
-    // --- Lógica de Filtro y Agrupación ---
-    const estudiantesFiltrados = estudiantes.filter((est) => {
-        const nombreCompleto = `${est.personas.nombre || ""} ${est.personas.primer_apellido || ""}`.toLowerCase()
-        const dni = est.personas.dni || ""
-        return nombreCompleto.includes(filtro.toLowerCase()) || dni.includes(filtro)
-    })
+    const { agrupados, salasOrdenadas } = useMemo(() => {
+        // 1. Filtrado por texto
+        const filtrados = estudiantes.filter((est) => {
+            const nombreCompleto = `${est.personas.nombre} ${est.personas.primer_apellido} ${est.personas.dni}`.toLowerCase();
+            return nombreCompleto.includes(filtroTexto.toLowerCase());
+        });
 
-    // Agrupa por sala (comisión)
-    const estudiantesAgrupados = estudiantesFiltrados.reduce((acc, est) => {
-        const salaNombre = est.salas.nombre || "Sin comisión"
-        if (!acc[salaNombre]) {
-            acc[salaNombre] = []
-        }
-        acc[salaNombre].push(est)
-        return acc
-    }, {} as Record<string, Estudiante[]>)
+        // 2. Agrupación por Sala (Comisión)
+        const grupos = filtrados.reduce((acc, est) => {
+            const key = est.salas?.nombre || "Sin comisión";
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(est);
+            return acc;
+        }, {} as Record<string, Estudiante[]>);
 
-    // Obtiene las claves (nombres de sala) y las ordena
-    const salasOrdenadas = Object.keys(estudiantesAgrupados).sort((a, b) => {
-        if (a === "Sin comisión") return 1; // "Sin comisión" al final
-        if (b === "Sin comisión") return -1;
-        return a.localeCompare(b); // Orden alfabético para el resto
-    });
+        // 3. Ordenar claves: Alfabético y "Sin comisión" al final
+        const ordenadas = Object.keys(grupos).sort((a, b) => {
+            if (a === "Sin comisión") return 1;
+            if (b === "Sin comisión") return -1;
+            return a.localeCompare(b);
+        });
 
-    // --- Renderizado ---
-    if (estudiantes.length === 0) {
-        return (
-            <Box sx={{ textAlign: "center", py: 8 }}>
-                <Typography variant="h6" sx={{ color: "#999", mb: 2 }}>
-                    No hay estudiantes registrados
-                </Typography>
-                <Typography variant="body2" sx={{ color: "#ccc", mb: 4 }}>
-                    Comienza creando un nuevo perfil de estudiante
-                </Typography>
-                <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={onAddEstudiante}
-                    sx={{
-                        bgcolor: "#000",
-                        color: "#fff",
-                        textTransform: "none",
-                        borderRadius: 2,
-                        py: 1,
-                        px: 3,
-                        "&:hover": { bgcolor: "#333" },
-                    }}
-                >
-                    Crear Estudiante
-                </Button>
-            </Box>
-        )
+        return { agrupados: grupos, salasOrdenadas: ordenadas };
+    }, [estudiantes, filtroTexto]);
+
+    const estudiantesFiltrados = useMemo(() => {
+        return estudiantes.filter((est) => {
+            const cumpleTexto = `${est.personas.nombre} ${est.personas.primer_apellido} ${est.personas.dni}`
+                .toLowerCase().includes(filtroTexto.toLowerCase())
+            const cumpleEscuela = escuelaFiltro === "todas" || est.escuela.escuela_id === escuelaFiltro
+            const cumpleSala = salaFiltro === "todas" || est.sala_id === Number(salaFiltro)
+            return cumpleTexto && cumpleEscuela && cumpleSala
+        })
+    }, [estudiantes, filtroTexto, escuelaFiltro, salaFiltro])
+
+    const resetFiltros = () => {
+        setEscuelaFiltro("todas")
+        setSalaFiltro("todas")
     }
 
     return (
-        <Box sx={{ position: "relative", pb: 10 }}> {/* Padding-bottom para que el FAB no tape contenido */}
-
-            {/* Controles de Búsqueda y Filtro (sticky) */}
-            <Box sx={{
-                display: "flex",
-                gap: 2,
-                mb: 3,
-                position: 'sticky',
-                top: 0,
-                bgcolor: '#f5f5f5', // Mismo color de fondo de la página
-                zIndex: 10,
-                py: 2
-            }}>
+        <Box sx={{ position: "relative", pb: 10 }}>
+            {/* Buscador y Botón Filtrar */}
+            <Box sx={{ display: "flex", gap: 2, mb: 4, alignItems: "center" }}>
                 <TextField
                     fullWidth
                     variant="outlined"
-                    placeholder="Buscar estudiante por nombre o DNI"
-                    value={filtro}
-                    onChange={(e) => setFiltro(e.target.value)}
+                    placeholder="Buscar estudiante..."
+                    value={filtroTexto}
+                    onChange={(e) => setFiltroTexto(e.target.value)}
                     InputProps={{
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <SearchIcon />
-                            </InputAdornment>
-                        ),
-                    }}
-                    sx={{
-                        '& .MuiOutlinedInput-root': {
-                            borderRadius: '50px', // Bordes redondeados
-                            backgroundColor: '#fff', // Fondo blanco
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': {
-                            border: 'none' // Sin borde
-                        }
+                        startAdornment: (<InputAdornment position="start"><SearchIcon color="action" /></InputAdornment>),
+                        sx: { borderRadius: 3, bgcolor: "#fff" }
                     }}
                 />
                 <Button
-                    variant="outlined"
+                    variant={escuelaFiltro !== "todas" || salaFiltro !== "todas" ? "contained" : "outlined"}
                     startIcon={<FilterListIcon />}
-                    sx={{
-                        borderRadius: "50px",
-                        borderColor: "#ddd",
-                        bgcolor: '#fff',
-                        color: "#333",
-                        textTransform: "none",
-                        px: 3,
-                        flexShrink: 0, // Evita que se encoja
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                    }}
+                    onClick={() => setOpenFilterDialog(true)}
+                    sx={{ borderRadius: 3, height: "56px", px: 3, textTransform: "none", fontWeight: 600 }}
                 >
                     Filtrar
                 </Button>
             </Box>
 
-            {/* Lista de Estudiantes Agrupada */}
+            {/* Diálogo de Filtros Dinámico */}
+            <Dialog open={openFilterDialog} onClose={() => setOpenFilterDialog(false)} fullWidth maxWidth="xs">
+                <DialogTitle sx={{ fontWeight: 700 }}>Opciones de Filtro</DialogTitle>
+                <DialogContent>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+                        
+                        {/* FILTRO DE ESCUELAS: Solo se muestra si tiene permisos  */}
+                        {puedeVerEscuelas && (
+                            <FormControl fullWidth variant="filled">
+                                <InputLabel>Institución / Escuela</InputLabel>
+                                <Select value={escuelaFiltro} onChange={(e) => setEscuelaFiltro(e.target.value)}>
+                                    <MenuItem value="todas">Todas las instituciones</MenuItem>
+                                    {listaEscuelas.map((esc) => (
+                                        <MenuItem key={esc.id} value={esc.id}>{esc.nombre}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        )}
+
+                        {/* FILTRO DE SALAS: Siempre visible */}
+                        <FormControl fullWidth variant="filled">
+                            <InputLabel>Sala / Comisión</InputLabel>
+                            <Select value={salaFiltro} onChange={(e) => setSalaFiltro(e.target.value)}>
+                                <MenuItem value="todas">Todas las salas</MenuItem>
+                                {listaSalas.map((s) => (
+                                    <MenuItem key={s.id} value={String(s.id)}>{s.nombre}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </Box>
+                </DialogContent>
+                <DialogActions sx={{ p: 3 }}>
+                    <Button onClick={resetFiltros}>Limpiar</Button>
+                    <Button variant="contained" onClick={() => setOpenFilterDialog(false)} sx={{ bgcolor: '#000' }}>
+                        Ver resultados
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Listado Agrupado */}
             {salasOrdenadas.map((salaNombre) => (
-                <Box key={salaNombre} sx={{ mb: 3 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#555', px: 2, mb: 1, textTransform: 'uppercase' }}>
+                <Box key={salaNombre} sx={{ mb: 4 }}>
+                    <Typography variant="subtitle2" sx={{ color: "#666", mb: 1, fontWeight: 700, textTransform: "uppercase" }}>
                         {salaNombre}
                     </Typography>
-                    <Paper elevation={0} sx={{ border: "1px solid #e0e0e0", borderRadius: 2, overflow: 'hidden' }}>
-                        <List sx={{ padding: 0 }}>
-                            {estudiantesAgrupados[salaNombre].map((est, index) => (
-                                <ListItem
-                                    key={est.id}
-                                    divider={index < estudiantesAgrupados[salaNombre].length - 1}
-                                    sx={{
-                                        py: 2,
-                                        bgcolor: '#fff',
-                                        "&:hover": { bgcolor: "#f9f9f9" },
-                                        cursor: 'pointer',
-                                    }}
-                                    onClick={(e) => handleMenuClick(e, est)} // Abre el menú al hacer clic
+                    <Paper elevation={0} sx={{ border: "1px solid #eee", borderRadius: 3, overflow: "hidden" }}>
+                        <List disablePadding>
+                            {agrupados[salaNombre].map((est, index) => (
+                                <ListItem 
+                                    key={est.id} 
+                                    divider={index < agrupados[salaNombre].length - 1}
+                                    secondaryAction={
+                                        <IconButton edge="end" onClick={(e) => handleMenuOpen(e, est)}>
+                                            <MoreVertIcon />
+                                        </IconButton>
+                                    }
                                 >
                                     <ListItemText
-                                        primary={
-                                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                                                {est.personas.primer_apellido}, {est.personas.nombre}
-                                            </Typography>
-                                        }
-                                        secondary={
-                                            <Typography component="span" variant="body2" color="text.secondary">
-                                                DNI {est.personas.dni || "N/A"}
-                                            </Typography>
-                                        }
+                                        primary={<Typography sx={{ fontWeight: 600 }}>{est.personas.primer_apellido}, {est.personas.nombre}</Typography>}
+                                        secondary={`DNI: ${est.personas.dni}`}
                                     />
-                                    <IconButton
-                                        aria-label="opciones"
-                                        onClick={(e) => handleMenuClick(e, est)}
-                                    >
-                                        <MoreVertIcon />
-                                    </IconButton>
                                 </ListItem>
                             ))}
                         </List>
@@ -237,113 +248,46 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante }: Estudi
                 </Box>
             ))}
 
-            {/* Menú de Acciones (simula el bottom sheet) */}
-            <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-                MenuListProps={{
-                    'aria-labelledby': 'basic-button',
-                }}
-                // Configuración para que se parezca más a un Bottom Sheet
-                PaperProps={{
-                    sx: {
-                        width: { xs: '100%', sm: 350 },
-                        maxWidth: '100%',
-                        borderTopLeftRadius: 16,
-                        borderTopRightRadius: 16,
-                        boxShadow: '0 -4px 12px rgba(0,0,0,0.1)',
-                        // Posicionamiento en el fondo
-                        position: 'fixed',
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        margin: 0,
-                        // Oculta en pantallas más grandes (sm y más)
-                        display: { sm: 'none' },
-                    },
-                }}
-            >
-                {/* Título del Menú */}
-                {selectedStudent && (
-                    <Box sx={{ px: 2, py: 2 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                            {selectedStudent.personas.primer_apellido}, {selectedStudent.personas.nombre}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            DNI {selectedStudent.personas.dni} - {selectedStudent.salas.nombre || "Sin comisión"}
-                        </Typography>
-                    </Box>
-                )}
-                <Divider sx={{ mb: 1 }} />
-                <MenuItem onClick={handleEvaluar} sx={{ py: 1.5, px: 2 }}>
-                    <ListItemIcon><AssessmentIcon fontSize="small" /></ListItemIcon>
-                    Evaluar
-                </MenuItem>
-                <MenuItem onClick={handleModificar} sx={{ py: 1.5, px: 2 }}>
-                    <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
-                    Modificar comisión
-                </MenuItem>
-                <MenuItem onClick={handleVerMas} sx={{ py: 1.5, px: 2 }}>
-                    <ListItemIcon><VisibilityIcon fontSize="small" /></ListItemIcon>
-                    Ver más
-                </MenuItem>
-            </Menu>
+            {/* Solo mostramos el FAB si NO es docente */}
+            {userRole !== "docente" && (
+                <Fab
+                    color="primary"
+                    onClick={onAddEstudiante}
+                    sx={{ position: "fixed", bottom: 40, right: 40, bgcolor: "#000" }}
+                >
+                    <AddIcon />
+                </Fab>
+            )}
 
-            {/* Menú de Acciones para Desktop (se oculta en móvil) */}
-            <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
+            <Menu 
+                anchorEl={anchorEl} 
+                open={Boolean(anchorEl)} 
                 onClose={handleMenuClose}
-                MenuListProps={{
-                    'aria-labelledby': 'basic-button',
-                }}
-                PaperProps={{
-                    sx: {
-                        display: { xs: 'none', sm: 'block' }, // Oculto en XS
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                        borderRadius: 2,
-                    },
-                }}
             >
-                {/* Título del Menú */}
-                {selectedStudent && (
-                    <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #eee' }}>
-                        <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                            {selectedStudent.personas.primer_apellido}, {selectedStudent.personas.nombre}
-                        </Typography>
-                    </Box>
-                )}
+                <Box sx={{ px: 2, py: 1, borderBottom: "1px solid #eee", mb: 1 }}>
+                    <Typography variant="caption" color="textSecondary">Estudiante</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                        {selectedStudent?.personas.primer_apellido}, {selectedStudent?.personas.nombre}
+                    </Typography>
+                </Box>
+
                 <MenuItem onClick={handleEvaluar} sx={{ py: 1, px: 2 }}>
                     <ListItemIcon><AssessmentIcon fontSize="small" /></ListItemIcon>
                     Evaluar
                 </MenuItem>
-                <MenuItem onClick={handleModificar} sx={{ py: 1, px: 2 }}>
-                    <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
-                    Modificar comisión
-                </MenuItem>
+
+                {userRole !== "docente" && (
+                    <MenuItem onClick={handleModificar}>
+                        <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
+                        Modificar datos
+                    </MenuItem>
+                )}
+
                 <MenuItem onClick={handleVerMas} sx={{ py: 1, px: 2 }}>
                     <ListItemIcon><VisibilityIcon fontSize="small" /></ListItemIcon>
-                    Ver más
+                    Ver historial
                 </MenuItem>
             </Menu>
-
-            {/* Botón Flotante para Añadir */}
-            <Fab
-                color="primary"
-                aria-label="add"
-                onClick={onAddEstudiante}
-                sx={{
-                    position: "fixed",
-                    bottom: { xs: 24, md: 40 }, // Más bajo en móvil
-                    right: { xs: 24, md: 40 },
-                    bgcolor: "#000",
-                    color: "#fff",
-                    "&:hover": { bgcolor: "#333" },
-                }}
-            >
-                <AddIcon />
-            </Fab>
         </Box>
     )
 }

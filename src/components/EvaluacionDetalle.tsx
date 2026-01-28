@@ -58,12 +58,18 @@ const getAreaIcon = (areaId: string) => {
 }
 
 const getStatusColor = (estadoId: string) => {
-    if (estadoId === 'N') return { bg: '#FEF3C7', text: '#D97706', label: 'No iniciado', color: 'warning' };
-    if (estadoId === 'E') return { bg: '#DBEAFE', text: '#2563EB', label: 'En Progreso', color: 'info' };
-    if (estadoId === 'C') return { bg: '#D1FAE5', text: '#059669', label: 'Completado', color: 'success' };
-    if (estadoId === 'A') return { bg: '#D1FAE5', text: '#059669', label: 'Aprobada', color: 'success' };
-    if (estadoId === 'D') return { bg: '#fee2e2', text: '#ef4444', label: 'Desaprobada', color: 'error' };
-    return { bg: '#F3F4F6', text: '#374151', label: estadoId, color: 'default' };
+    switch (estadoId) {
+        case "N":
+            return { bg: '#FEF3C7', text: '#D97706', label: 'No iniciada', color: 'warning' };
+        case "E":
+            return { bg: '#DBEAFE', text: '#2563EB', label: 'En Progreso', color: 'info' };
+        case "A":
+            return { bg: '#D1FAE5', text: '#059669', label: 'Aprobada', color: 'success' };
+        case "D":
+            return { bg: '#FEE2E2', text: '#EF4444', label: 'Desaprobada', color: 'error' };
+        default:
+            return { bg: '#F3F4F6', text: '#6B7280', label: 'Pendiente', color: 'default' };
+    }
 }
 
 
@@ -79,7 +85,6 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
     //estados para revision de rtas
     const [revisionOpen, setRevisionOpen] = useState(false);
     const [revisionData, setRevisionData] = useState<{ id: string, nombre: string, score: number, total: number, statusId: string } | null>(null);
-
 
     // Carga inicial y recarga
     const loadEvaluationData = async () => {
@@ -139,8 +144,15 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
     if (!data || !data.estudiante) return <Box sx={{ p: 4 }}><Typography>No se encontraron datos del estudiante.</Typography></Box>;
     const areas = data.areas || [];
 
-    const fechaCreacion = new Date(data.createdAt).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    // const fechaCreacion = new Date(data.createdAt).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
     const overallStatus = getStatusColor(data.estadoId);
+
+    const fechaObj = data.createdAt;
+    const mesYAnio = fechaObj.toLocaleDateString('es-ES', {
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'UTC' // Usar UTC si el backend envía ISO sin hora específica
+    });
 
     return (
         <Box>
@@ -153,7 +165,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                     Evaluación {data.tipoId === 'inicial' ? 'Inicial' : 'de Cierre'}
                 </Typography>
                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#666' }}>
-                    Sala {data.salaNombre || data.salaId}
+                    {data.salaNombre || data.salaId}
                 </Typography>
             </Box>
 
@@ -169,41 +181,34 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
 
 
             {/* Student Card */}
-            <Card sx={{
-                mb: 4,
-                borderRadius: 4,
-                background: 'linear-gradient(to right, #eff6ff, #fff)',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                border: '1px solid #e0e7ff'
-            }}>
+            <Card sx={{ mb: 4, borderRadius: 4 }}>
                 <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Box sx={{
-                        width: 60, height: 60,
-                        bgcolor: '#BFDBFE',
-                        borderRadius: '50%',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
+                    <Box sx={{ /* avatar style */ }}>
                         <FaceIcon sx={{ fontSize: 35, color: '#2563EB' }} />
                     </Box>
-                    <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-                            {data.estudiante.nombre} {data.estudiante.apellido}
+                    <Box sx={{ flexGrow: 1 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                            {data.estudiante?.nombre} {data.estudiante?.apellido}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                            DNI: {data.estudiante.dni}
+                        {/* Colegio del Alumno */}
+                        <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
+                            🏫 {data.estudiante?.escuelaNombre}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            DNI: {data.estudiante?.dni}
                         </Typography>
 
                         <Grid container spacing={4} sx={{ mt: 1 }}>
                             <Grid item>
-                                <Typography variant="caption" sx={{ color: '#666', display: 'block' }}>Edad</Typography>
+                                <Typography variant="caption" sx={{ display: 'block' }}>Edad</Typography>
                                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                    {calcularEdad(data.estudiante.fechaNacimiento)}
+                                    {calcularEdad(data.estudiante?.fechaNacimiento)}
                                 </Typography>
                             </Grid>
                             <Grid item>
-                                <Typography variant="caption" sx={{ color: '#666', display: 'block' }}>Fecha Evaluación</Typography>
+                                <Typography variant="caption" sx={{ display: 'block' }}>Fecha Evaluación</Typography>
                                 <Typography variant="body2" sx={{ fontWeight: 600, textTransform: 'capitalize' }}>
-                                    {fechaCreacion}
+                                    {mesYAnio}
                                 </Typography>
                             </Grid>
                         </Grid>
@@ -216,11 +221,10 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {data.areas?.map((area) => {
                     const statusStyle = getStatusColor(area.estadoId);
-                    const aciertosLogrados = area.aciertosIndividuales !== null && area.aciertosIndividuales !== undefined
-                        ? area.aciertosIndividuales
-                        : (area.puntaje !== null ? area.puntaje : 0);
 
-                    const totalPreguntasActivas = area.totalPreguntas || area.totalPuntosPosibles || 6;
+                    //solo se muestra el texto de aciertos logrados si el estado es aprobada, desaprobada o completada de cada area
+                    // const mostrarAciertos = area.estadoId === 'A' || area.estadoId === 'D' || area.estadoId === 'C';
+
                     return (
                         <Paper
                             key={area.id}
@@ -240,7 +244,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                                     borderColor: area.estadoId !== 'C' ? 'transparent' : '#eee'
                                 }
                             }}
-                            onClick={() => handleAreaClick(area.id, area.nombre, area.estadoId, aciertosLogrados, totalPreguntasActivas)}
+                        // onClick={() => handleAreaClick(area.id, area.nombre, area.estadoId, aciertosLogrados, totalPreguntasActivas)}
                         >
 
                             {/* Icon Box */}
@@ -267,21 +271,14 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                                     size="small"
                                     sx={{
                                         mt: 0.5,
-                                        height: 20,
-                                        fontSize: '0.75rem',
-                                        fontWeight: 600,
                                         bgcolor: statusStyle.bg,
                                         color: statusStyle.text
                                     }}
                                 />
-                                {area.estadoId === 'E' && (
-                                    <Typography variant="caption" sx={{ ml: 1, color: '#999' }}>
-                                        (Retomar)
-                                    </Typography>
-                                )}
-                                {(area.estadoId === 'A' || area.estadoId === 'D' || area.estadoId === 'C') && (
+
+                                {area.estadoId !== "N" && area.totalPreguntas !== undefined && (
                                     <Typography variant="caption" sx={{ ml: 1, color: '#666', fontWeight: 'bold' }}>
-                                        ({aciertosLogrados} / {totalPreguntasActivas} respuestas logradas)
+                                        ({area.aciertosIndividuales || 0} / {area.totalPreguntas} respuestas logradas)
                                     </Typography>
                                 )}
                             </Box>

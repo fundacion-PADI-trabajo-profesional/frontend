@@ -50,6 +50,7 @@ export interface EstudianteDetalle {
   dni: string
   fechaNacimiento: string | null
   genero: string
+  escuelaNombre?: string
 }
 
 export interface EvaluacionInstancia {
@@ -75,62 +76,56 @@ export interface CreateEvaluacionPayload {
   fecha_creacion: string
 }
 
-// --- 2. MAPPER (AQUÍ ESTÁ LA MAGIA) ---
 function mapToCamelCase(data: any): EvaluacionInstancia {
+  const nombre = data?.estudiantes?.personas?.nombre ?? "";
+  const apellido = data?.estudiantes?.personas?.primer_apellido ?? "";
 
-  // Debug para ver qué llega del backend
-  // console.log("Data cruda del backend:", data);
+  const nombreCompleto = [apellido, nombre].filter(Boolean).join(", ");
 
-  const nombre = data?.estudiantes?.personas?.nombre ?? ""
-  const apellido = data?.estudiantes?.personas?.primer_apellido ?? ""
-  const estudianteNombre = [apellido, nombre].filter(Boolean).join(", ") || undefined
+  const escuelaId = data.estudiantes?.escuela_id;
+  const nombreEscuela = data.estudiantes?.escuelas?.nombre ?? "";
 
-  // Mapeo de áreas
-  let areasMapped: AreaDetalle[] = []
-  if (data.evaluaciones_estudiante_area && Array.isArray(data.evaluaciones_estudiante_area)) {
+  // Mapeo de áreas: Aseguramos que el estadoId sea exacto del backend
+  let areasMapped = [];
+  if (data.evaluaciones_estudiante_area) {
     areasMapped = data.evaluaciones_estudiante_area.map((item: any) => ({
       id: item.area_id,
       instanciaId: item.id,
       nombre: item.areas?.nombre || "",
       descripcion: item.areas?.descripcion || "",
-      orden: item.areas?.orden || 0,
-      estadoId: item.estado_id,
+      estadoId: item.estado_id, // <-- Aquí debe llegar 'N'
       estadoDescripcion: item.estados_evaluacion?.descripcion || "",
       puntaje: item.puntaje,
-      aciertosIndividuales: item.aciertos_individuales,
-      observacion: item.observacion,
-      totalPreguntas: item.totalPreguntas // <--- CAPTURAMOS EL TOTAL DE PREGUNTAS ACTIVAS
-    })).sort((a: any, b: any) => a.orden - b.orden)
-  }
-
-  // Objeto estudiante detallado
-  // NOTA: Usamos optional chaining (?.) para evitar crashes si algo falta
-  const estudianteDetalle: EstudianteDetalle = {
-    id: data.estudiantes?.id || "",
-    nombre: data.estudiantes?.personas?.nombre || "",
-    apellido: data.estudiantes?.personas?.primer_apellido || "",
-    dni: data.estudiantes?.personas?.dni || "",
-    fechaNacimiento: data.estudiantes?.personas?.fecha_nacimiento || null,
-    genero: data.estudiantes?.generos?.descripcion || ""
+      aciertosIndividuales: item.aciertos_individuales || 0,
+      totalPreguntas: item.totalPreguntas || 6
+    }));
   }
 
   return {
     id: data.id,
     estudianteId: data.estudiante_id,
-    estudianteNombre,
+    estudianteNombre: nombreCompleto || data.estudiante_id,
 
-    // AQUÍ ASIGNAMOS EL OBJETO CREADO ARRIBA
-    estudiante: estudianteDetalle,
+    estudiante: {
+      id: data.estudiantes?.id || "",
+      nombre,
+      apellido,
+      dni: data.estudiantes?.personas?.dni || "",
+      fechaNacimiento: data.estudiantes?.personas?.fecha_nacimiento || null,
+      genero: data.estudiantes?.personas?.genero || "",
+      escuelaNombre: nombreEscuela || "No asignada",
+    },
 
     profesorId: data.profesor_id,
     salaId: data.sala_id,
-    salaNombre: data.estudiantes?.salas?.nombre,
+    salaNombre: data.estudiantes?.salas?.nombre || `Sala de ${data.sala_id}`,
     tipoId: data.tipo_id,
     estadoId: data.estado_id,
     puntaje: data.puntaje,
-    createdAt: new Date(data.fecha_creacion),
+    // Corrección de Fecha: Forzamos el parseo correcto
+    createdAt: data.fecha_creacion ? new Date(data.fecha_creacion) : new Date(),
     areas: areasMapped
-  }
+  };
 }
 
 // ----------------------------------------------------------------------

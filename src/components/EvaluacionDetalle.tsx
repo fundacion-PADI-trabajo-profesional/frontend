@@ -145,6 +145,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
     const areas = data.areas || [];
 
     // const fechaCreacion = new Date(data.createdAt).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    //const overallStatus = getStatusColor(data.estadoId);
     const overallStatus = getStatusColor(data.estadoId);
 
     const fechaObj = data.createdAt;

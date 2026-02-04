@@ -86,19 +86,24 @@ function mapToCamelCase(data: any): EvaluacionInstancia {
   const nombreEscuela = data.estudiantes?.escuelas?.nombre ?? "";
 
   // Mapeo de áreas: Aseguramos que el estadoId sea exacto del backend
-  let areasMapped = [];
+  let areasMapped: AreaDetalle[] = [];
+
   if (data.evaluaciones_estudiante_area) {
-    areasMapped = data.evaluaciones_estudiante_area.map((item: any) => ({
-      id: item.area_id,
-      instanciaId: item.id,
-      nombre: item.areas?.nombre || "",
-      descripcion: item.areas?.descripcion || "",
-      estadoId: item.estado_id, // <-- Aquí debe llegar 'N'
-      estadoDescripcion: item.estados_evaluacion?.descripcion || "",
-      puntaje: item.puntaje,
-      aciertosIndividuales: item.aciertos_individuales || 0,
-      totalPreguntas: item.totalPreguntas || 6
-    }));
+    areasMapped = data.evaluaciones_estudiante_area.map((item: any) => {
+      const estadoArea = (item.estado_id ?? "N").toString().toUpperCase();
+
+      return {
+        id: item.area_id,
+        instanciaId: item.id,
+        nombre: item.areas?.nombre || "",
+        descripcion: item.areas?.descripcion || "",
+        estadoId: estadoArea,
+        estadoDescripcion: item.estados_evaluacion?.descripcion || "",
+        puntaje: item.puntaje,
+        aciertosIndividuales: item.aciertos_individuales || 0,
+        totalPreguntas: item.totalPreguntas || 6,
+      };
+    });
   }
 
   return {
@@ -182,6 +187,8 @@ export async function getEvaluacionInstanciaById(id: string): Promise<Evaluacion
   if (!res.ok) throw new Error("Error al cargar la evaluación")
   const resData = await res.json()
   // Importante: pasamos resData.data al mapper
+  console.log(resData.data)
+
   return mapToCamelCase(resData.data)
 }
 

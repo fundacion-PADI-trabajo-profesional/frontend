@@ -1,7 +1,5 @@
-// Archivo: src/components/EvaluacionRevision.tsx
-
-import React, { useEffect, useState } from 'react';
-import { Box, Typography, IconButton, CircularProgress, Paper, Divider, List, ListItem, ListItemText, ListItemIcon, Chip, Alert, Dialog } from '@mui/material';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Box, Typography, IconButton, CircularProgress, Paper, Divider, List, ListItem, ListItemText, ListItemIcon, Chip, Alert, Dialog, Stack } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -41,6 +39,51 @@ export default function EvaluacionRevision({ open, onClose, evaluacionId, areaId
         return { text: 'No', icon: <CancelIcon color="error" /> };
     };
 
+    //esto no se si se puede agregar, por lo menos aca porque es unico para cada seccion de cada area de cada sala y no se si vale tanto la pena
+    const groupTitles: Record<number, string> = {
+        // 4: "Copiado de figuras",
+        // 5: "Recorte y pegado",
+    };
+
+    const getGroupTitle = (n: number) => groupTitles[n] ?? `Sección ${n}`;
+
+    // Agrupar preguntas por numero (grupo)
+    const grouped = useMemo(() => {
+        const preguntas = data?.preguntas ?? [];
+        const map = new Map<number, typeof preguntas>();
+
+        for (const p of preguntas) {
+            const key = Number(p.numero);
+            if (!map.has(key)) map.set(key, []);
+            map.get(key)!.push(p);
+        }
+
+        // orden por numero asc
+        return Array.from(map.entries()).sort(([a], [b]) => a - b);
+    }, [data]);
+
+    // Stats por grupo (mayoría: ceil(total/2))
+    const getGroupStats = (preguntas: any[]) => {
+        const total = preguntas.length;
+
+        let answered = 0;
+        let correct = 0;
+
+        for (const p of preguntas) {
+            const r = data?.respuestas.find(x => x.pregunta_id === p.id)?.respuesta ?? null;
+            if (r !== null && r !== undefined) {
+                answered += 1;
+                if (r === 1) correct += 1;
+            }
+        }
+
+        const needed = Math.ceil(total / 2);
+        const aprobado = answered === total && correct >= needed;
+        const completo = answered === total;
+
+        return { total, answered, correct, needed, aprobado, completo };
+    };
+
     if (!open) return null;
 
     const puntajePorcentual = (score / total) * 100;
@@ -71,29 +114,105 @@ export default function EvaluacionRevision({ open, onClose, evaluacionId, areaId
                 ) : error ? (
                     <Alert severity="error">{error}</Alert>
                 ) : (
-                    <List component={Paper} elevation={1} sx={{ borderRadius: 2 }}>
-                        {data?.preguntas.map((p, index) => {
-                            const { text, icon } = getAnswerText(p.id);
+                    <Stack spacing={2}>
+                        {grouped.map(([groupNumber, preguntasDelGrupo]) => {
+                            const stats = getGroupStats(preguntasDelGrupo);
+
                             return (
-                                <React.Fragment key={p.id}>
-                                    <ListItem alignItems="flex-start">
-                                        <ListItemText
-                                            primary={<Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>{index + 1}. {p.consigna}</Typography>}
-                                            secondary={
-                                                <Typography component="div" variant="body2" color="text.secondary">
-                                                    Grupo: {p.grupopregunta} | Material: {p.materiales || '-'}
-                                                </Typography>
-                                            }
-                                        />
-                                        <ListItemIcon sx={{ minWidth: 40, alignItems: 'center', justifyContent: 'center' }}>
-                                            <Chip label={text} size="small" color={text === 'Sí' ? 'success' : text === 'No' ? 'error' : 'default'} sx={{ mr: 1 }} />
-                                        </ListItemIcon>
-                                    </ListItem>
-                                    <Divider component="li" />
-                                </React.Fragment>
+                                <Paper key={groupNumber} elevation={1} sx={{ borderRadius: 2, overflow: "hidden" }}>
+                                    {/* Header del grupo */}
+                                    <Box
+                                        sx={{
+                                            px: 2,
+                                            py: 1.5,
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "space-between",
+                                            bgcolor: "#F7F9FC", // suave
+                                            borderBottom: "1px solid rgba(0,0,0,0.06)",
+                                        }}
+                                    >
+                                        <Box>
+                                            <Typography sx={{ fontWeight: 800 }}>
+                                                {getGroupTitle(groupNumber)}
+                                            </Typography>
+                                            <Typography variant="body2" color="text.secondary">
+                                                Se aprueba con {stats.needed}/{stats.total} respuestas “Sí”
+                                            </Typography>
+                                        </Box>
+
+                                        <Stack direction="row" spacing={1} alignItems="center">
+                                            <Chip
+                                                size="small"
+                                                label={`${stats.correct}/${stats.total}`}
+                                                sx={{
+                                                    bgcolor: "#EEF2FF",
+                                                    color: "#4A78C2",
+                                                    fontWeight: 700
+                                                }}
+                                            />
+                                            <Chip
+                                                size="small"
+                                                label={
+                                                    !stats.completo ? "Incompleto" : stats.aprobado ? "Sección aprobada" : "Sección no aprobada"
+                                                }
+                                                sx={{
+                                                    fontWeight: 700,
+                                                    ...(!stats.completo
+                                                        ? { bgcolor: "#FFF7E6", color: "#B26A00" }  // N pastel
+                                                        : stats.aprobado
+                                                            ? { bgcolor: "#ECF7F0", color: "#4F8A5B" } // A pastel
+                                                            : { bgcolor: "#FDEFF0", color: "#C05A63" } // D pastel
+                                                    )
+                                                }}
+                                            />
+                                        </Stack>
+                                    </Box>
+
+                                    {/* Preguntas del grupo */}
+                                    <List disablePadding>
+                                        {preguntasDelGrupo.map((p: any, idx: number) => {
+                                            const { text, icon } = getAnswerText(p.id);
+                                            return (
+                                                <React.Fragment key={p.id}>
+                                                    <ListItem alignItems="flex-start" sx={{ px: 2, py: 1.25 }}>
+                                                        <ListItemText
+                                                            primary={
+                                                                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                                                                    {idx + 1}. {p.consigna}
+                                                                </Typography>
+                                                            }
+                                                            secondary={
+                                                                <Typography component="div" variant="body2" color="text.secondary">
+                                                                    Tipo de Pregunta: {p.tipopregunta || "-"}
+                                                                </Typography>
+                                                            }
+                                                        />
+                                                        <ListItemIcon sx={{ minWidth: 40, alignItems: "center", justifyContent: "center" }}>
+                                                            <Chip
+                                                                label={text}
+                                                                size="small"
+                                                                sx={{
+                                                                    fontWeight: 700,
+                                                                    ...(text === "Sí"
+                                                                        ? { bgcolor: "#ECF7F0", color: "#4F8A5B" }
+                                                                        : text === "No"
+                                                                            ? { bgcolor: "#FDEFF0", color: "#C05A63" }
+                                                                            : { bgcolor: "#F1F3F5", color: "#6C757D" })
+                                                                }}
+                                                            />
+                                                        </ListItemIcon>
+                                                    </ListItem>
+                                                    <Divider />
+                                                </React.Fragment>
+                                            );
+                                        })}
+                                    </List>
+                                </Paper>
                             );
                         })}
-                    </List>
+                    </Stack>
+
                 )}
             </Box>
         </Dialog>

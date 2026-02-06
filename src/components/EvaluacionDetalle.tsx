@@ -66,7 +66,7 @@ const getStatusColor = (estadoId: string) => {
         case "A":
             return { bg: '#D1FAE5', text: '#059669', label: 'Aprobada', color: 'success' };
         case "D":
-            return { bg: '#FEE2E2', text: '#EF4444', label: 'Desaprobada', color: 'error' };
+            return { bg: '#242222', text: '#EF4444', label: 'Desaprobada', color: 'error' };
         default:
             return { bg: '#F3F4F6', text: '#6B7280', label: 'Pendiente', color: 'default' };
     }

@@ -28,6 +28,8 @@ import { getEvaluacionesInstancias, eliminarEvaluacionInstancia, type Evaluacion
 const TOTAL_AREAS_EVALUACION = 4;
 const ESTADO_NO_INICIADA = "N"
 const ESTADO_APROBADA = "A"
+const ESTADO_DESAPROBADA = "D"
+const ESTADO_EN_PROGRESO = "E"
 
 export default function EvaluacionesList({ onEditar }: {
   onEditar: (evaluacion: EvaluacionInstancia) => void
@@ -99,28 +101,40 @@ export default function EvaluacionesList({ onEditar }: {
 
   const getEstadoColor = (estado: string) => {
     switch (estado) {
-      case "N":
-        return "warning"
-      case "E":
-        return "info"
-      case "A":
-        return "success"
-      case "D":
-        return "error"
+      case ESTADO_NO_INICIADA:
+        return {
+          bgcolor: "#FEF3C7",
+          color: "#D97706"
+        }
+      case ESTADO_EN_PROGRESO:
+        return {
+          bgcolor: "#DBEAFE",
+          color: "#2563EB"
+        }
+      case ESTADO_APROBADA:
+        return {
+          bgcolor: "#D1FAE5",
+          color: "#059669"
+        }
+      case ESTADO_DESAPROBADA:
+        return {
+          bgcolor: "#FEE2E2",
+          color: "#EF4444"
+        }
       default:
-        return "default"
+        return {}
     }
   }
 
   const getEstadoLabel = (estado: string) => {
     switch (estado) {
-      case "N":
+      case ESTADO_NO_INICIADA:
         return "No iniciada"
-      case "E":
+      case ESTADO_EN_PROGRESO:
         return "En Progreso"
-      case "A":
+      case ESTADO_APROBADA:
         return "Aprobada"
-      case "D":
+      case ESTADO_DESAPROBADA:
         return "Desaprobada"
       default:
         return estado
@@ -196,7 +210,10 @@ export default function EvaluacionesList({ onEditar }: {
                 <TableCell>
                   <Chip
                     label={getEstadoLabel(evaluacion.estadoId)}
-                    color={getEstadoColor(evaluacion.estadoId)}
+                    sx={{
+                      fontWeight: 600,
+                      ...getEstadoColor(evaluacion.estadoId)
+                    }}
                     size="small"
                     variant="outlined"
                   />

@@ -41,19 +41,26 @@ export default function EvaluacionesList({ onEditar }: {
   }, [])
 
   const loadEvaluaciones = async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
     try {
-      const data = await getEvaluacionesInstancias()
-      setEvaluaciones(data)
-      console.log("[v0] Evaluaciones cargadas:", data)
+      // 1. Obtener datos del usuario logueado (ejemplo desde localStorage)
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : null;
+
+      // 2. Llamar a la API con los nuevos parámetros de filtrado
+      const data = await getEvaluacionesInstancias({
+        escuela_id: user?.escuela_id,
+        rol: user?.rol
+      });
+
+      setEvaluaciones(data);
     } catch (err: any) {
-      setError(err.message || "Error al cargar las evaluaciones")
-      console.error("[v0] Error loading evaluaciones:", err)
+      setError(err.message || "Error al cargar las evaluaciones");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // 1. Abrir Modal
   const handleClickDelete = (e: React.MouseEvent, id: string) => {

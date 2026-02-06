@@ -77,6 +77,9 @@ export interface CreateEvaluacionPayload {
 }
 
 function mapToCamelCase(data: any): EvaluacionInstancia {
+  const estudianteInfo = data.estudiantes || {};
+  const personaInfo = estudianteInfo.personas || {};
+
   const nombre = data?.estudiantes?.personas?.nombre ?? "";
   const apellido = data?.estudiantes?.personas?.primer_apellido ?? "";
 
@@ -175,37 +178,50 @@ export async function enviarRespuestas(
 // 3. API CALLS
 // --------------------------------------------------------------------------
 
-export async function getEvaluacionesInstancias(): Promise<EvaluacionInstancia[]> {
-  const res = await fetch(`${API_URL}/evaluaciones`)
-  if (!res.ok) throw new Error("Error al cargar las evaluaciones")
-  const resData = await res.json()
-  return (resData.data || []).map(mapToCamelCase)
-}
-
 export async function getEvaluacionInstanciaById(id: string): Promise<EvaluacionInstancia> {
   const res = await fetch(`${API_URL}/evaluaciones/${id}`)
-  if (!res.ok) throw new Error("Error al cargar la evaluación")
-  const resData = await res.json()
-  // Importante: pasamos resData.data al mapper
-  console.log(resData.data)
+  const json = await res.json().catch(() => null)
 
-  return mapToCamelCase(resData.data)
+  if (!res.ok) throw new Error(json?.message || "Error al cargar la evaluación")
+
+  return mapToCamelCase(json.data)
 }
 
-export async function crearEvaluacionInstancia(
-  data: CreateEvaluacionPayload | any,
-): Promise<EvaluacionInstancia> {
+/**
+ * GET: Obtiene evaluaciones filtradas por rol y escuela si aplica.
+ * busca en /evaluaciones?escuela_id=XXX&rol=YYY
+ */
+export async function getEvaluacionesInstancias(filters?: {
+  escuela_id?: string;
+  rol?: string;
+}): Promise<EvaluacionInstancia[]> {
+  const params = new URLSearchParams();
+  if (filters?.escuela_id) params.append("escuela_id", filters.escuela_id);
+  if (filters?.rol) params.append("rol", filters.rol);
+
+  const res = await fetch(`${API_URL}/evaluaciones?${params.toString()}`);
+  if (!res.ok) throw new Error("Error al cargar las evaluaciones");
+
+  const resData = await res.json();
+  // El backend ahora devuelve { success: true, data: [...] }
+  return (resData.data || []).map(mapToCamelCase);
+}
+
+/**
+ * POST: Crear evaluación. 
+ * Ajustado para apuntar a /evaluaciones 
+ */
+export async function crearEvaluacionInstancia(data: CreateEvaluacionPayload): Promise<EvaluacionInstancia> {
   const res = await fetch(`${API_URL}/evaluaciones`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
-  })
-  const responseData = await res.json().catch(() => ({}))
-  if (!res.ok) {
-    const errorDescription = responseData.error?.description || responseData.message
-    throw new Error(errorDescription || "Error al crear la evaluación")
-  }
-  return mapToCamelCase(responseData.data)
+  });
+
+  const responseData = await res.json();
+  if (!res.ok) throw new Error(responseData.message || "Error al crear la evaluación");
+
+  return mapToCamelCase(responseData.data);
 }
 
 export async function getEvaluacionesInstanciasByEstudiante(

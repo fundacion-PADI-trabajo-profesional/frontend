@@ -141,14 +141,15 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
 
     if (loading) return <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
     if (error) return <Box sx={{ p: 4 }}><Typography color="error">{error}</Typography><Button onClick={onBack}>Volver</Button></Box>
-    if (!data || !data.estudiante) return <Box sx={{ p: 4 }}><Typography>No se encontraron datos del estudiante.</Typography></Box>;
-    const areas = data.areas || [];
+    if (!data || !data.estudiante) return <Box sx={{ p: 4 }}><Typography>No se encontraron datos del estudiante.</Typography></Box>
+    const evaluacion = data
+    const areas = evaluacion.areas || []
 
     // const fechaCreacion = new Date(data.createdAt).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
     //const overallStatus = getStatusColor(data.estadoId);
-    const overallStatus = getStatusColor(data.estadoId);
+    const overallStatus = getStatusColor(evaluacion.estadoId);
 
-    const fechaObj = data.createdAt;
+    const fechaObj = evaluacion.createdAt;
     const mesYAnio = fechaObj.toLocaleDateString('es-ES', {
         month: 'long',
         year: 'numeric',
@@ -163,19 +164,19 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                     <ArrowBackIcon />
                 </IconButton>
                 <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-                    Evaluación {data.tipoId === 'inicial' ? 'Inicial' : 'de Cierre'}
+                    Evaluación {evaluacion.tipoId === 'inicial' ? 'Inicial' : 'de Cierre'}
                 </Typography>
                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#666' }}>
-                    {data.salaNombre || data.salaId}
+                    {evaluacion.salaNombre || evaluacion.salaId}
                 </Typography>
             </Box>
 
             {/* ALERT DE APROBACIÓN GENERAL */}
-            {data.estadoId !== 'N' && data.estadoId !== 'E' && (
+            {evaluacion.estadoId !== 'N' && evaluacion.estadoId !== 'E' && (
                 <Alert severity={overallStatus.color as 'success' | 'error'} sx={{ mb: 3 }}>
                     <Typography sx={{ fontWeight: 'bold' }}>ESTADO GENERAL: {overallStatus.label}</Typography>
-                    {data.puntaje !== null && data.puntaje !== undefined && (
-                        <Typography variant="body2">Puntaje Total Obtenido: {data.puntaje.toFixed(2)}%</Typography>
+                    {evaluacion.puntaje !== null && evaluacion.puntaje !== undefined && (
+                        <Typography variant="body2">Puntaje Total Obtenido: {evaluacion.puntaje.toFixed(2)}%</Typography>
                     )}
                 </Alert>
             )}
@@ -189,21 +190,21 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                     </Box>
                     <Box sx={{ flexGrow: 1 }}>
                         <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                            {data.estudiante?.nombre} {data.estudiante?.apellido}
+                            {evaluacion.estudiante?.nombre} {evaluacion.estudiante?.apellido}
                         </Typography>
                         {/* Colegio del Alumno */}
                         <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
-                            🏫 {data.estudiante?.escuelaNombre}
+                            🏫 {evaluacion.estudiante?.escuelaNombre}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                            DNI: {data.estudiante?.dni}
+                            DNI: {evaluacion.estudiante?.dni}
                         </Typography>
 
                         <Grid container spacing={4} sx={{ mt: 1 }}>
                             <Grid item>
                                 <Typography variant="caption" sx={{ display: 'block' }}>Edad</Typography>
                                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                    {calcularEdad(data.estudiante?.fechaNacimiento)}
+                                    {calcularEdad(evaluacion.estudiante?.fechaNacimiento)}
                                 </Typography>
                             </Grid>
                             <Grid item>
@@ -220,7 +221,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
             {/* Areas List */}
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Áreas de Evaluación</Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {data.areas?.map((area) => {
+                {evaluacion.areas?.map((area) => {
                     const statusStyle = getStatusColor(area.estadoId);
 
                     //solo se muestra el texto de aciertos logrados si el estado es aprobada, desaprobada o completada de cada area

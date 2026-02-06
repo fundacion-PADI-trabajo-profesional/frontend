@@ -145,8 +145,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
     const evaluacion = data
     const areas = evaluacion.areas || []
 
-    // const fechaCreacion = new Date(data.createdAt).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-    //const overallStatus = getStatusColor(data.estadoId);
+    const fechaCreacion = new Date(data.createdAt).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
     const overallStatus = getStatusColor(evaluacion.estadoId);
 
     const fechaObj = evaluacion.createdAt;
@@ -224,9 +223,6 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                 {evaluacion.areas?.map((area) => {
                     const statusStyle = getStatusColor(area.estadoId);
 
-                    //solo se muestra el texto de aciertos logrados si el estado es aprobada, desaprobada o completada de cada area
-                    // const mostrarAciertos = area.estadoId === 'A' || area.estadoId === 'D' || area.estadoId === 'C';
-
                     return (
                         <Paper
                             key={area.id}
@@ -246,7 +242,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                                     borderColor: area.estadoId !== 'C' ? 'transparent' : '#eee'
                                 }
                             }}
-                        // onClick={() => handleAreaClick(area.id, area.nombre, area.estadoId, aciertosLogrados, totalPreguntasActivas)}
+                            onClick={() => handleAreaClick(area.id, area.nombre, area.estadoId, area.aciertosIndividuales || 0, area.totalPreguntas || 0)}
                         >
 
                             {/* Icon Box */}
@@ -295,7 +291,11 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
             {/* WIZARD MODAL (Aparece al hacer click en un área) */}
             <EvaluacionWizard
                 open={wizardOpen}
-                onClose={handleWizardClose}
+                onClose={() => {
+                    setWizardOpen(false);
+                    setSelectedArea(null);
+                    loadEvaluationData(); // refresca estados/aciertos
+                }}
                 evaluacionId={evaluacionId}
                 areaId={selectedArea?.id || ""}
                 areaNombre={selectedArea?.nombre || ""}
@@ -304,13 +304,17 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
             {revisionData && (
                 <EvaluacionRevision
                     open={revisionOpen}
-                    onClose={handleRevisionClose}
+                    onClose={() => {
+                        setRevisionOpen(false);
+                        setRevisionData(null);
+                        loadEvaluationData(); // por si querés refrescar
+                    }}
                     evaluacionId={evaluacionId}
-                    areaId={revisionData.id}
-                    areaNombre={revisionData.nombre}
-                    score={revisionData.score}
-                    total={revisionData.total}
-                    statusId={revisionData.statusId}
+                    areaId={revisionData?.id || ""}
+                    areaNombre={revisionData?.nombre || ""}
+                    score={revisionData?.score || 0}
+                    total={revisionData?.total || 0}
+                    statusId={revisionData?.statusId || "N"}
                 />
             )}
         </Box>

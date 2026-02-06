@@ -2,6 +2,8 @@
 
 const API_URL = import.meta.env.VITE_API_URL
 
+const ESTADO_NO_INICIADA = "N"
+
 // --- 1. INTERFACES ---
 
 export interface PreguntaBase {
@@ -93,7 +95,7 @@ function mapToCamelCase(data: any): EvaluacionInstancia {
 
   if (data.evaluaciones_estudiante_area) {
     areasMapped = data.evaluaciones_estudiante_area.map((item: any) => {
-      const estadoArea = (item.estado_id ?? "N").toString().toUpperCase();
+      const estadoArea = (item.estado_id ?? ESTADO_NO_INICIADA).toString().toUpperCase();
 
       return {
         id: item.area_id,
@@ -103,8 +105,8 @@ function mapToCamelCase(data: any): EvaluacionInstancia {
         estadoId: estadoArea,
         estadoDescripcion: item.estados_evaluacion?.descripcion || "",
         puntaje: item.puntaje,
-        aciertosIndividuales: item.aciertos_individuales || 0,
-        totalPreguntas: item.totalPreguntas || 6,
+        totalPreguntas: item.totalPreguntas ?? 0,
+        aciertosIndividuales: item.aciertos_individuales ?? 0,
       };
     });
   }

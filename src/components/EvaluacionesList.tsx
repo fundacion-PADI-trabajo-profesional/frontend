@@ -25,6 +25,10 @@ import DeleteIcon from "@mui/icons-material/Delete"
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { getEvaluacionesInstancias, eliminarEvaluacionInstancia, type EvaluacionInstancia } from "../api/evaluaciones"
 
+const TOTAL_AREAS_EVALUACION = 4;
+const ESTADO_NO_INICIADA = "N"
+const ESTADO_APROBADA = "A"
+
 export default function EvaluacionesList({ onEditar }: {
   onEditar: (evaluacion: EvaluacionInstancia) => void
 }) {
@@ -173,7 +177,7 @@ export default function EvaluacionesList({ onEditar }: {
               <TableCell align="center" sx={{ fontWeight: 700 }}>Sala</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Tipo</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Estado</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 700 }}>Puntaje</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 700 }}>Áreas aprobadas</TableCell>
               <TableCell align="center" sx={{ fontWeight: 700 }}>Acciones</TableCell>
             </TableRow>
           </TableHead>
@@ -197,7 +201,19 @@ export default function EvaluacionesList({ onEditar }: {
                     variant="outlined"
                   />
                 </TableCell>
-                <TableCell align="right">{evaluacion.puntaje ?? "-"}</TableCell>
+                <TableCell align="center">
+                  {(() => {
+                    const totalAreas = TOTAL_AREAS_EVALUACION;
+                    const aprobadas = evaluacion.areas?.filter((a) => a.estadoId === ESTADO_APROBADA).length ?? 0;
+
+                    // Si no vinieron áreas en el listado, evitamos mostrar 0/4 engañoso
+                    if (evaluacion.estadoId === ESTADO_NO_INICIADA) return "-";
+
+                    if (!evaluacion.areas) return "-";
+
+                    return `${aprobadas}/${totalAreas}`;
+                  })()}
+                </TableCell>
                 <TableCell align="center">
                   <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
                     <Button

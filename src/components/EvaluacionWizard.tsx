@@ -69,9 +69,10 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                     setPreguntas(data.preguntas || [])
 
                     const map: Record<string, number | null> = {}
-                    data.respuestas.forEach(r => {
+                    const respuestasArr = data.respuestas || [];
+                    respuestasArr.forEach((r) => {
                         map[r.pregunta_id] = r.respuesta;
-                    })
+                    });
                     setRespuestas(map);
 
                     // Encontrar el primer índice sin respuesta (para retomar)
@@ -148,9 +149,18 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
 
     // Handler para cerrar: asegura que se guarde el progreso actual (si se salió sin responder la última)
     const handleCloseDialog = () => {
+        if (!preguntas || preguntas.length === 0) {
+            onClose();
+            return;
+        }
+
         const preguntaActual = preguntas[currentQuestionIndex];
-        const answerValue = respuestas[preguntaActual.id];
-        // Si la respuesta actual es nula, guardamos null. Si no, guardamos el último valor conocido.
+        if (!preguntaActual) {
+            onClose();
+            return;
+        }
+
+        const answerValue = respuestas[preguntaActual.id] ?? null;
         saveAnswersAndAdvance(false, 'CLOSE', preguntaActual.id, answerValue);
     }
 

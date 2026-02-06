@@ -39,13 +39,10 @@ export default function EvaluacionRevision({ open, onClose, evaluacionId, areaId
         return { text: 'No', icon: <CancelIcon color="error" /> };
     };
 
-    //esto no se si se puede agregar, por lo menos aca porque es unico para cada seccion de cada area de cada sala y no se si vale tanto la pena
-    const groupTitles: Record<number, string> = {
-        // 4: "Copiado de figuras",
-        // 5: "Recorte y pegado",
+    const getGroupTitleFromQuestions = (preguntas: any[], groupNumber: number) => {
+        // Todas las preguntas del grupo comparten el mismo título
+        return preguntas?.[0]?.titulo ?? `Grupo ${groupNumber}`;
     };
-
-    const getGroupTitle = (n: number) => groupTitles[n] ?? `Sección ${n}`;
 
     // Agrupar preguntas por numero (grupo)
     const grouped = useMemo(() => {
@@ -134,7 +131,7 @@ export default function EvaluacionRevision({ open, onClose, evaluacionId, areaId
                                     >
                                         <Box>
                                             <Typography sx={{ fontWeight: 800 }}>
-                                                {getGroupTitle(groupNumber)}
+                                                {getGroupTitleFromQuestions(preguntasDelGrupo, groupNumber)}
                                             </Typography>
                                             <Typography variant="body2" color="text.secondary">
                                                 Se aprueba con {stats.needed}/{stats.total} respuestas “Sí”
@@ -184,7 +181,7 @@ export default function EvaluacionRevision({ open, onClose, evaluacionId, areaId
                                                             }
                                                             secondary={
                                                                 <Typography component="div" variant="body2" color="text.secondary">
-                                                                    Tipo de Pregunta: {p.tipopregunta || "-"}
+                                                                    Grupo de Pregunta: {formatCamelCaseLabel(p.grupopregunta)}
                                                                 </Typography>
                                                             }
                                                         />
@@ -218,3 +215,12 @@ export default function EvaluacionRevision({ open, onClose, evaluacionId, areaId
         </Dialog>
     );
 }
+
+//Helper function
+const formatCamelCaseLabel = (value?: string) => {
+    if (!value) return "-";
+
+    return value
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        .replace(/^./, (str) => str.toUpperCase());
+};

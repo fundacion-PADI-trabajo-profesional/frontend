@@ -97,9 +97,11 @@ export default function EvaluacionesList({ onEditar }: {
     switch (estado) {
       case "N":
         return "warning"
-      case "C":
+      case "E":
+        return "info"
+      case "A":
         return "success"
-      case "R":
+      case "D":
         return "error"
       default:
         return "default"
@@ -110,10 +112,12 @@ export default function EvaluacionesList({ onEditar }: {
     switch (estado) {
       case "N":
         return "No iniciada"
-      case "C":
-        return "Completada"
-      case "R":
-        return "Revisada"
+      case "E":
+        return "En Progreso"
+      case "A":
+        return "Aprobada"
+      case "D":
+        return "Desaprobada"
       default:
         return estado
     }
@@ -178,7 +182,7 @@ export default function EvaluacionesList({ onEditar }: {
               <TableRow
                 key={evaluacion.id}
                 hover
-                // AQUÍ ESTÁ LA SOLUCIÓN AL CLICK
+
                 onClick={() => onEditar(evaluacion)}
                 sx={{ cursor: 'pointer' }}
               >

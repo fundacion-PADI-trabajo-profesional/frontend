@@ -143,9 +143,9 @@ export default function EvaluacionesList({ onEditar }: {
 
   const getTipoLabel = (tipo: string) => {
     switch (tipo) {
-      case "Evaluacion Inicial":
+      case "inicial":
         return "Evaluación Inicial"
-      case "Evaluacion de Cierre":
+      case "cierre":
         return "Evaluacion de Cierre"
       default:
         return tipo
@@ -187,10 +187,10 @@ export default function EvaluacionesList({ onEditar }: {
         <Table>
           <TableHead sx={{ bgcolor: "#f5f5f5" }}>
             <TableRow>
-              <TableCell sx={{ fontWeight: 700 }}>Estudiante</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 700 }}>Estudiante</TableCell>
               <TableCell align="center" sx={{ fontWeight: 700 }}>Sala</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Tipo</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Estado</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 700 }}>Tipo</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 700 }}>Estado</TableCell>
               <TableCell align="center" sx={{ fontWeight: 700 }}>Áreas aprobadas</TableCell>
               <TableCell align="center" sx={{ fontWeight: 700 }}>Acciones</TableCell>
             </TableRow>
@@ -207,9 +207,10 @@ export default function EvaluacionesList({ onEditar }: {
                 <TableCell>{evaluacion.estudianteNombre || evaluacion.estudianteId}</TableCell>
                 <TableCell align="center">{evaluacion.salaId || evaluacion.salaId}</TableCell>
                 <TableCell>{getTipoLabel(evaluacion.tipoId)}</TableCell>
-                <TableCell>
+                <TableCell align="center">
                   <Chip
                     label={getEstadoLabel(evaluacion.estadoId)}
+
                     sx={{
                       fontWeight: 600,
                       ...getEstadoColor(evaluacion.estadoId)

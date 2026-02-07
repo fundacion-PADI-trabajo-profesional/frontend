@@ -80,15 +80,15 @@ export interface CreateEvaluacionPayload {
 
 function mapToCamelCase(data: any): EvaluacionInstancia {
   const estudianteInfo = data.estudiantes || {};
-  const personaInfo = estudianteInfo.personas || {};
+  //const personaInfo = estudianteInfo.personas || {};
 
   const nombre = data?.estudiantes?.personas?.nombre ?? "";
   const apellido = data?.estudiantes?.personas?.primer_apellido ?? "";
 
   const nombreCompleto = [apellido, nombre].filter(Boolean).join(", ");
 
-  const escuelaId = data.estudiantes?.escuela_id;
-  const nombreEscuela = data.estudiantes?.escuelas?.nombre ?? "";
+  //const escuelaId = data.estudiantes?.escuela_id;
+  const nombreEscuela = data.estudiantes?.escuela?.nombre ?? "";
 
   // Mapeo de áreas: Aseguramos que el estadoId sea exacto del backend
   let areasMapped: AreaDetalle[] = [];
@@ -122,7 +122,7 @@ function mapToCamelCase(data: any): EvaluacionInstancia {
       apellido,
       dni: data.estudiantes?.personas?.dni || "",
       fechaNacimiento: data.estudiantes?.personas?.fecha_nacimiento || null,
-      genero: data.estudiantes?.personas?.genero || "",
+      genero: data.estudiantes?.generos?.descripcion ?? "",
       escuelaNombre: nombreEscuela || "No asignada",
     },
 

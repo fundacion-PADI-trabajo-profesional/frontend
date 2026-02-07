@@ -280,7 +280,7 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
 
                                     {/* Detalle / Criterio de aprobación */}
                                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                        Criterio: Aprueba con {preguntaActual.aprueba_con}
+                                        Criterio de Aprobación: {preguntaActual.aprueba_con}
                                     </Typography>
 
                                     {/* --- NUEVO: MOSTRAR DETALLE DE LA PREGUNTA (Ejemplos, Notas) --- */}

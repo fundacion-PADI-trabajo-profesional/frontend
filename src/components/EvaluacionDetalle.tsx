@@ -72,6 +72,17 @@ const getStatusColor = (estadoId: string) => {
     }
 }
 
+const getGeneroColor = (genero?: string) => {
+    if (!genero) return "#9E9E9E"; // gris default
+
+    const g = genero.toLowerCase();
+
+    if (g.startsWith("f")) return "#F48FB1"; // rosa pastel
+    if (g.startsWith("m")) return "#90CAF9"; // azul pastel
+
+    return "#9E9E9E";
+};
+
 
 export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
     const [loading, setLoading] = useState(true)
@@ -165,7 +176,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                 <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
                     Evaluación {evaluacion.tipoId === 'inicial' ? 'Inicial' : 'de Cierre'}
                 </Typography>
-                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#666' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#000000' }}>
                     {evaluacion.salaNombre || evaluacion.salaId}
                 </Typography>
             </Box>
@@ -184,31 +195,81 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
             {/* Student Card */}
             <Card sx={{ mb: 4, borderRadius: 4 }}>
                 <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Box sx={{ /* avatar style */ }}>
-                        <FaceIcon sx={{ fontSize: 35, color: '#2563EB' }} />
-                    </Box>
                     <Box sx={{ flexGrow: 1 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                            {evaluacion.estudiante?.nombre} {evaluacion.estudiante?.apellido}
-                        </Typography>
-                        {/* Colegio del Alumno */}
-                        <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
-                            🏫 {evaluacion.estudiante?.escuelaNombre}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            DNI: {evaluacion.estudiante?.dni}
-                        </Typography>
+                        {/* Fila 1: Icono + Nombre */}
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <FaceIcon
+                                sx={{
+                                    color: getGeneroColor(evaluacion.estudiante?.genero),
+                                    fontSize: 34,
+                                }}
+                            />
+                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                {evaluacion.estudiante?.nombre} {evaluacion.estudiante?.apellido}
+                            </Typography>
+                        </Box>
 
+                        {/* Fila 2: DNI + Edad */}
+                        <Box
+                            sx={{
+                                mt: 0.5,
+                                display: "flex",
+                                gap: 2,
+                                flexWrap: "wrap",
+                            }}
+                        >
+                            <Typography variant="body2" color="text.secondary">
+                                DNI:{" "}
+                                <Box component="span" sx={{ fontWeight: 700, color: "text.primary" }}>
+                                    {evaluacion.estudiante?.dni ?? "-"}
+                                </Box>
+                            </Typography>
+
+                            <Typography variant="body2" color="text.secondary">
+                                Edad:{" "}
+                                <Box component="span" sx={{ fontWeight: 700, color: "text.primary" }}>
+                                    {calcularEdad(evaluacion.estudiante?.fechaNacimiento)}
+                                </Box>
+                            </Typography>
+                        </Box>
+
+                        {/* Fila 3: Chips Escuela + Comisión */}
+                        <Box
+                            sx={{
+                                mt: 1,
+                                display: "flex",
+                                gap: 1,
+                                flexWrap: "wrap",
+                            }}
+                        >
+                            <Chip
+                                icon={<span>🏫</span>}
+                                label={evaluacion.estudiante?.escuelaNombre || "Escuela no asignada"}
+                                sx={{
+                                    bgcolor: "#d4edf5",
+                                    color: "#00A5DB",
+                                    fontWeight: 600,
+                                }}
+                            />
+
+                            <Chip
+                                // label={`Comisión: ${evaluacion.estudiante?.comisionNombre || "Sin asignar"}`}
+                                label={`Comisión: "Sin asignar - fix!!"`}
+                                sx={{
+                                    bgcolor: "#ebf4d2",
+                                    color: "#9fbd4c",
+                                    fontWeight: 600,
+                                }}
+                            />
+                        </Box>
+
+                        {/* (Si querés mantener la fecha evaluación abajo como antes) */}
                         <Grid container spacing={4} sx={{ mt: 1 }}>
                             <Grid item>
-                                <Typography variant="caption" sx={{ display: 'block' }}>Edad</Typography>
-                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                    {calcularEdad(evaluacion.estudiante?.fechaNacimiento)}
+                                <Typography variant="caption" sx={{ display: "block" }}>
+                                    Fecha Evaluación
                                 </Typography>
-                            </Grid>
-                            <Grid item>
-                                <Typography variant="caption" sx={{ display: 'block' }}>Fecha Evaluación</Typography>
-                                <Typography variant="body2" sx={{ fontWeight: 600, textTransform: 'capitalize' }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600, textTransform: "capitalize" }}>
                                     {mesYAnio}
                                 </Typography>
                             </Grid>

@@ -19,6 +19,7 @@ export interface EstudianteFormData {
     genero_id: string
     sala_id: number
     escuela_id: string
+    aula_id?: string
 }
 
 // Tipo para el estudiante devuelto por la API (en la lista)
@@ -120,13 +121,20 @@ export const getEstudiantes = async (): Promise<Estudiante[]> => {
 }
 
 export const createEstudiante = async (formData: EstudianteFormData): Promise<EstudianteCreado> => {
+    const stored = localStorage.getItem("padiUser")
+    const user = stored ? JSON.parse(stored) : null
+
     const response = await fetch(`${API_URL}/estudiantes`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             // "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+            ...formData,
+            usuario_id: user?.id,
+            rol: user?.rol,
+        }),
     })
 
     return handleApiResponse<EstudianteCreado>(response)

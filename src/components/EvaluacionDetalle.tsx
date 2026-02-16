@@ -253,8 +253,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                             />
 
                             <Chip
-                                // label={`Comisión: ${evaluacion.estudiante?.comisionNombre || "Sin asignar"}`}
-                                label={`Comisión: "Sin asignar - fix!!"`}
+                                label={`Comisión: ${evaluacion.aulaLabel || "Sin asignar"}`}
                                 sx={{
                                     bgcolor: "#ebf4d2",
                                     color: "#9fbd4c",

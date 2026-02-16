@@ -73,12 +73,20 @@ export default function Estudiantes() {
     const handleBackToList = () => {
         setSelectedForEdit(null);
         setView("list");
-        setSelectedAulaId(null);
+        if (userRole !== "docente") {
+            setSelectedAulaId(null);
+        }
         // Si usamos React Router, limpiamos la URL
         navigate("/estudiantes", { replace: true });
     }
 
     const handleSuccess = (nuevoEstudiante: EstudianteCreado) => {
+        if (userRole === "docente") {
+            setView("list");
+            setRefreshKey(prev => prev + 1);
+            return;
+        }
+
         // Si estábamos editando, volvemos directo a la lista
         if (selectedForEdit) {
             handleBackToList();
@@ -183,6 +191,13 @@ export default function Estudiantes() {
                                                 <Typography variant="body2" sx={{ color: "#666", mb: 2 }}>
                                                     {aula.escuela?.nombre ?? "Escuela"}
                                                 </Typography>
+                                                <Button
+                                                    variant="contained"
+                                                    onClick={() => setView("form")}
+                                                    sx={{ mb: 2, bgcolor: "#000" }}
+                                                >
+                                                    Agregar estudiante a esta aula
+                                                </Button>
 
                                                 {aula.estudiantes.length === 0 ? (
                                                     <Alert severity="info">
@@ -200,7 +215,7 @@ export default function Estudiantes() {
                                                                             <Button
                                                                                 size="small"
                                                                                 onClick={() =>
-                                                                                    navigate(`/evaluaciones?estudianteId=${est.id}&nombre=${est.personas.nombre} ${est.personas.primer_apellido}&salaId=${aula.sala_id}`)
+                                                                                    navigate(`/evaluaciones?estudianteId=${est.id}&nombre=${est.personas.nombre} ${est.personas.primer_apellido}&salaId=${aula.sala_id}&aulaId=${aula.id}&aulaLabel=${encodeURIComponent(`${aula.sala?.grado ?? "?"}° - ${aula.comision} (${aula.turno})`)}&escuelaNombre=${encodeURIComponent(aula.escuela?.nombre ?? "Escuela")}`)
                                                                                 }
                                                                             >
                                                                                 Evaluar
@@ -245,7 +260,22 @@ export default function Estudiantes() {
                         <EstudianteForm 
                             onCancel={handleBackToList} 
                             onSuccess={handleSuccess} 
-                            estudianteAEditar={selectedForEdit} 
+                            estudianteAEditar={selectedForEdit}
+                            aulaContext={
+                                userRole === "docente" && !selectedForEdit && selectedAulaId
+                                    ? (() => {
+                                          const aula = aulasDocente.find((a) => a.id === selectedAulaId);
+                                          if (!aula) return null;
+                                          return {
+                                              aula_id: aula.id,
+                                              sala_id: aula.sala_id,
+                                              escuela_id: aula.escuela_id,
+                                              aulaLabel: `${aula.sala?.grado ?? "?"}° - ${aula.comision} (${aula.turno})`,
+                                              escuelaNombre: aula.escuela?.nombre ?? null,
+                                          };
+                                      })()
+                                    : null
+                            }
                         />
                     </Box>
                 )}

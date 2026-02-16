@@ -26,15 +26,14 @@ export default function DocenteDashboard() {
                     />
                 </Grid>
 
-                {/* Tomar Evaluación - CORREGIDO */}
+                {/* Mis Evaluaciones */}
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard
-                        title="Tomar Evaluación"
-                        description="Iniciar nueva prueba PADI."
+                        title="Mis Evaluaciones"
+                        description="Ver y gestionar las evaluaciones realizadas."
                         icon="📝"
                         color="#A3BE54"
-                        // CAMBIO AQUÍ: Usamos el parámetro ?crear=true
-                        onClick={() => navigate("/evaluaciones?crear=true")}
+                        onClick={() => navigate("/evaluaciones")}
                     />
                 </Grid>
             </Grid>

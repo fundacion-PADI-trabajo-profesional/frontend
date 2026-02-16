@@ -1,4 +1,5 @@
 import { api } from "./auth";
+import type { Estudiante } from "./estudiantes";
 
 const getUserData = () => {
   const stored = localStorage.getItem("padiUser");
@@ -73,6 +74,25 @@ export interface AulaDocente {
   };
 }
 
+export interface DocenteAulaConEstudiantes {
+  id: string;
+  sala_id: number;
+  escuela_id: string;
+  comision: string;
+  turno: string;
+  fecha_creacion?: string;
+  sala?: {
+    id: number;
+    nombre: string | null;
+    grado: number | null;
+  };
+  escuela?: {
+    id: string;
+    nombre: string | null;
+  };
+  estudiantes: Estudiante[];
+}
+
 export const getAulaDocentes = async (aulaId: string): Promise<AulaDocente[]> => {
   const { usuario_id, rol } = getUserData();
   const response = await api.get(`/aulas/${aulaId}/docentes?usuario_id=${usuario_id}&rol=${rol}`);
@@ -91,6 +111,12 @@ export const desasignarDocenteAula = async (aulaId: string, profesorId: string) 
   const payload = { profesor_id: profesorId, usuario_id, rol };
   const response = await api.post(`/aulas/${aulaId}/desasignar-docente`, payload);
   return response.data;
+};
+
+export const getDocenteAulasConEstudiantes = async (): Promise<DocenteAulaConEstudiantes[]> => {
+  const { usuario_id, rol } = getUserData();
+  const response = await api.get(`/docentes/aulas?usuario_id=${usuario_id}&rol=${rol}`);
+  return response.data.data || [];
 };
 
 

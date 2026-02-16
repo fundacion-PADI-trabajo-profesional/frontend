@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Box, Container, Typography, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, CircularProgress, Alert, Button } from "@mui/material"
+import { Box, Container, Typography, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, CircularProgress, Alert, Button, Stack, Chip } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import { useNavigate } from "react-router-dom"
 import { getDocentes, type Docente } from "../api/docentes"
@@ -28,6 +28,12 @@ export default function DocentesPage() {
     }
     load()
   }, [])
+
+  const formatAulaLabel = (aula: NonNullable<Docente["aulas"]>[number]) => {
+    const grado = aula.grado ?? "?"
+    const escuela = aula.escuelaNombre ? ` - ${aula.escuelaNombre}` : ""
+    return `${grado}° - ${aula.comision} (${aula.turno})${escuela}`
+  }
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
@@ -61,6 +67,7 @@ export default function DocentesPage() {
                 <TableRow>
                   <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Apellido</TableCell>
                   <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Nombre</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Aulas asignadas</TableCell>
                   <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Acciones</TableCell>
                 </TableRow>
               </TableHead>
@@ -74,6 +81,19 @@ export default function DocentesPage() {
                   >
                     <TableCell align="center">{d.apellido}</TableCell>
                     <TableCell align="center">{d.nombre}</TableCell>
+                    <TableCell align="center">
+                      {!d.aulas || d.aulas.length === 0 ? (
+                        <Typography variant="body2" sx={{ color: "#777" }}>
+                          Sin aulas asignadas
+                        </Typography>
+                      ) : (
+                        <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" justifyContent="center">
+                          {d.aulas.map((aula) => (
+                            <Chip key={aula.id} size="small" label={formatAulaLabel(aula)} />
+                          ))}
+                        </Stack>
+                      )}
+                    </TableCell>
                     <TableCell align="center">Ver evaluaciones</TableCell>
                   </TableRow>
                 ))}

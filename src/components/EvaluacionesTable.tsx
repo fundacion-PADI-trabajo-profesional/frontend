@@ -6,14 +6,20 @@ import type { EvaluacionInstancia } from "../api/evaluaciones"
 function getEstadoColor(estado: string) {
   switch (estado) {
     case "N": return "warning"
+    case "E": return "info"
+    case "A": return "success"
+    case "D": return "error"
     case "C": return "success"
-    case "R": return "error"
+    case "R": return "default"
     default: return "default"
   }
 }
 function getEstadoLabel(estado: string) {
   switch (estado) {
     case "N": return "No iniciada"
+    case "E": return "En progreso"
+    case "A": return "Aprobada"
+    case "D": return "Desaprobada"
     case "C": return "Completada"
     case "R": return "Revisada"
     default: return estado
@@ -30,9 +36,10 @@ function getTipoLabel(tipo: string) {
 interface Props {
   items: EvaluacionInstancia[]
   showEstudiante?: boolean
+  onRowClick?: (evaluacion: EvaluacionInstancia) => void
 }
 
-export default function EvaluacionesTable({ items, showEstudiante = false }: Props) {
+export default function EvaluacionesTable({ items, showEstudiante = false, onRowClick }: Props) {
   return (
     <TableContainer component={Paper}>
       <Table>
@@ -48,7 +55,12 @@ export default function EvaluacionesTable({ items, showEstudiante = false }: Pro
         </TableHead>
         <TableBody>
           {items.map((e) => (
-            <TableRow key={e.id} hover>
+            <TableRow
+              key={e.id}
+              hover
+              onClick={onRowClick ? () => onRowClick(e) : undefined}
+              sx={onRowClick ? { cursor: "pointer" } : undefined}
+            >
               {showEstudiante && <TableCell>{e.estudianteNombre || e.estudianteId}</TableCell>}
               <TableCell>{e.salaId}</TableCell>
               <TableCell>{getTipoLabel(e.tipoId)}</TableCell>

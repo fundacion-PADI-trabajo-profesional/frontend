@@ -11,6 +11,7 @@ interface PageHeaderProps {
   backLabel?: string
   title: string
   subtitle?: ReactNode;
+  onBack?: () => void
   onAdd?: () => void
   addLabel?: string
 }
@@ -20,12 +21,17 @@ export default function PageHeader({
   backLabel = "Volver",
   title,
   subtitle,
+  onBack,
   onAdd,
   addLabel
 }: PageHeaderProps) {
   const navigate = useNavigate()
 
   const handleBack = () => {
+    if (onBack) {
+      onBack()
+      return
+    }
     if (backTo) {
       navigate(backTo)
     } else {

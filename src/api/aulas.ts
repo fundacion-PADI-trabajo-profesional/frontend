@@ -119,4 +119,10 @@ export const getDocenteAulasConEstudiantes = async (): Promise<DocenteAulaConEst
   return response.data.data || [];
 };
 
+export const getAulaEstudiantes = async (aulaId: string): Promise<Estudiante[]> => {
+  const { usuario_id, rol } = getUserData();
+  const response = await api.get(`/aulas/${aulaId}/estudiantes?usuario_id=${usuario_id}&rol=${rol}`);
+  return response.data.data || [];
+};
+
 

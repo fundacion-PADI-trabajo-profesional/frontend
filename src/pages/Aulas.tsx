@@ -15,6 +15,10 @@ import {
   Button,
   TextField,
   MenuItem,
+  Stack,
+  List,
+  ListItem,
+  ListItemText,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddIcon from "@mui/icons-material/Add";
@@ -29,8 +33,9 @@ import {
   asignarDocenteAula,
   desasignarDocenteAula,
   AulaDocente,
+  getAulaEstudiantes,
 } from "../api/aulas";
-import { getSalas, Sala } from "../api/estudiantes";
+import { getSalas, Sala, Estudiante } from "../api/estudiantes";
 import { getDocentes, Docente } from "../api/docentes";
 
 type Mode = "list" | "create" | "edit";
@@ -42,6 +47,9 @@ export default function AulasPage() {
   const [selectedAulaForDocentes, setSelectedAulaForDocentes] = useState<Aula | null>(null);
   const [aulaDocentes, setAulaDocentes] = useState<AulaDocente[]>([]);
   const [selectedDocenteId, setSelectedDocenteId] = useState<string>("");
+  const [selectedAulaForEstudiantes, setSelectedAulaForEstudiantes] = useState<Aula | null>(null);
+  const [aulaEstudiantes, setAulaEstudiantes] = useState<Estudiante[]>([]);
+  const [loadingAulaEstudiantes, setLoadingAulaEstudiantes] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("list");
@@ -186,6 +194,25 @@ export default function AulasPage() {
     } catch (e: any) {
       setError(e.message || "Error al desasignar docente del aula");
     }
+  };
+
+  const openEstudiantesView = async (aula: Aula) => {
+    try {
+      setLoadingAulaEstudiantes(true);
+      setError(null);
+      const estudiantes = await getAulaEstudiantes(aula.id);
+      setSelectedAulaForEstudiantes(aula);
+      setAulaEstudiantes(estudiantes);
+    } catch (e: any) {
+      setError(e.message || "Error al cargar estudiantes del aula");
+    } finally {
+      setLoadingAulaEstudiantes(false);
+    }
+  };
+
+  const closeEstudiantesView = () => {
+    setSelectedAulaForEstudiantes(null);
+    setAulaEstudiantes([]);
   };
 
   const renderSalaLabel = (aula: Aula) => {
@@ -352,6 +379,61 @@ export default function AulasPage() {
               </Box>
             ) : error ? (
               <Alert severity="error">{error}</Alert>
+            ) : selectedAulaForEstudiantes ? (
+              <Box>
+                <Button
+                  startIcon={<ArrowBackIcon />}
+                  onClick={closeEstudiantesView}
+                  sx={{ mb: 2, textTransform: "none" }}
+                >
+                  Volver a aulas
+                </Button>
+
+                <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                  {renderSalaLabel(selectedAulaForEstudiantes)} - {selectedAulaForEstudiantes.comision} (
+                  {selectedAulaForEstudiantes.turno})
+                </Typography>
+                <Typography variant="body2" sx={{ color: "#666", mb: 2 }}>
+                  Tocá en un alumno para ver su historial de evaluaciones.
+                </Typography>
+
+                {loadingAulaEstudiantes ? (
+                  <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+                    <CircularProgress />
+                  </Box>
+                ) : aulaEstudiantes.length === 0 ? (
+                  <Alert severity="info">
+                    Esta aula existe, pero todavía no tiene alumnos asignados.
+                  </Alert>
+                ) : (
+                  <Paper elevation={0} sx={{ border: "1px solid #eee", borderRadius: 3 }}>
+                    <List>
+                      {aulaEstudiantes.map((est, index) => (
+                        <ListItem
+                          key={est.id}
+                          divider={index < aulaEstudiantes.length - 1}
+                          sx={{ cursor: "pointer" }}
+                          onClick={() => {
+                            const nombre = `${est.personas?.nombre ?? ""} ${est.personas?.primer_apellido ?? ""}`.trim();
+                            const params = new URLSearchParams({
+                              estudianteId: est.id,
+                              nombre,
+                              backTo: "/aulas",
+                              backLabel: "Volver a aulas",
+                            });
+                            navigate(`/historial-estudiante?${params.toString()}`);
+                          }}
+                        >
+                          <ListItemText
+                            primary={`${est.personas?.primer_apellido ?? ""}, ${est.personas?.nombre ?? ""}`}
+                            secondary={`DNI: ${est.personas?.dni ?? "-"}`}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Paper>
+                )}
+              </Box>
             ) : aulas.length === 0 ? (
               <Typography sx={{ color: "#666" }}>No hay aulas registradas.</Typography>
             ) : (
@@ -367,12 +449,17 @@ export default function AulasPage() {
                   </TableHead>
                   <TableBody>
                     {aulas.map((a) => (
-                      <TableRow key={a.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                      <TableRow
+                        key={a.id}
+                        hover
+                        onClick={() => openEstudiantesView(a)}
+                        sx={{ '&:last-child td, &:last-child th': { border: 0 }, cursor: "pointer" }}
+                      >
                         <TableCell align="center" sx={{ fontWeight: 500 }}>{renderSalaLabel(a)}</TableCell>
                         <TableCell align="center">{a.comision}</TableCell>
                         <TableCell align="center">{a.turno}</TableCell>
                         <TableCell align="center">
-                          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                          <Stack direction="row" justifyContent="center" spacing={1}>
                             <Button
                               size="small"
                               variant="outlined"
@@ -385,7 +472,10 @@ export default function AulasPage() {
                                   borderColor: '#1976d2'
                                 }
                               }}
-                              onClick={() => handleStartEdit(a)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStartEdit(a);
+                              }}
                             >
                               Editar
                             </Button>
@@ -401,7 +491,10 @@ export default function AulasPage() {
                                   borderColor: '#2e7d32'
                                 }
                               }}
-                              onClick={() => openDocentesDialog(a)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openDocentesDialog(a);
+                              }}
                             >
                               Docentes
                             </Button>
@@ -417,11 +510,14 @@ export default function AulasPage() {
                                   borderColor: '#d32f2f'
                                 }
                               }}
-                              onClick={() => handleDelete(a)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(a);
+                              }}
                             >
                               Eliminar
                             </Button>
-                          </Box>
+                          </Stack>
                         </TableCell>
                       </TableRow>
                     ))}

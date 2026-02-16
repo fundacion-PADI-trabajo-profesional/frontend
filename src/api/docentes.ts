@@ -11,6 +11,13 @@ export interface Docente {
   id: string
   nombre: string
   apellido: string
+  aulas?: {
+    id: string
+    comision: string
+    turno: string
+    grado: number | null
+    escuelaNombre: string | null
+  }[]
 }
 
 export async function getDocentes(): Promise<Docente[]> {

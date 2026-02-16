@@ -6,15 +6,19 @@ import { Box, Container, Typography, CircularProgress, Alert } from "@mui/materi
 import { getEvaluacionesInstanciasByEstudiante, type EvaluacionInstancia } from "../api/evaluaciones"
 import EvaluacionesTable from "../components/EvaluacionesTable"
 import PageHeader from "../components/PageHeader"
+import EvaluacionDetalle from "../components/EvaluacionDetalle"
 
 export default function HistorialEstudiante() {
   const [searchParams] = useSearchParams()
   const estudianteId = searchParams.get("estudianteId") || ""
   const estudianteNombre = searchParams.get("nombre") || ""
+  const backTo = searchParams.get("backTo") || "/estudiantes"
+  const backLabel = searchParams.get("backLabel") || "Volver a estudiantes"
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [items, setItems] = useState<EvaluacionInstancia[]>([])
+  const [selectedEvaluacionId, setSelectedEvaluacionId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!estudianteId) {
@@ -39,9 +43,27 @@ export default function HistorialEstudiante() {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
+      {selectedEvaluacionId ? (
+        <>
+          <PageHeader
+            backTo="#"
+            backLabel="Volver al historial"
+            title={estudianteNombre ? `Detalle de evaluación de ${estudianteNombre}` : "Detalle de evaluación"}
+            subtitle="Resultado por área y estado actual de la evaluación"
+            onBack={() => setSelectedEvaluacionId(null)}
+          />
+          <Container maxWidth="sm" sx={{ py: 4 }}>
+            <EvaluacionDetalle
+              evaluacionId={selectedEvaluacionId}
+              onBack={() => setSelectedEvaluacionId(null)}
+            />
+          </Container>
+        </>
+      ) : (
+        <>
       <PageHeader
-        backTo="/estudiantes"
-        backLabel="Volver a estudiantes"
+        backTo={backTo}
+        backLabel={backLabel}
         title={estudianteNombre ? `Historial de ${estudianteNombre}` : "Historial del estudiante"}
         subtitle="Listado de evaluaciones realizadas"
       />
@@ -65,10 +87,15 @@ export default function HistorialEstudiante() {
               </Typography>
             </Box>
           ) : (
-            <EvaluacionesTable items={items} />
+            <EvaluacionesTable
+              items={items}
+              onRowClick={(evaluacion) => setSelectedEvaluacionId(evaluacion.id)}
+            />
           )
         )}
       </Container>
+        </>
+      )}
     </Box>
   )
 }

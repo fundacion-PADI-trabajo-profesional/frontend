@@ -2,14 +2,13 @@ import { useState, useEffect } from "react";
 import {
     Box, TextField, Button, Grid, Paper, Typography, MenuItem,
     Divider, IconButton, List, ListItem, ListItemText, ListItemSecondaryAction,
-    Snackbar, Alert, CircularProgress, Tooltip, Dialog, DialogTitle,
+    Snackbar, Alert, CircularProgress, Dialog, DialogTitle,
     DialogContent, DialogContentText, DialogActions
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import { updateEscuela, deleteEscuela, asignarDocente, desasignarDocente, Escuela, asignarDirectivo, desasignarDirectivo, getDirectivosDisponibles } from "../api/escuelas";
+import { updateEscuela, deleteEscuela, Escuela, asignarDirectivo, desasignarDirectivo, getDirectivosDisponibles } from "../api/escuelas";
 import { getZonas, Zona } from "../api/zonas";
-import { getDocentes, Docente } from "../api/docentes";
 import { Directivo } from "../api/directivos";
 
 interface Props {
@@ -27,10 +26,8 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
     });
 
     const [zonas, setZonas] = useState<Zona[]>([]);
-    const [docentesDisponibles, setDocentesDisponibles] = useState<Docente[]>([]);
     const [directivosDisponibles, setDirectivosDisponibles] = useState<Directivo[]>([]);
     const [directivoSeleccionado, setDirectivoSeleccionado] = useState("");
-    const [docenteSeleccionado, setDocenteSeleccionado] = useState("");
     const [userRole, setUserRole] = useState("");
     const [loading, setLoading] = useState(false);
     const [notification, setNotification] = useState({ open: false, message: "", severity: "success" as "success" | "error" });
@@ -40,20 +37,12 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
         const user = JSON.parse(localStorage.getItem("padiUser") || "{}");
         setUserRole(user.rol);
         loadZonas();
-        loadDocentesDisponibles();
         loadDirectivosDisponibles();
     }, []);
 
     const loadZonas = async () => {
         const data = await getZonas();
         setZonas(data);
-    };
-
-    const loadDocentesDisponibles = async () => {
-        try {
-            const data = await getDocentes(); // Trae todos los docentes del sistema
-            setDocentesDisponibles(data);
-        } catch (err) { console.error("Error cargando docentes"); }
     };
 
     const loadDirectivosDisponibles = async () => {
@@ -74,38 +63,17 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
         } finally { setLoading(false); }
     };
 
-    const handleAsignar = async (tipo: 'docente' | 'directivo') => {
-        const id = tipo === 'docente' ? docenteSeleccionado : directivoSeleccionado;
+    const handleAsignarDirectivo = async () => {
+        const id = directivoSeleccionado;
         if (!id) return;
 
         try {
-            if (tipo === 'docente') {
-                await asignarDocente(escuela.id, id);
-            } else {
-                await asignarDirectivo(escuela.id, id);
-            }
-            setNotification({ open: true, message: `${tipo === 'docente' ? 'Docente' : 'Directivo'} asignado`, severity: "success" });
+            await asignarDirectivo(escuela.id, id);
+            setNotification({ open: true, message: "Directivo asignado", severity: "success" });
             onSuccess();
         } catch (err) {
             setNotification({ open: true, message: "Error al asignar", severity: "error" });
         }
-    };
-
-    const handleDesasignarDocente = async (profesorId: string) => {
-        setConfirmDialog({
-            open: true,
-            title: "Confirmar desasignación",
-            message: "¿Está seguro de quitar a este docente de la escuela?",
-            onConfirm: async () => {
-                try {
-                    await desasignarDocente(escuela.id, profesorId);
-                    onSuccess();
-                } catch (err) {
-                    setNotification({ open: true, message: "Error al desasignar", severity: "error" });
-                }
-                setConfirmDialog({ ...confirmDialog, open: false });
-            }
-        });
     };
 
     const handleDesasignarDirectivo = async (usuarioId: string) => {
@@ -202,39 +170,7 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
                         ))}
                     </TextField>
                     <Button variant="outlined" startIcon={<PersonAddIcon />}
-                        onClick={() => handleAsignar('directivo')} sx={{ borderColor: '#375E9E', color: '#375E9E' }}>
-                        ASIGNAR
-                    </Button>
-                </Box>
-
-                {/* CUERPO DOCENTE */}
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Cuerpo Docente</Typography>
-                <List sx={{ mb: 2, bgcolor: '#fcfcfc', borderRadius: 2 }}>
-                    {escuela.profesores?.map((prof: any) => (
-                        <ListItem key={prof.id} divider>
-                            <ListItemText
-                                primary={`${prof.personas?.nombre} ${prof.personas?.primer_apellido}`}
-                                secondary="Docente activo"
-                            />
-                            <ListItemSecondaryAction>
-                                <IconButton edge="end" color="error" onClick={() => handleDesasignarDocente(prof.id)}>
-                                    <DeleteIcon fontSize="small" />
-                                </IconButton>
-                            </ListItemSecondaryAction>
-                        </ListItem>
-                    ))}
-                </List>
-                <Box sx={{ display: 'flex', gap: 2, p: 2, bgcolor: '#f0f0f0', borderRadius: 2 }}>
-                    <TextField select fullWidth size="small" label="Seleccionar Docente"
-                        value={docenteSeleccionado} onChange={(e) => setDocenteSeleccionado(e.target.value)}>
-                        {docentesDisponibles.map((d) => (
-                            <MenuItem key={d.id} value={d.id}>
-                                {d.nombre && d.apellido ? `${d.nombre} ${d.apellido}` : "Docente sin datos"}
-                            </MenuItem>
-                        ))}
-                    </TextField>
-                    <Button variant="outlined" startIcon={<PersonAddIcon />}
-                        onClick={() => handleAsignar('docente')} sx={{ borderColor: '#375E9E', color: '#375E9E' }}>
+                        onClick={handleAsignarDirectivo} sx={{ borderColor: '#375E9E', color: '#375E9E' }}>
                         ASIGNAR
                     </Button>
                 </Box>

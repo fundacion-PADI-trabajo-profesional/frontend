@@ -19,6 +19,7 @@ import Escuelas from "./pages/Escuelas"
 import AulasPage from "./pages/Aulas"
 import Zonas from "./pages/Zonas"
 import ZonaDetalle from "./pages/ZonaDetalle"
+import PanelControl from "./pages/PanelControl"
 
 // Define a type for your user object
 interface User {
@@ -78,6 +79,7 @@ function App() {
         <Route path="/docentes" element={currentUser ? <DocentesPage /> : <Navigate to="/login" replace />} />
         <Route path="/directivos" element={currentUser ? <DirectivosPage /> : <Navigate to="/login" replace />} />
         <Route path="/aulas" element={currentUser ? <AulasPage /> : <Navigate to="/login" replace />} />
+        <Route path="/panel-control" element={currentUser ? <PanelControl /> : <Navigate to="/login" replace />} />
 
         {/* Rutas de Gestión (Ahora protegidas) */}
         <Route path="/zonas" element={currentUser ? <Zonas /> : <Navigate to="/login" replace />} />

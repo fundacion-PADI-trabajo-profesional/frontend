@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Box, Container, Typography, Button, CircularProgress, Alert } from "@mui/material"
+import { Box, Container, Typography, Button, CircularProgress, Alert, Paper, List, ListItem, ListItemText, Stack } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
-import { useNavigate, useSearchParams } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import EstudiantesList from "../components/EstudiantesList"
 import EstudianteForm from "../components/EstudianteForm"
 import { getEstudiantes, type Estudiante, type EstudianteCreado } from "../api/estudiantes"
+import { getDocenteAulasConEstudiantes, type DocenteAulaConEstudiantes } from "../api/aulas"
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 /**
@@ -21,10 +22,10 @@ export default function Estudiantes() {
     const [estudianteCreado, setEstudianteCreado] = useState<EstudianteCreado | null>(null)
     const [selectedForEdit, setSelectedForEdit] = useState<Estudiante | null>(null);
     const [userRole, setUserRole] = useState("");
+    const [aulasDocente, setAulasDocente] = useState<DocenteAulaConEstudiantes[]>([]);
+    const [selectedAulaId, setSelectedAulaId] = useState<string | null>(null);
 
     const navigate = useNavigate()
-    const [searchParams] = useSearchParams()
-
     // --- Carga de Datos Inicial ---
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem("padiUser") || "{}")
@@ -41,8 +42,16 @@ export default function Estudiantes() {
         setLoading(true)
         setError(null)
         try {
-            const data = await getEstudiantes()
-            setEstudiantes(data)
+            const user = JSON.parse(localStorage.getItem("padiUser") || "{}");
+            if (user?.rol === "docente") {
+                const aulas = await getDocenteAulasConEstudiantes();
+                setAulasDocente(aulas);
+                setEstudiantes([]);
+            } else {
+                const data = await getEstudiantes();
+                setEstudiantes(data);
+                setAulasDocente([]);
+            }
         } catch (err: any) {
             setError(err.message || "Error al cargar los estudiantes")
         } finally {
@@ -64,6 +73,7 @@ export default function Estudiantes() {
     const handleBackToList = () => {
         setSelectedForEdit(null);
         setView("list");
+        setSelectedAulaId(null);
         // Si usamos React Router, limpiamos la URL
         navigate("/estudiantes", { replace: true });
     }
@@ -124,6 +134,102 @@ export default function Estudiantes() {
                             <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}><CircularProgress /></Box>
                         ) : error ? (
                             <Alert severity="error">{error}</Alert>
+                        ) : userRole === "docente" ? (
+                            <>
+                                {!selectedAulaId ? (
+                                    <Stack spacing={2}>
+                                        {aulasDocente.length === 0 && (
+                                            <Alert severity="info">
+                                                No tenés aulas asignadas por ahora.
+                                            </Alert>
+                                        )}
+                                        {aulasDocente.map((aula) => (
+                                            <Paper
+                                                key={aula.id}
+                                                sx={{ p: 2.5, borderRadius: 3, border: "1px solid #eee", cursor: "pointer" }}
+                                                onClick={() => setSelectedAulaId(aula.id)}
+                                            >
+                                                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                                    {aula.sala?.grado ?? "?"}° - {aula.comision} ({aula.turno})
+                                                </Typography>
+                                                <Typography variant="body2" sx={{ color: "#666", mt: 0.5 }}>
+                                                    Escuela: {aula.escuela?.nombre ?? "Sin nombre"}
+                                                </Typography>
+                                                <Typography variant="body2" sx={{ color: "#444", mt: 1 }}>
+                                                    Estudiantes asignados: {aula.estudiantes?.length ?? 0}
+                                                </Typography>
+                                            </Paper>
+                                        ))}
+                                    </Stack>
+                                ) : (
+                                    (() => {
+                                        const aula = aulasDocente.find((a) => a.id === selectedAulaId);
+                                        if (!aula) {
+                                            return <Alert severity="warning">Aula no encontrada.</Alert>;
+                                        }
+
+                                        return (
+                                            <Box>
+                                                <Button
+                                                    startIcon={<ArrowBackIcon />}
+                                                    onClick={() => setSelectedAulaId(null)}
+                                                    sx={{ mb: 2, textTransform: "none" }}
+                                                >
+                                                    Volver a mis aulas
+                                                </Button>
+                                                <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                                                    {aula.sala?.grado ?? "?"}° - {aula.comision} ({aula.turno})
+                                                </Typography>
+                                                <Typography variant="body2" sx={{ color: "#666", mb: 2 }}>
+                                                    {aula.escuela?.nombre ?? "Escuela"}
+                                                </Typography>
+
+                                                {aula.estudiantes.length === 0 ? (
+                                                    <Alert severity="info">
+                                                        Esta aula está asignada a vos, pero todavía no tiene estudiantes.
+                                                    </Alert>
+                                                ) : (
+                                                    <Paper elevation={0} sx={{ border: "1px solid #eee", borderRadius: 3 }}>
+                                                        <List>
+                                                            {aula.estudiantes.map((est, index) => (
+                                                                <ListItem
+                                                                    key={est.id}
+                                                                    divider={index < aula.estudiantes.length - 1}
+                                                                    secondaryAction={
+                                                                        <Stack direction="row" spacing={1}>
+                                                                            <Button
+                                                                                size="small"
+                                                                                onClick={() =>
+                                                                                    navigate(`/evaluaciones?estudianteId=${est.id}&nombre=${est.personas.nombre} ${est.personas.primer_apellido}&salaId=${aula.sala_id}`)
+                                                                                }
+                                                                            >
+                                                                                Evaluar
+                                                                            </Button>
+                                                                            <Button
+                                                                                size="small"
+                                                                                onClick={() =>
+                                                                                    navigate(`/historial-estudiante?estudianteId=${est.id}&nombre=${est.personas.nombre} ${est.personas.primer_apellido}`)
+                                                                                }
+                                                                            >
+                                                                                Historial
+                                                                            </Button>
+                                                                        </Stack>
+                                                                    }
+                                                                >
+                                                                    <ListItemText
+                                                                        primary={`${est.personas.primer_apellido ?? ""}, ${est.personas.nombre ?? ""}`}
+                                                                        secondary={`DNI: ${est.personas.dni ?? "-"}`}
+                                                                    />
+                                                                </ListItem>
+                                                            ))}
+                                                        </List>
+                                                    </Paper>
+                                                )}
+                                            </Box>
+                                        );
+                                    })()
+                                )}
+                            </>
                         ) : (
                             <EstudiantesList 
                                 estudiantes={estudiantes} 

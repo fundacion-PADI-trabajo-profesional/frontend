@@ -50,14 +50,15 @@ export default function EvaluacionesList({ onEditar }: {
     setLoading(true);
     setError(null);
     try {
-      // 1. Obtener datos del usuario logueado (ejemplo desde localStorage)
-      const userStr = localStorage.getItem("user");
+      // 1. Obtener datos del usuario logueado
+      const userStr = localStorage.getItem("padiUser");
       const user = userStr ? JSON.parse(userStr) : null;
 
-      // 2. Llamar a la API con los nuevos parámetros de filtrado
+      // 2. Para docente, mostrar solo evaluaciones propias.
       const data = await getEvaluacionesInstancias({
         escuela_id: user?.escuela_id,
-        rol: user?.rol
+        rol: user?.rol,
+        profesorId: user?.rol === "docente" ? user?.id : undefined,
       });
 
       setEvaluaciones(data);
@@ -188,6 +189,8 @@ export default function EvaluacionesList({ onEditar }: {
           <TableHead sx={{ bgcolor: "#f5f5f5" }}>
             <TableRow>
               <TableCell align="center" sx={{ fontWeight: 700 }}>Estudiante</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 700 }}>Colegio</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 700 }}>Aula</TableCell>
               <TableCell align="center" sx={{ fontWeight: 700 }}>Sala</TableCell>
               <TableCell align="center" sx={{ fontWeight: 700 }}>Tipo</TableCell>
               <TableCell align="center" sx={{ fontWeight: 700 }}>Estado</TableCell>
@@ -205,6 +208,8 @@ export default function EvaluacionesList({ onEditar }: {
                 sx={{ cursor: 'pointer' }}
               >
                 <TableCell>{evaluacion.estudianteNombre || evaluacion.estudianteId}</TableCell>
+                <TableCell align="center">{evaluacion.escuelaNombre || "-"}</TableCell>
+                <TableCell align="center">{evaluacion.aulaLabel || "-"}</TableCell>
                 <TableCell align="center">{evaluacion.salaId || evaluacion.salaId}</TableCell>
                 <TableCell>{getTipoLabel(evaluacion.tipoId)}</TableCell>
                 <TableCell align="center">

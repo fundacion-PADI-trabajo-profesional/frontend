@@ -61,6 +61,9 @@ export interface EvaluacionInstancia {
   estudianteNombre?: string
   profesorId: string
   salaId: number
+  aulaId?: string
+  aulaLabel?: string
+  escuelaNombre?: string
   salaNombre?: string
   tipoId: string
   estadoId: string
@@ -74,6 +77,7 @@ export interface EvaluacionInstancia {
 export interface CreateEvaluacionPayload {
   dni: string
   profesor_id: string
+  aula_id?: string
   tipo_id: string
   fecha_creacion: string
 }
@@ -128,6 +132,9 @@ function mapToCamelCase(data: any): EvaluacionInstancia {
 
     profesorId: data.profesor_id,
     salaId: data.sala_id,
+    aulaId: data.aula_id ?? undefined,
+    aulaLabel: data.aulas ? `${data.aulas.comision ?? ""} (${data.aulas.turno ?? ""})`.trim() : undefined,
+    escuelaNombre: data.estudiantes?.escuela?.nombre ?? "",
     salaNombre: data.estudiantes?.salas?.nombre || `Sala de ${data.sala_id}`,
     tipoId: data.tipo_id,
     estadoId: data.estado_id,
@@ -196,10 +203,12 @@ export async function getEvaluacionInstanciaById(id: string): Promise<Evaluacion
 export async function getEvaluacionesInstancias(filters?: {
   escuela_id?: string;
   rol?: string;
+  profesorId?: string;
 }): Promise<EvaluacionInstancia[]> {
   const params = new URLSearchParams();
   if (filters?.escuela_id) params.append("escuela_id", filters.escuela_id);
   if (filters?.rol) params.append("rol", filters.rol);
+  if (filters?.profesorId) params.append("profesorId", filters.profesorId);
 
   const res = await fetch(`${API_URL}/evaluaciones?${params.toString()}`);
   if (!res.ok) throw new Error("Error al cargar las evaluaciones");

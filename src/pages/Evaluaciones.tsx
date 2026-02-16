@@ -3,46 +3,20 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { Box, Container, Typography, Button, Tabs, Tab } from "@mui/material"
+import { Box, Container, Typography, Button } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import EvaluacionesList from "../components/EvaluacionesList"
 import EvaluacionForm from "../components/EvaluacionForm"
-import type { EvaluacionInstancia } from "../api/evaluaciones"; // <--- IMPORTA EL TIPO
+import type { EvaluacionInstancia } from "../api/evaluaciones";
 import EvaluacionDetalle from "../components/EvaluacionDetalle"
 
-interface TabPanelProps {
-  children?: React.ReactNode
-  index: number
-  value: number
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`evaluacion-tabpanel-${index}`}
-      aria-labelledby={`evaluacion-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ py: 4 }}>{children}</Box>}
-    </div>
-  )
-}
-
 export default function Evaluaciones() {
-  const [tabValue, setTabValue] = useState(0)
-  const [loading, setLoading] = useState(false)
   const [profile, setProfile] = useState<any | null>(null)
-  const [evaluacionAEditar, setEvaluacionAEditar] = useState<EvaluacionInstancia | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0); // Para refrescar la lista
+  const [refreshKey, setRefreshKey] = useState(0);
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [prefillEstudianteId, setPrefillEstudianteId] = useState<string | null>(null)
-  // Estado para controlar qué evaluación se está VIENDO en detalle
   const [evaluacionSeleccionadaId, setEvaluacionSeleccionadaId] = useState<string | null>(null);
 
 
@@ -56,51 +30,22 @@ export default function Evaluaciones() {
     }
   }, [navigate])
 
-  // Si venimos desde Estudiantes con ?evaluarAhora=<id>, abrir pestaña "Nueva Evaluación" y prellenar
+  // Si venimos desde Estudiantes con estudianteId/evaluarAhora, abrimos modo creación.
   useEffect(() => {
     const evaluarAhora = searchParams.get("evaluarAhora")
-    const crear = searchParams.get("crear") // <--- LEER EL NUEVO PARÁMETRO
+    const estudianteId = searchParams.get("estudianteId")
+    const crear = searchParams.get("crear")
 
     if (evaluarAhora) {
       setPrefillEstudianteId(evaluarAhora)
-      setTabValue(1) // Cambia a pestaña "Nueva Evaluación"
+    } else if (estudianteId) {
+      setPrefillEstudianteId(estudianteId)
     } else if (crear === "true") {
-      setPrefillEstudianteId(null) // Nos aseguramos de limpiar cualquier ID previo
-      setTabValue(1) // Cambia a pestaña "Nueva Evaluación"
+      setPrefillEstudianteId(null)
+    } else {
+      setPrefillEstudianteId(null)
     }
   }, [searchParams])
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue)
-    // Si el usuario cambia de pestaña manualmente, limpiamos el estado de edición
-    if (newValue === 0) {
-      setEvaluacionAEditar(null);
-    }
-  }
-
-  const handleEditar = (evaluacion: EvaluacionInstancia) => {
-    // Si la evaluación es 'No iniciada' ('N') o 'En Progreso' ('E'),
-    // el objetivo del "Editar" es ir a la pantalla de detalle/continuar.
-    // Como no tenemos el componente de detalle, por ahora simulamos la edición
-    // redirigiendo al formulario (como estaba) o lanzando una acción.
-
-    // --- NUEVO FLUJO ---
-    // En un proyecto real, aquí navegarías a: navigate(`/evaluaciones/${evaluacion.id}/detalle`)
-
-    // MANTENEMOS EL COMPORTAMIENTO ACTUAL POR EL MOMENTO (volver a la pestaña 1),
-    // pero con la lógica de edición. La implementación de la vista de detalle
-    // (`EvaluacionDetalle.tsx`) sería el siguiente paso.
-    setEvaluacionAEditar(evaluacion); // Guarda la evaluación a editar
-    setTabValue(1); // Cambia a la pestaña del formulario
-  };
-
-  // --- NUEVA FUNCIÓN ---
-  // Esta se la pasamos al formulario
-  const handleSuccess = () => {
-    setTabValue(0); // Vuelve a la lista
-    setEvaluacionAEditar(null); // Limpia el estado de edición
-    setRefreshKey(prevKey => prevKey + 1); // Cambia la 'key' para forzar refresh de la lista
-  };
 
   // Only docentes should access this page
   if (profile && profile.rol !== "docente") {
@@ -118,9 +63,7 @@ export default function Evaluaciones() {
   }
 
   const handleVerEvaluacion = (evaluacion: EvaluacionInstancia) => {
-    // Guardamos el ID de la evaluación seleccionada
     setEvaluacionSeleccionadaId(evaluacion.id);
-    // Ocultamos tabs para centrar la vista en el detalle (opcional, o podemos dejar el tab activo)
   };
 
   const handleVolverALista = () => {
@@ -129,15 +72,12 @@ export default function Evaluaciones() {
   };
 
   const handleSuccessForm = () => {
-    setTabValue(0);
-    setEvaluacionAEditar(null);
+    setPrefillEstudianteId(null);
     setRefreshKey(prev => prev + 1);
+    navigate("/evaluaciones", { replace: true });
   };
 
-  if (profile && profile.rol !== "docente") {
-    // ... (Código de acceso denegado igual) ...
-    return null; // Abreviado para ejemplo
-  }
+  const showCreateView = prefillEstudianteId !== null || searchParams.get("crear") === "true";
 
   // Si hay una evaluación seleccionada, mostramos SU DETALLE ocupando todo el área de contenido
   if (evaluacionSeleccionadaId) {
@@ -183,30 +123,32 @@ export default function Evaluaciones() {
         </Container>
       </Box>
 
-      {/* Contenido Tabs */}
+      {/* Contenido */}
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
-          <Tabs value={tabValue} onChange={handleTabChange} aria-label="evaluaciones tabs">
-            <Tab label="Mis Evaluaciones" id="evaluacion-tab-0" />
-            <Tab label="Nueva Evaluación" id="evaluacion-tab-1" />
-          </Tabs>
-        </Box>
-
-        <TabPanel value={tabValue} index={0}>
+        {showCreateView ? (
+          <>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+              <Button
+                startIcon={<ArrowBackIcon />}
+                onClick={() => navigate("/evaluaciones", { replace: true })}
+                sx={{ textTransform: "none" }}
+              >
+                Volver a mis evaluaciones
+              </Button>
+            </Box>
+            <EvaluacionForm
+              onSuccess={handleSuccessForm}
+              evaluacionAEditar={null}
+              profile={profile}
+              prefillEstudianteId={prefillEstudianteId || undefined}
+            />
+          </>
+        ) : (
           <EvaluacionesList
             key={refreshKey}
-            onEditar={handleVerEvaluacion} // <--- Ahora pasamos la función que abre el detalle
+            onEditar={handleVerEvaluacion}
           />
-        </TabPanel>
-
-        <TabPanel value={tabValue} index={1}>
-          <EvaluacionForm
-            onSuccess={handleSuccessForm}
-            evaluacionAEditar={null} // Por ahora solo creación en esta pestaña
-            profile={profile}
-            prefillEstudianteId={prefillEstudianteId || undefined}
-          />
-        </TabPanel>
+        )}
       </Container>
     </Box>
   )

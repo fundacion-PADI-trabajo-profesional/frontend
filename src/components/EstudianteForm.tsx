@@ -32,9 +32,16 @@ interface EstudianteFormProps {
     onCancel: () => void
     onSuccess: (estudiante: any) => void
     estudianteAEditar?: Estudiante | null // Prop para detectar si estamos editando
+    aulaContext?: {
+        aula_id: string
+        sala_id: number
+        escuela_id: string
+        aulaLabel?: string
+        escuelaNombre?: string | null
+    } | null
 }
 
-export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar }: EstudianteFormProps) {
+export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar, aulaContext }: EstudianteFormProps) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [isDirector, setIsDirector] = useState(false)
@@ -72,8 +79,8 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar 
                 setGeneros(genData)
                 setSalas(salasData)
 
-                // 3. Cargar escuelas (solo si no es director, para ahorrar peticiones)
-                if (user?.rol !== "director") {
+                // 3. Cargar escuelas solo para roles que pueden listar escuelas
+                if (user?.rol === "equipo_padi" || user?.rol === "encargado_zona") {
                     const escData = await getEscuelas()
                     setEscuelas(escData)
                 }
@@ -90,6 +97,13 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar 
                         sala_id: String(estudianteAEditar.sala_id),
                         escuela_id: estudianteAEditar.escuela.escuela_id || "",
                     })
+                } else if (aulaContext) {
+                    // MODO CREACIÓN DESDE AULA (docente)
+                    setFormData(prev => ({
+                        ...prev,
+                        sala_id: String(aulaContext.sala_id),
+                        escuela_id: aulaContext.escuela_id,
+                    }))
                 } else if (user && user.rol === "director" && user.escuela_id) {
                     // MODO CREACIÓN (Director)
                     setFormData(prev => ({ ...prev, escuela_id: user.escuela_id }))
@@ -102,7 +116,7 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar 
             }
         }
         loadInitialData()
-    }, [estudianteAEditar])
+    }, [estudianteAEditar, aulaContext])
 
     const validate = () => {
         const newErrors: Record<string, string> = {}
@@ -142,7 +156,8 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar 
                 // Crear nuevo estudiante
                 const nuevo = await createEstudiante({
                     ...formData,
-                    sala_id: Number(formData.sala_id)
+                    sala_id: Number(formData.sala_id),
+                    aula_id: aulaContext?.aula_id,
                 })
                 onSuccess(nuevo)
             }
@@ -212,7 +227,12 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar 
                 <Grid item xs={12} sm={6}>
                     <FormControl fullWidth variant="filled" error={!!errors.sala_id}>
                         <InputLabel>Sala / Comisión</InputLabel>
-                        <Select name="sala_id" value={formData.sala_id} onChange={handleChange}>
+                        <Select
+                            name="sala_id"
+                            value={formData.sala_id}
+                            onChange={handleChange}
+                            disabled={!!aulaContext && !estudianteAEditar}
+                        >
                             {salas.map((s) => (
                                 <MenuItem key={s.id} value={String(s.id)}>{s.nombre} ({s.grado}° grado)</MenuItem>
                             ))}
@@ -225,7 +245,7 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar 
                     <FormControl 
                         fullWidth variant="filled" 
                         error={!!errors.escuela_id} 
-                        disabled={isDirector && !estudianteAEditar} // Bloqueado solo si es nuevo registro por director
+                        disabled={(isDirector && !estudianteAEditar) || (!!aulaContext && !estudianteAEditar)} // Bloqueado para director o creación desde aula
                     >
                         <InputLabel>Institución / Escuela</InputLabel>
                         <Select name="escuela_id" value={formData.escuela_id} onChange={handleChange}>
@@ -238,6 +258,11 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar 
                             )}
                         </Select>
                         {isDirector && <FormHelperText>Escuela vinculada automáticamente a tu perfil de director.</FormHelperText>}
+                        {!!aulaContext && !estudianteAEditar && (
+                            <FormHelperText>
+                                Aula asignada: {aulaContext.aulaLabel || "Aula"} ({aulaContext.escuelaNombre || "Escuela"})
+                            </FormHelperText>
+                        )}
                     </FormControl>
                 </Grid>
             </Grid>

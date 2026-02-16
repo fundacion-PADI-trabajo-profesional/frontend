@@ -15,11 +15,13 @@ import {
   Alert,
   CircularProgress,
   Autocomplete,
+  Paper,
 } from "@mui/material"
 import SaveIcon from "@mui/icons-material/Save"
 import CancelIcon from "@mui/icons-material/Cancel"
 import { crearEvaluacionInstancia, actualizarEvaluacionInstancia, type EvaluacionInstancia } from "../api/evaluaciones"; // <-- IMPORTA EL TIPO Y LA NUEVA FUNCIÓN
 import { getEstudiantes, type Estudiante } from "../api/estudiantes";
+import { getDocenteAulasConEstudiantes } from "../api/aulas";
 import { useSearchParams } from "react-router-dom"
 
 interface EvaluacionFormProps {
@@ -39,6 +41,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
   const [formData, setFormData] = useState({
     estudianteId: "",
     salaId: "",
+    aulaId: "",
     tipoId: "inicial",
     estadoId: "N",
     fechaCreacion: getCurrentMonth(),
@@ -55,16 +58,20 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
 
   const [searchParams] = useSearchParams();
   const prefillSalaId = searchParams.get("salaId"); // Capturamos la sala
+  const prefillAulaId = searchParams.get("aulaId");
+  const prefillAulaLabel = searchParams.get("aulaLabel");
+  const prefillEscuelaNombre = searchParams.get("escuelaNombre");
 
   useEffect(() => {
     if (prefillEstudianteId) {
       setFormData(prev => ({
         ...prev,
         estudianteId: prefillEstudianteId,
-        salaId: prefillSalaId || "" // Pre-cargamos la sala si viene en la URL
+        salaId: prefillSalaId || "", // Pre-cargamos la sala si viene en la URL
+        aulaId: prefillAulaId || "",
       }));
     }
-  }, [prefillEstudianteId, prefillSalaId]);
+  }, [prefillEstudianteId, prefillSalaId, prefillAulaId]);
 
   useEffect(() => {
     const loadEstudiantes = async () => {
@@ -72,13 +79,29 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
         const data = await getEstudiantes();
         setEstudiantes(data);
       } catch (err) {
-        setError("Error al cargar la lista de estudiantes.");
+        // Para docentes sin escuela única asignada, usamos sus aulas asignadas como fuente.
+        if (profile?.rol === "docente") {
+          try {
+            const aulas = await getDocenteAulasConEstudiantes();
+            const dedup = new Map<string, Estudiante>();
+            for (const aula of aulas) {
+              for (const est of aula.estudiantes || []) {
+                dedup.set(est.id, est);
+              }
+            }
+            setEstudiantes(Array.from(dedup.values()));
+          } catch {
+            setError("Error al cargar la lista de estudiantes.");
+          }
+        } else {
+          setError("Error al cargar la lista de estudiantes.");
+        }
       } finally {
         setLoadingEstudiantes(false);
       }
     };
     loadEstudiantes();
-  }, []);
+  }, [profile?.rol]);
 
   useEffect(() => {
     // Solo se ejecuta si la evaluación a editar existe Y la lista de estudiantes ya se cargó
@@ -93,6 +116,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
       setFormData({
         estudianteId: evaluacionAEditar.estudianteId,
         salaId: String(evaluacionAEditar.salaId),
+        aulaId: evaluacionAEditar.aulaId || "",
         tipoId: evaluacionAEditar.tipoId,
         estadoId: evaluacionAEditar.estadoId,
         fechaCreacion: getCurrentMonth(),
@@ -114,14 +138,16 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
         ...prev,
         estudianteId: estudiante ? estudiante.id : "",
         salaId: estudiante ? String(estudiante.sala_id) : "",
+        aulaId: prev.aulaId || prefillAulaId || "",
       }));
     }
-  }, [prefillEstudianteId, estudiantes, evaluacionAEditar]);
+  }, [prefillEstudianteId, estudiantes, evaluacionAEditar, prefillAulaId]);
 
   const handleClear = () => {
     setFormData({
       estudianteId: "",
       salaId: "",
+      aulaId: "",
       tipoId: "inicial",
       estadoId: "N",
       fechaCreacion: getCurrentMonth(),
@@ -191,6 +217,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
         const payloadBackend = {
           dni: selectedEstudiante.personas.dni, // Usamos DNI, no ID
           profesor_id: profile.id,              // snake_case: profesor_id
+          aula_id: formData.aulaId || undefined,
           tipo_id: formData.tipoId,             // snake_case: tipo_id
           fecha_creacion: formData.fechaCreacion,
         }
@@ -239,6 +266,22 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
 
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
+            {formData.aulaId && (
+              <Grid item xs={12}>
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: "#fafafa" }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
+                    Contexto del estudiante a evaluar
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "#555" }}>
+                    Aula: {prefillAulaLabel || formData.aulaId}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "#555" }}>
+                    Escuela: {prefillEscuelaNombre || "-"}
+                  </Typography>
+                </Paper>
+              </Grid>
+            )}
+
             {/* Estudiante ID */}
             <Grid item xs={12}>
               <Autocomplete
@@ -263,6 +306,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
                   setFormData((prev) => ({
                     ...prev,
                     estudianteId: newValue ? newValue.id : "",
+                    salaId: newValue ? String(newValue.sala_id) : "",
                   }));
                 }}
                 // Cómo se ve el campo de texto

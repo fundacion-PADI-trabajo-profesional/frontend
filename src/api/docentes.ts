@@ -11,6 +11,10 @@ export interface Docente {
   id: string
   nombre: string
   apellido: string
+  escuelas?: {
+    id: string
+    nombre: string
+  }[]
   aulas?: {
     id: string
     comision: string
@@ -20,16 +24,30 @@ export interface Docente {
   }[]
 }
 
+function getSessionUser() {
+  const userRaw = localStorage.getItem("padiUser")
+  const profileRaw = localStorage.getItem("padiProfile")
+
+  const user = userRaw ? JSON.parse(userRaw) : null
+  const profile = profileRaw ? JSON.parse(profileRaw) : null
+
+  const id = user?.id ?? profile?.id ?? ""
+  const rol = user?.rol ?? profile?.rol ?? ""
+  const escuela_id = user?.escuela_id ?? profile?.escuela_id ?? ""
+
+  return { id, rol, escuela_id }
+}
+
 export async function getDocentes(): Promise<Docente[]> {
-  // Obtenemos los datos del usuario (id, rol, escuela_id)
-  const stored = localStorage.getItem("padiUser");
-  const user = stored ? JSON.parse(stored) : null;
-  
-  const params = new URLSearchParams();
-  if (user) {
-    params.append("rol", user.rol);
-    if (user.escuela_id) params.append("escuela_id", user.escuela_id);
+  const user = getSessionUser()
+  if (!user.id || !user.rol) {
+    throw new Error("Sesion invalida. Volve a iniciar sesion.")
   }
+
+  const params = new URLSearchParams();
+  params.append("usuario_id", user.id)
+  params.append("rol", user.rol);
+  if (user.escuela_id) params.append("escuela_id", user.escuela_id);
 
   const res = await fetch(`${API_URL}/docentes?${params.toString()}`);
   const body: ApiResponse<Docente[]> = await res.json();
@@ -38,6 +56,56 @@ export async function getDocentes(): Promise<Docente[]> {
     throw new Error(body.message || "Error al cargar docentes");
   }
   return body.data || [];
+}
+
+export async function asignarDocenteAEscuela(
+  docenteId: string,
+  escuelaId: string,
+): Promise<void> {
+  const user = getSessionUser()
+  if (!user.id || !user.rol) {
+    throw new Error("No hay sesion activa");
+  }
+
+  const res = await fetch(`${API_URL}/docentes/${docenteId}/asignar-escuela`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      escuela_id: escuelaId,
+      usuario_id: user.id,
+      rol: user.rol,
+    }),
+  });
+
+  const body: ApiResponse<unknown> = await res.json();
+  if (!res.ok || !body.success) {
+    throw new Error(body.message || "Error al asignar docente al colegio");
+  }
+}
+
+export async function desasignarDocenteDeEscuela(
+  docenteId: string,
+  escuelaId: string,
+): Promise<void> {
+  const user = getSessionUser()
+  if (!user.id || !user.rol) {
+    throw new Error("No hay sesion activa");
+  }
+
+  const res = await fetch(`${API_URL}/docentes/${docenteId}/desasignar-escuela`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      escuela_id: escuelaId,
+      usuario_id: user.id,
+      rol: user.rol,
+    }),
+  });
+
+  const body: ApiResponse<unknown> = await res.json();
+  if (!res.ok || !body.success) {
+    throw new Error(body.message || "Error al desasignar docente del colegio");
+  }
 }
 
 

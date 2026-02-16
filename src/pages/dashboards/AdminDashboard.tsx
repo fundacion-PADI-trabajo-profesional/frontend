@@ -9,6 +9,7 @@ interface Props {
 export default function AdminDashboard({ rol }: Props) {
     const navigate = useNavigate();
     const isEquipoPadi = rol === "equipo_padi";
+    const isEncargado = rol === "encargado_zona";
     const titulo = isEquipoPadi ? "Panel Central PADI" : "Panel de Zona";
 
     return (
@@ -45,35 +46,53 @@ export default function AdminDashboard({ rol }: Props) {
                     </Grid>
                 )}
 
-                <Grid item xs={12} sm={6} md={4}>
-                    <DashboardCard
-                        title="Escuelas"
-                        description="Alta y gestión de instituciones educativas."
-                        icon="🏫"
-                        color="#FF9800"
-                        onClick={() => navigate("/escuelas")}
-                    />
-                </Grid>
+                {isEquipoPadi && (
+                    <Grid item xs={12} sm={6} md={4}>
+                        <DashboardCard
+                            title="Escuelas"
+                            description="Alta y gestión de instituciones educativas."
+                            icon="🏫"
+                            color="#FF9800"
+                            onClick={() => navigate("/escuelas")}
+                        />
+                    </Grid>
+                )}
 
-                <Grid item xs={12} sm={6} md={4}>
-                    <DashboardCard
-                        title="Gestionar Aulas"
-                        description="Crear y administrar aulas (grado, comisión, turno)."
-                        icon="📂"
-                        color="#9C27B0"
-                        onClick={() => navigate("/aulas")}
-                    />
-                </Grid>
+                {isEquipoPadi && (
+                    <Grid item xs={12} sm={6} md={4}>
+                        <DashboardCard
+                            title="Gestionar Aulas"
+                            description="Crear y administrar aulas (grado, comisión, turno)."
+                            icon="📂"
+                            color="#9C27B0"
+                            onClick={() => navigate("/aulas")}
+                        />
+                    </Grid>
+                )}
 
-                <Grid item xs={12} sm={6} md={4}>
-                    <DashboardCard
-                        title="Directivos"
-                        description="Gestionar cuentas de directores."
-                        icon="👔"
-                        color="#607D8B"
-                        onClick={() => navigate("/directivos")}
-                    />
-                </Grid>
+                {isEquipoPadi && (
+                    <Grid item xs={12} sm={6} md={4}>
+                        <DashboardCard
+                            title="Directivos"
+                            description="Gestionar cuentas de directores."
+                            icon="👔"
+                            color="#607D8B"
+                            onClick={() => navigate("/directivos")}
+                        />
+                    </Grid>
+                )}
+
+                {isEncargado && (
+                    <Grid item xs={12} sm={6} md={4}>
+                        <DashboardCard
+                            title="Panel de control"
+                            description="Escuelas, directores, aulas, estudiantes y evaluaciones de tu zona."
+                            icon="🧭"
+                            color="#FF9800"
+                            onClick={() => navigate("/panel-control")}
+                        />
+                    </Grid>
+                )}
 
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard

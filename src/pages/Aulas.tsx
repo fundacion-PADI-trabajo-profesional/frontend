@@ -41,6 +41,7 @@ import { getDocentes, Docente } from "../api/docentes";
 type Mode = "list" | "create" | "edit";
 
 export default function AulasPage() {
+  const [currentRole, setCurrentRole] = useState("");
   const [aulas, setAulas] = useState<Aula[]>([]);
   const [salas, setSalas] = useState<Sala[]>([]);
   const [docentes, setDocentes] = useState<Docente[]>([]);
@@ -62,6 +63,27 @@ export default function AulasPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const stored = localStorage.getItem("padiUser");
+    if (!stored) {
+      setCurrentRole("");
+      return;
+    }
+    try {
+      const user = JSON.parse(stored);
+      setCurrentRole(user?.rol || "");
+    } catch {
+      setCurrentRole("");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (currentRole && currentRole !== "director") {
+      navigate("/home");
+    }
+  }, [currentRole, navigate]);
+
+  useEffect(() => {
+    if (!currentRole || currentRole !== "director") return;
     const loadInitial = async () => {
       setLoading(true);
       setError(null);
@@ -83,7 +105,7 @@ export default function AulasPage() {
     if (mode === "list") {
       loadInitial();
     }
-  }, [mode]);
+  }, [mode, currentRole]);
 
   const resetForm = () => {
     setSalaId("");

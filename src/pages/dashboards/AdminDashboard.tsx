@@ -46,18 +46,6 @@ export default function AdminDashboard({ rol }: Props) {
                     </Grid>
                 )}
 
-                {isEquipoPadi && (
-                    <Grid item xs={12} sm={6} md={4}>
-                        <DashboardCard
-                            title="Gestionar Aulas"
-                            description="Crear y administrar aulas (grado, comisión, turno)."
-                            icon="📂"
-                            color="#9C27B0"
-                            onClick={() => navigate("/aulas")}
-                        />
-                    </Grid>
-                )}
-
                 {isEncargado && (
                     <Grid item xs={12} sm={6} md={4}>
                         <DashboardCard

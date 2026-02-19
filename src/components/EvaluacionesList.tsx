@@ -31,8 +31,8 @@ const ESTADO_APROBADA = "A"
 const ESTADO_DESAPROBADA = "D"
 const ESTADO_EN_PROGRESO = "E"
 
-export default function EvaluacionesList({ onEditar }: {
-  onEditar: (evaluacion: EvaluacionInstancia) => void
+export default function EvaluacionesList({ onEditar }: { 
+  onEditar: (evaluacion: EvaluacionInstancia) => void 
 }) {
   const [evaluaciones, setEvaluaciones] = useState<EvaluacionInstancia[]>([])
   const [loading, setLoading] = useState(true)
@@ -184,10 +184,10 @@ export default function EvaluacionesList({ onEditar }: {
 
   return (
     <>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead sx={{ bgcolor: "#f5f5f5" }}>
-            <TableRow>
+    <TableContainer component={Paper}>
+      <Table>
+        <TableHead sx={{ bgcolor: "#f5f5f5" }}>
+          <TableRow>
               <TableCell align="center" sx={{ fontWeight: 700 }}>Estudiante</TableCell>
               <TableCell align="center" sx={{ fontWeight: 700 }}>Colegio</TableCell>
               <TableCell align="center" sx={{ fontWeight: 700 }}>Aula</TableCell>
@@ -196,10 +196,10 @@ export default function EvaluacionesList({ onEditar }: {
               <TableCell align="center" sx={{ fontWeight: 700 }}>Estado</TableCell>
               <TableCell align="center" sx={{ fontWeight: 700 }}>Áreas aprobadas</TableCell>
               <TableCell align="center" sx={{ fontWeight: 700 }}>Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {evaluaciones.map((evaluacion) => (
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {evaluaciones.map((evaluacion) => (
               <TableRow
                 key={evaluacion.id}
                 hover
@@ -211,19 +211,19 @@ export default function EvaluacionesList({ onEditar }: {
                 <TableCell align="center">{evaluacion.escuelaNombre || "-"}</TableCell>
                 <TableCell align="center">{evaluacion.aulaLabel || "-"}</TableCell>
                 <TableCell align="center">{evaluacion.salaId || evaluacion.salaId}</TableCell>
-                <TableCell>{getTipoLabel(evaluacion.tipoId)}</TableCell>
+              <TableCell>{getTipoLabel(evaluacion.tipoId)}</TableCell>
                 <TableCell align="center">
-                  <Chip
-                    label={getEstadoLabel(evaluacion.estadoId)}
+                <Chip
+                  label={getEstadoLabel(evaluacion.estadoId)}
 
                     sx={{
                       fontWeight: 600,
                       ...getEstadoColor(evaluacion.estadoId)
                     }}
-                    size="small"
-                    variant="outlined"
-                  />
-                </TableCell>
+                  size="small"
+                  variant="outlined"
+                />
+              </TableCell>
                 <TableCell align="center">
                   {(() => {
                     const totalAreas = TOTAL_AREAS_EVALUACION;
@@ -237,25 +237,25 @@ export default function EvaluacionesList({ onEditar }: {
                     return `${aprobadas}/${totalAreas}`;
                   })()}
                 </TableCell>
-                <TableCell align="center">
-                  <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      color="error"
-                      startIcon={<DeleteIcon />}
+              <TableCell align="center">
+                <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="error"
+                    startIcon={<DeleteIcon />}
                       onClick={(e) => handleClickDelete(e, evaluacion.id)}
-                      sx={{ textTransform: "none" }}
-                    >
-                      Eliminar
-                    </Button>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                    sx={{ textTransform: "none" }}
+                  >
+                    Eliminar
+                  </Button>
+                </Box>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
       <Dialog
         open={openDeleteDialog}
         onClose={handleCloseDialog}

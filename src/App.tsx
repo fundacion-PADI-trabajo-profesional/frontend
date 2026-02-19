@@ -12,7 +12,6 @@ import Estudiantes from "./pages/Estudiantes"
 import HistorialEstudiante from "./pages/HistorialEstudiante"
 import EvaluacionesDocente from "./pages/EvaluacionesDocente"
 import DocentesPage from "./pages/Docentes"
-import DirectivosPage from "./pages/Directivos"
 import EncargadosZona from "./pages/EncargadosZona";
 import "./App.css" //
 import Escuelas from "./pages/Escuelas"
@@ -77,7 +76,6 @@ function App() {
         <Route path="/historial-estudiante" element={currentUser ? <HistorialEstudiante /> : <Navigate to="/login" replace />} />
         <Route path="/evaluaciones-docente" element={currentUser ? <EvaluacionesDocente /> : <Navigate to="/login" replace />} />
         <Route path="/docentes" element={currentUser ? <DocentesPage /> : <Navigate to="/login" replace />} />
-        <Route path="/directivos" element={currentUser ? <DirectivosPage /> : <Navigate to="/login" replace />} />
         <Route path="/aulas" element={currentUser ? <AulasPage /> : <Navigate to="/login" replace />} />
         <Route path="/panel-control" element={currentUser ? <PanelControl /> : <Navigate to="/login" replace />} />
 

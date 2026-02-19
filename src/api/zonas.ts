@@ -10,10 +10,33 @@ interface ApiResponse<T> {
 export interface Zona {
     id: string
     nombre: string
+    encargados?: Array<{
+        id: string
+        usuario: {
+            id: string
+            nombre: string
+            apellido: string
+            email: string
+        }
+    }>
     _count?: {
         escuelas: number
         encargados: number
     }
+}
+
+export interface EncargadoZonaOption {
+    id: string
+    usuario: {
+        id: string
+        nombre: string
+        apellido: string
+        email: string
+    }
+    zona?: {
+        id: string
+        nombre: string
+    } | null
 }
 
 // Reutilizamos tu lógica de obtener usuario para los permisos
@@ -124,6 +147,14 @@ export async function getEncargadosSinZona(): Promise<any[]> {
     const { rol } = getUserData();
     const res = await fetch(`${API_URL}/encargados-sin-zona?rol=${rol}`)
     const body: ApiResponse<any[]> = await res.json()
+    if (!res.ok || !body.success) throw new Error(body.message || "Error al cargar encargados");
+    return body.data || []
+}
+
+export async function getEncargadosZonaOptions(): Promise<EncargadoZonaOption[]> {
+    const { rol } = getUserData();
+    const res = await fetch(`${API_URL}/zonas/encargados?rol=${rol}`)
+    const body: ApiResponse<EncargadoZonaOption[]> = await res.json()
     if (!res.ok || !body.success) throw new Error(body.message || "Error al cargar encargados");
     return body.data || []
 }

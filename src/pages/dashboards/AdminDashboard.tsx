@@ -25,23 +25,11 @@ export default function AdminDashboard({ rol }: Props) {
                 {isEquipoPadi && (
                     <Grid item xs={12} sm={6} md={4}>
                         <DashboardCard
-                            title="Zonas"
-                            description="Crear y gestionar regiones geográficas."
-                            icon="🗺️"
+                            title="Panel de control"
+                            description="Zonas, encargados y navegación en cascada hasta detalle de evaluaciones."
+                            icon="🧭"
                             color="#4CAF50"
-                            onClick={() => navigate("/zonas")}
-                        />
-                    </Grid>
-                )}
-
-                {isEquipoPadi && (
-                    <Grid item xs={12} sm={6} md={4}>
-                        <DashboardCard
-                            title="Encargados de Zona"
-                            description="Gestionar y habilitar responsables zonales."
-                            icon="👤"
-                            color="#673AB7"
-                            onClick={() => navigate("/encargados-zonas")}
+                            onClick={() => navigate("/panel-control")}
                         />
                     </Grid>
                 )}
@@ -66,18 +54,6 @@ export default function AdminDashboard({ rol }: Props) {
                             icon="📂"
                             color="#9C27B0"
                             onClick={() => navigate("/aulas")}
-                        />
-                    </Grid>
-                )}
-
-                {isEquipoPadi && (
-                    <Grid item xs={12} sm={6} md={4}>
-                        <DashboardCard
-                            title="Directivos"
-                            description="Gestionar cuentas de directores."
-                            icon="👔"
-                            color="#607D8B"
-                            onClick={() => navigate("/directivos")}
                         />
                     </Grid>
                 )}

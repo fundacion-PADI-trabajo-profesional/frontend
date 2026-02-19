@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
-import { Box, Container, Typography, Button, CircularProgress, Alert } from "@mui/material";
+import { Box, Container, Typography, Button, CircularProgress, Alert, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import { useNavigate } from "react-router-dom";
 
 import EscuelasList from "../components/EscuelasList";
 import EscuelaForm from "../components/EscuelaForm";
 import PageHeader from "../components/PageHeader";
-import { getEscuelas, Escuela } from "../api/escuelas";
+import { desasignarDirectivo, getEscuelas, Escuela } from "../api/escuelas";
 import EditarEscuela from "../components/EditarEscuela";
 import EscuelaDetalle from "../components/EscuelaDetalle";
+import { asignarEscuelaADirectivo, getDirectivos, type Directivo } from "../api/directivos";
 
 type ViewState = "list" | "form" | "success" | "edit" | "details";
 
@@ -22,15 +22,30 @@ export default function Escuelas() {
     const [refreshKey, setRefreshKey] = useState(0);
     const [escuelaAEditar, setEscuelaAEditar] = useState<Escuela | null>(null);
     const [escuelaDetalle, setEscuelaDetalle] = useState<Escuela | null>(null);
-
-    const navigate = useNavigate(); // Hook de navegación
+    const [currentRole, setCurrentRole] = useState("");
+    const [directivos, setDirectivos] = useState<Directivo[]>([]);
+    const [directorDialogOpen, setDirectorDialogOpen] = useState(false);
+    const [directorEscuelaTarget, setDirectorEscuelaTarget] = useState<Escuela | null>(null);
+    const [directorId, setDirectorId] = useState("");
+    const [savingDirector, setSavingDirector] = useState(false);
 
     // Cargar escuelas
+    useEffect(() => {
+        const stored = localStorage.getItem("padiUser");
+        if (!stored) return;
+        try {
+            const user = JSON.parse(stored);
+            setCurrentRole(user?.rol || "");
+        } catch {
+            setCurrentRole("");
+        }
+    }, []);
+
     useEffect(() => {
         if (view === "list") {
             loadEscuelas();
         }
-    }, [view, refreshKey]);
+    }, [view, refreshKey, currentRole]);
 
     const loadEscuelas = async () => {
         setLoading(true);
@@ -38,10 +53,51 @@ export default function Escuelas() {
         try {
             const data = await getEscuelas();
             setEscuelas(data);
+            if (currentRole === "equipo_padi") {
+                const directivosData = await getDirectivos();
+                setDirectivos(directivosData);
+            }
         } catch (err: any) {
             setError(err.message || "Error al cargar las escuelas");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const openAssignDirectorDialog = (escuela: Escuela) => {
+        setDirectorEscuelaTarget(escuela);
+        const assigned = directivos.find((d) => d.escuela?.id === escuela.id);
+        setDirectorId(assigned?.id || "");
+        setDirectorDialogOpen(true);
+    };
+
+    const handleAssignDirector = async () => {
+        if (!directorEscuelaTarget || !directorId) return;
+        setSavingDirector(true);
+        setError(null);
+        try {
+            await asignarEscuelaADirectivo(directorId, directorEscuelaTarget.id);
+            setDirectorDialogOpen(false);
+            setDirectorEscuelaTarget(null);
+            setDirectorId("");
+            await loadEscuelas();
+        } catch (e: any) {
+            setError(e.message || "Error al asignar director");
+        } finally {
+            setSavingDirector(false);
+        }
+    };
+
+    const handleRemoveDirector = async (directorUserId: string) => {
+        if (!window.confirm("¿Quitar director de esta escuela?")) {
+            return;
+        }
+        setError(null);
+        try {
+            await desasignarDirectivo(directorUserId);
+            await loadEscuelas();
+        } catch (e: any) {
+            setError(e.message || "Error al quitar director");
         }
     };
 
@@ -91,6 +147,9 @@ export default function Escuelas() {
                                     escuelas={escuelas}
                                     onEdit={handleEdit}
                                     onView={handleViewDetails}
+                                    isEquipoPadi={currentRole === "equipo_padi"}
+                                    onAssignDirector={openAssignDirectorDialog}
+                                    onRemoveDirector={handleRemoveDirector}
                                 />
                             </Box>
                         )}
@@ -197,6 +256,41 @@ export default function Escuelas() {
             <Container maxWidth="lg" sx={{ py: 4 }}>
                 {renderContent()}
             </Container>
+
+            <Dialog open={directorDialogOpen} onClose={() => setDirectorDialogOpen(false)} fullWidth maxWidth="sm">
+                <DialogTitle>Asignar director a escuela</DialogTitle>
+                <DialogContent>
+                    <Typography sx={{ mb: 2 }}>
+                        Escuela: <strong>{directorEscuelaTarget?.nombre}</strong>
+                    </Typography>
+                    <TextField
+                        select
+                        fullWidth
+                        label="Director"
+                        value={directorId}
+                        onChange={(e) => setDirectorId(e.target.value)}
+                    >
+                        {directivos.map((d) => (
+                            <MenuItem key={d.id} value={d.id}>
+                                {d.apellido}, {d.nombre}
+                            </MenuItem>
+                        ))}
+                        {directivos.length === 0 && (
+                            <MenuItem disabled>No hay directivos disponibles</MenuItem>
+                        )}
+                    </TextField>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDirectorDialogOpen(false)}>Cancelar</Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleAssignDirector}
+                        disabled={!directorId || savingDirector}
+                    >
+                        Guardar
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
         </Box>
     );

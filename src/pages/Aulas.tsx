@@ -19,6 +19,8 @@ import {
   List,
   ListItem,
   ListItemText,
+  Divider,
+  IconButton,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddIcon from "@mui/icons-material/Add";
@@ -34,8 +36,10 @@ import {
   desasignarDocenteAula,
   AulaDocente,
   getAulaEstudiantes,
+  asignarEstudianteAula,
+  desasignarEstudianteAula
 } from "../api/aulas";
-import { getSalas, Sala, Estudiante } from "../api/estudiantes";
+import { getEstudiantes, getSalas, Sala, Estudiante } from "../api/estudiantes";
 import { getDocentes, Docente } from "../api/docentes";
 
 type Mode = "list" | "create" | "edit";
@@ -55,6 +59,8 @@ export default function AulasPage() {
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("list");
   const [editing, setEditing] = useState<Aula | null>(null);
+  const [todosLosEstudiantes, setTodosLosEstudiantes] = useState<Estudiante[]>([]);
+  const [selectedEstudianteId, setSelectedEstudianteId] = useState("");
 
   const [salaId, setSalaId] = useState<number | "">("");
   const [comision, setComision] = useState("");
@@ -74,6 +80,10 @@ export default function AulasPage() {
     } catch {
       setCurrentRole("");
     }
+  }, []);
+
+  useEffect(() => {
+    getEstudiantes().then(setTodosLosEstudiantes).catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -236,6 +246,55 @@ export default function AulasPage() {
     setSelectedAulaForEstudiantes(null);
     setAulaEstudiantes([]);
   };
+
+  const openEstudiantesDialog = async (aula: Aula) => {
+    try {
+      const data = await getAulaEstudiantes(aula.id);
+      setAulaEstudiantes(data);
+
+      const todos = await getEstudiantes(); 
+      setTodosLosEstudiantes(todos);
+
+      setSelectedAulaForEstudiantes(aula);
+      
+    } catch (err) {
+      console.error("Error al cargar estudiantes:", err);
+      alert("No se pudieron cargar los estudiantes del aula.");
+    }
+  };
+
+  const closeEstudiantesDialog = () => {
+    setSelectedAulaForEstudiantes(null);
+    setAulaEstudiantes([]);
+    setSelectedEstudianteId("");
+  };
+
+  const handleDesasignarEstudiante = async (estudianteId: string) => {
+    if (!selectedAulaForEstudiantes) return;
+    try {
+      await desasignarEstudianteAula(selectedAulaForEstudiantes.id, estudianteId);
+      const updated = await getAulaEstudiantes(selectedAulaForEstudiantes.id);
+      setAulaEstudiantes(updated);
+    } catch (err) {
+      alert("Error al quitar estudiante");
+    }
+  };
+
+  const handleAsignarEstudiante = async () => {
+    if (!selectedAulaForEstudiantes || !selectedEstudianteId) return;
+    try {
+      await asignarEstudianteAula(selectedAulaForEstudiantes.id, selectedEstudianteId);
+      const updated = await getAulaEstudiantes(selectedAulaForEstudiantes.id);
+      setAulaEstudiantes(updated);
+      setSelectedEstudianteId("");
+    } catch (err) {
+      alert("Error al asignar estudiante");
+    }
+  };
+
+  const estudiantesDisponiblesParaAula = todosLosEstudiantes.filter(
+    (e) => !aulaEstudiantes.some((ae) => ae.id === e.id)
+  );
 
   const renderSalaLabel = (aula: Aula) => {
     if (aula.sala?.nombre || aula.sala?.grado) {
@@ -525,6 +584,25 @@ export default function AulasPage() {
                               variant="outlined"
                               sx={{
                                 textTransform: "none",
+                                borderColor: '#2e7d32',
+                                color: '#2e7d32',
+                                '&:hover': {
+                                  bgcolor: 'rgba(46, 125, 50, 0.04)',
+                                  borderColor: '#2e7d32'
+                                }
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEstudiantesDialog(a);
+                              }}
+                            >
+                              Estudiantes
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              sx={{
+                                textTransform: "none",
                                 borderColor: '#d32f2f',
                                 color: '#d32f2f',
                                 '&:hover': {
@@ -672,6 +750,131 @@ export default function AulasPage() {
                   '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' }
                 }}
                 onClick={closeDocentesDialog}
+              >
+                Cerrar
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      )}
+
+      {selectedAulaForEstudiantes && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            bgcolor: "rgba(0,0,0,0.4)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1300,
+          }}
+        >
+          <Box
+            sx={{
+              bgcolor: "#fff",
+              p: 3,
+              borderRadius: 2,
+              minWidth: 400,
+              maxWidth: 500,
+            }}
+          >
+            <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+              Estudiantes del aula
+            </Typography>
+            <Typography variant="body2" sx={{ mb: 2, color: "#666" }}>
+              {renderSalaLabel(selectedAulaForEstudiantes)} - {selectedAulaForEstudiantes.comision} (
+              {selectedAulaForEstudiantes.turno})
+            </Typography>
+
+            <Box sx={{ mb: 2, maxHeight: 200, overflowY: "auto" }}>
+              {aulaEstudiantes.length === 0 ? (
+                <Typography variant="body2" sx={{ color: "#777" }}>
+                  No hay estudiantes asignados a esta aula.
+                </Typography>
+              ) : (
+                aulaEstudiantes.map((ae) => (
+                  <Box
+                    key={ae.id}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 0.5,
+                    }}
+                  >
+                    <Typography variant="body2">
+                      {ae.personas?.nombre} {ae.personas?.primer_apellido}
+                    </Typography>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        textTransform: "none",
+                        borderColor: '#d32f2f',
+                        color: '#d32f2f',
+                        '&:hover': {
+                          bgcolor: 'rgba(211, 47, 47, 0.04)',
+                          borderColor: '#d32f2f'
+                        }
+                      }}
+                      onClick={() => handleDesasignarEstudiante(ae.id)}
+                    >
+                      Quitar
+                    </Button>
+                  </Box>
+                ))
+              )}
+            </Box>
+
+            <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Agregar estudiante"
+                value={selectedEstudianteId}
+                onChange={(e) => setSelectedEstudianteId(e.target.value)}
+              >
+                {estudiantesDisponiblesParaAula.map((e) => (
+                  <MenuItem key={e.id} value={e.id}>
+                    {e.personas?.primer_apellido}, {e.personas?.nombre}
+                  </MenuItem>
+                ))}
+                {estudiantesDisponiblesParaAula.length === 0 && (
+                  <MenuItem disabled>No hay más estudiantes disponibles</MenuItem>
+                )}
+              </TextField>
+              <Button
+                variant="contained"
+                sx={{
+                  textTransform: "none",
+                  bgcolor: '#000',
+                  color: '#fff',
+                  fontWeight: 600,
+                  '&:hover': { bgcolor: '#333' }
+                }}
+                disabled={!selectedEstudianteId}
+                onClick={handleAsignarEstudiante}
+              >
+                Asignar
+              </Button>
+            </Box>
+
+            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+              <Button
+                variant="outlined"
+                sx={{
+                  textTransform: "none",
+                  borderColor: '#000',
+                  color: '#000',
+                  fontWeight: 600,
+                  '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' }
+                }}
+                onClick={closeEstudiantesDialog}
               >
                 Cerrar
               </Button>

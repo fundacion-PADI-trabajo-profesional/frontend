@@ -1,6 +1,7 @@
 import { api } from "./auth";
 import type { Estudiante } from "./estudiantes";
 
+
 const getUserData = () => {
   const stored = localStorage.getItem("padiUser");
   if (stored) {
@@ -125,4 +126,25 @@ export const getAulaEstudiantes = async (aulaId: string): Promise<Estudiante[]> 
   return response.data.data || [];
 };
 
+export const asignarEstudianteAula = async (aulaId: string, estudianteId: string) => {
+    // Obtenemos datos de sesión para validación de roles en el backend
+    const stored = localStorage.getItem("padiUser");
+    const user = stored ? JSON.parse(stored) : null;
+
+    const payload = { 
+        estudiante_id: estudianteId, // Debe coincidir con el controlador
+        usuario_id: user?.id, // ID del usuario que realiza la acción
+        rol: user?.rol 
+    };
+
+    const response = await api.post(`/aulas/${aulaId}/asignar-estudiante`, payload);
+    return response.data;
+};
+
+export const desasignarEstudianteAula = async (aulaId: string, estudianteId: string) => {
+  const { usuario_id, rol } = getUserData();
+  const payload = { estudiante_id: estudianteId, usuario_id, rol };
+  const response = await api.post(`/aulas/${aulaId}/desasignar-estudiante`, payload);
+  return response.data;
+};
 

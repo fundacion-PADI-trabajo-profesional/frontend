@@ -1,6 +1,6 @@
 "use client"
 
-import { Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, Chip } from "@mui/material"
+import { Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, Chip, Button } from "@mui/material"
 import type { EvaluacionInstancia } from "../api/evaluaciones"
 
 function getEstadoColor(estado: string) {
@@ -37,9 +37,10 @@ interface Props {
   items: EvaluacionInstancia[]
   showEstudiante?: boolean
   onRowClick?: (evaluacion: EvaluacionInstancia) => void
+  onDelete?: (evaluacion: EvaluacionInstancia) => void
 }
 
-export default function EvaluacionesTable({ items, showEstudiante = false, onRowClick }: Props) {
+export default function EvaluacionesTable({ items, showEstudiante = false, onRowClick, onDelete }: Props) {
   return (
     <TableContainer component={Paper}>
       <Table>
@@ -51,6 +52,7 @@ export default function EvaluacionesTable({ items, showEstudiante = false, onRow
             <TableCell sx={{ fontWeight: 700 }}>Estado</TableCell>
             <TableCell align="right" sx={{ fontWeight: 700 }}>Puntaje</TableCell>
             <TableCell sx={{ fontWeight: 700 }}>Fecha</TableCell>
+            {onDelete && <TableCell sx={{ fontWeight: 700 }} align="center">Acciones</TableCell>}
           </TableRow>
         </TableHead>
         <TableBody>
@@ -74,6 +76,26 @@ export default function EvaluacionesTable({ items, showEstudiante = false, onRow
               </TableCell>
               <TableCell align="right">{e.puntaje ?? "-"}</TableCell>
               <TableCell>{e.createdAt.toLocaleString()}</TableCell>
+              {onDelete && (
+                <TableCell align="center">
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      textTransform: "none",
+                      borderColor: "#d32f2f",
+                      color: "#d32f2f",
+                      "&:hover": { bgcolor: "rgba(211, 47, 47, 0.04)", borderColor: "#d32f2f" },
+                    }}
+                    onClick={(ev) => {
+                      ev.stopPropagation()
+                      onDelete(e)
+                    }}
+                  >
+                    Eliminar
+                  </Button>
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>

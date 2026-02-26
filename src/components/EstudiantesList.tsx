@@ -95,7 +95,14 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
 
     const handleVerMas = () => {
         if (selectedStudent) {
-            navigate(`/historial-estudiante?estudianteId=${selectedStudent.id}&nombre=${selectedStudent.personas.nombre} ${selectedStudent.personas.primer_apellido}`);
+            const nombre = `${selectedStudent.personas.nombre} ${selectedStudent.personas.primer_apellido}`;
+            const params = new URLSearchParams({
+                estudianteId: selectedStudent.id,
+                nombre,
+                backTo: "/estudiantes",
+                backLabel: "Volver a estudiantes",
+            });
+            navigate(`/historial-estudiante?${params.toString()}`);
         }
         handleMenuClose();
     };

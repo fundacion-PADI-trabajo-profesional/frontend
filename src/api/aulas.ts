@@ -38,6 +38,7 @@ export interface CreateAulaDto {
   sala_id: number;
   comision: string;
   turno: string;
+  escuela_id?: string;
 }
 
 export const getAulas = async (): Promise<Aula[]> => {

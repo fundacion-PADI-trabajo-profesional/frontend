@@ -49,13 +49,13 @@ export default function Evaluaciones() {
     }
   }, [searchParams])
 
-  if (profile && profile.rol !== "docente" && profile.rol !== "director") {
+  if (profile && profile.rol !== "docente" && profile.rol !== "director" && profile.rol !== "encargado_zona") {
     return (
       <Container maxWidth="lg" sx={{ py: 8, textAlign: "center" }}>
         <Typography variant="h5" color="error">
           Acceso denegado
         </Typography>
-        <Typography>Solo los docentes y directores pueden acceder a las evaluaciones.</Typography>
+        <Typography>No tenés permisos para acceder a las evaluaciones.</Typography>
         <Button onClick={() => navigate("/home")} sx={{ mt: 3, color: "#A3BE54" }}>
           Volver a inicio
         </Button>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { Box, Container, Typography, CircularProgress, Alert } from "@mui/material"
-import { getEvaluacionesInstanciasByEstudiante, type EvaluacionInstancia } from "../api/evaluaciones"
+import { getEvaluacionesInstanciasByEstudiante, eliminarEvaluacionInstancia, type EvaluacionInstancia } from "../api/evaluaciones"
 import EvaluacionesTable from "../components/EvaluacionesTable"
 import PageHeader from "../components/PageHeader"
 import EvaluacionDetalle from "../components/EvaluacionDetalle"
@@ -19,6 +19,26 @@ export default function HistorialEstudiante() {
   const [error, setError] = useState<string | null>(null)
   const [items, setItems] = useState<EvaluacionInstancia[]>([])
   const [selectedEvaluacionId, setSelectedEvaluacionId] = useState<string | null>(null)
+  const [userRole, setUserRole] = useState("")
+
+  useEffect(() => {
+    const stored = localStorage.getItem("padiUser")
+    if (stored) {
+      try { setUserRole(JSON.parse(stored).rol || "") } catch { setUserRole("") }
+    }
+  }, [])
+
+  const canDelete = userRole === "encargado_zona" || userRole === "equipo_padi"
+
+  const handleDeleteEvaluacion = async (evaluacion: EvaluacionInstancia) => {
+    if (!window.confirm("¿Seguro que querés eliminar esta evaluación?")) return
+    try {
+      await eliminarEvaluacionInstancia(evaluacion.id)
+      setItems((prev) => prev.filter((e) => e.id !== evaluacion.id))
+    } catch (e: any) {
+      alert(e.message || "Error al eliminar la evaluación")
+    }
+  }
 
   useEffect(() => {
     if (!estudianteId) {
@@ -90,6 +110,7 @@ export default function HistorialEstudiante() {
             <EvaluacionesTable
               items={items}
               onRowClick={(evaluacion) => setSelectedEvaluacionId(evaluacion.id)}
+              onDelete={canDelete ? handleDeleteEvaluacion : undefined}
             />
           )
         )}

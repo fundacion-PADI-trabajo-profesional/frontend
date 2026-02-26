@@ -30,7 +30,9 @@ export default function Evaluaciones() {
     }
   }, [navigate])
 
-  // Si venimos desde Estudiantes con estudianteId/evaluarAhora, abrimos modo creación.
+  const backTo = searchParams.get("backTo") || "/home"
+  const backLabel = searchParams.get("backLabel") || "Volver a inicio"
+
   useEffect(() => {
     const evaluarAhora = searchParams.get("evaluarAhora")
     const estudianteId = searchParams.get("estudianteId")
@@ -47,14 +49,13 @@ export default function Evaluaciones() {
     }
   }, [searchParams])
 
-  // Only docentes should access this page
-  if (profile && profile.rol !== "docente") {
+  if (profile && profile.rol !== "docente" && profile.rol !== "director") {
     return (
       <Container maxWidth="lg" sx={{ py: 8, textAlign: "center" }}>
         <Typography variant="h5" color="error">
           Acceso denegado
         </Typography>
-        <Typography>Solo los docentes pueden acceder a las evaluaciones.</Typography>
+        <Typography>Solo los docentes y directores pueden acceder a las evaluaciones.</Typography>
         <Button onClick={() => navigate("/home")} sx={{ mt: 3, color: "#A3BE54" }}>
           Volver a inicio
         </Button>
@@ -74,7 +75,11 @@ export default function Evaluaciones() {
   const handleSuccessForm = () => {
     setPrefillEstudianteId(null);
     setRefreshKey(prev => prev + 1);
-    navigate("/evaluaciones", { replace: true });
+    if (backTo !== "/home") {
+      navigate(backTo, { replace: true });
+    } else {
+      navigate("/evaluaciones", { replace: true });
+    }
   };
 
   const showCreateView = prefillEstudianteId !== null || searchParams.get("crear") === "true";
@@ -108,10 +113,10 @@ export default function Evaluaciones() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
             <Button
               startIcon={<ArrowBackIcon />}
-              onClick={() => navigate("/home")}
+              onClick={() => navigate(backTo)}
               sx={{ color: "#5c7cfa", textTransform: "none" }}
             >
-              Volver a inicio
+              {backLabel}
             </Button>
           </Box>
           <Typography variant="h3" component="h1" sx={{ fontWeight: 700, mb: 1 }}>
@@ -130,10 +135,10 @@ export default function Evaluaciones() {
             <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
               <Button
                 startIcon={<ArrowBackIcon />}
-                onClick={() => navigate("/evaluaciones", { replace: true })}
+                onClick={() => navigate(backTo, { replace: true })}
                 sx={{ textTransform: "none" }}
               >
-                Volver a mis evaluaciones
+                {backLabel}
               </Button>
             </Box>
             <EvaluacionForm

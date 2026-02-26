@@ -81,11 +81,20 @@ export default function Home({ onLogout }: HomeProps) {
               <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
                 {profile.nombre} {profile.apellido}
               </Typography>
-              <Chip
-                label={profile.rol.replace("_", " ").toUpperCase()}
-                size="small"
-                sx={{ height: 20, fontSize: "0.65rem", bgcolor: "#A3BE54", color: "white" }}
-              />
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.5 }}>
+                <Chip
+                  label={profile.rol.replace("_", " ").toUpperCase()}
+                  size="small"
+                  sx={{ height: 20, fontSize: "0.65rem", bgcolor: "#A3BE54", color: "white" }}
+                />
+                {profile.rol === "director" && profile.escuela?.nombre && (
+                  <Chip
+                    label={profile.escuela.nombre}
+                    size="small"
+                    sx={{ height: 20, fontSize: "0.65rem", bgcolor: "#1976d2", color: "white" }}
+                  />
+                )}
+              </Box>
             </Box>
 
             <Avatar sx={{ bgcolor: "#e0e0e0", color: "#666" }}>

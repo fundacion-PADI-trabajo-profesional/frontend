@@ -88,8 +88,7 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
 
     const handleEvaluar = () => {
         if (selectedStudent) {
-            // La ruta debe ser /evaluaciones (como en App.tsx)
-            navigate(`/evaluaciones?estudianteId=${selectedStudent.id}&nombre=${selectedStudent.personas.nombre} ${selectedStudent.personas.primer_apellido}&salaId=${selectedStudent.sala_id}`);
+            navigate(`/evaluaciones?estudianteId=${selectedStudent.id}&nombre=${encodeURIComponent(`${selectedStudent.personas.nombre} ${selectedStudent.personas.primer_apellido}`)}&salaId=${selectedStudent.sala_id}&backTo=${encodeURIComponent("/estudiantes")}&backLabel=${encodeURIComponent("Volver a estudiantes")}`);
         }
         handleMenuClose();
     };

@@ -101,7 +101,7 @@ export default function Estudiantes() {
 
     const handleEvaluarAhora = () => {
         if (estudianteCreado) {
-            navigate(`/evaluaciones?estudianteId=${estudianteCreado.id}`);
+            navigate(`/evaluaciones?estudianteId=${estudianteCreado.id}&backTo=${encodeURIComponent("/estudiantes")}&backLabel=${encodeURIComponent("Volver a estudiantes")}`);
         }
     }
 
@@ -215,7 +215,7 @@ export default function Estudiantes() {
                                                                             <Button
                                                                                 size="small"
                                                                                 onClick={() =>
-                                                                                    navigate(`/evaluaciones?estudianteId=${est.id}&nombre=${est.personas.nombre} ${est.personas.primer_apellido}&salaId=${aula.sala_id}&aulaId=${aula.id}&aulaLabel=${encodeURIComponent(`${aula.sala?.grado ?? "?"}° - ${aula.comision} (${aula.turno})`)}&escuelaNombre=${encodeURIComponent(aula.escuela?.nombre ?? "Escuela")}`)
+                                                                                    navigate(`/evaluaciones?estudianteId=${est.id}&nombre=${encodeURIComponent(`${est.personas.nombre} ${est.personas.primer_apellido}`)}&salaId=${aula.sala_id}&aulaId=${aula.id}&aulaLabel=${encodeURIComponent(`${aula.sala?.grado ?? "?"}° - ${aula.comision} (${aula.turno})`)}&escuelaNombre=${encodeURIComponent(aula.escuela?.nombre ?? "Escuela")}&backTo=${encodeURIComponent("/estudiantes")}&backLabel=${encodeURIComponent("Volver a estudiantes")}`)
                                                                                 }
                                                                             >
                                                                                 Evaluar

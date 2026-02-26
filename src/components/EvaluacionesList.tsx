@@ -54,7 +54,6 @@ export default function EvaluacionesList({ onEditar }: {
       const userStr = localStorage.getItem("padiUser");
       const user = userStr ? JSON.parse(userStr) : null;
 
-      // 2. Para docente, mostrar solo evaluaciones propias.
       const data = await getEvaluacionesInstancias({
         escuela_id: user?.escuela_id,
         rol: user?.rol,

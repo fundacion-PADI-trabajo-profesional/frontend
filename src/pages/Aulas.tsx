@@ -19,12 +19,10 @@ import {
   List,
   ListItem,
   ListItemText,
-  Divider,
-  IconButton,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddIcon from "@mui/icons-material/Add";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Aula,
   getAulas,
@@ -67,6 +65,19 @@ export default function AulasPage() {
   const [turno, setTurno] = useState("");
 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialAulaId = searchParams.get("aulaId");
+  const [pendingAulaId, setPendingAulaId] = useState<string | null>(initialAulaId);
+
+  useEffect(() => {
+    if (pendingAulaId && aulas.length > 0 && !loading && !selectedAulaForEstudiantes) {
+      const aula = aulas.find((a) => a.id === pendingAulaId);
+      if (aula) {
+        openEstudiantesView(aula);
+      }
+      setPendingAulaId(null);
+    }
+  }, [pendingAulaId, aulas, loading]);
 
   useEffect(() => {
     const stored = localStorage.getItem("padiUser");
@@ -80,10 +91,6 @@ export default function AulasPage() {
     } catch {
       setCurrentRole("");
     }
-  }, []);
-
-  useEffect(() => {
-    getEstudiantes().then(setTodosLosEstudiantes).catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -232,9 +239,14 @@ export default function AulasPage() {
     try {
       setLoadingAulaEstudiantes(true);
       setError(null);
-      const estudiantes = await getAulaEstudiantes(aula.id);
+      const [estudiantes, todos] = await Promise.all([
+        getAulaEstudiantes(aula.id),
+        getEstudiantes(),
+      ]);
       setSelectedAulaForEstudiantes(aula);
       setAulaEstudiantes(estudiantes);
+      setTodosLosEstudiantes(todos);
+      setSelectedEstudianteId("");
     } catch (e: any) {
       setError(e.message || "Error al cargar estudiantes del aula");
     } finally {
@@ -247,27 +259,6 @@ export default function AulasPage() {
     setAulaEstudiantes([]);
   };
 
-  const openEstudiantesDialog = async (aula: Aula) => {
-    try {
-      const data = await getAulaEstudiantes(aula.id);
-      setAulaEstudiantes(data);
-
-      const todos = await getEstudiantes(); 
-      setTodosLosEstudiantes(todos);
-
-      setSelectedAulaForEstudiantes(aula);
-      
-    } catch (err) {
-      console.error("Error al cargar estudiantes:", err);
-      alert("No se pudieron cargar los estudiantes del aula.");
-    }
-  };
-
-  const closeEstudiantesDialog = () => {
-    setSelectedAulaForEstudiantes(null);
-    setAulaEstudiantes([]);
-    setSelectedEstudianteId("");
-  };
 
   const handleDesasignarEstudiante = async (estudianteId: string) => {
     if (!selectedAulaForEstudiantes) return;
@@ -297,12 +288,10 @@ export default function AulasPage() {
   );
 
   const renderSalaLabel = (aula: Aula) => {
-    if (aula.sala?.nombre || aula.sala?.grado) {
-      return `${aula.sala.nombre ?? ""} ${aula.sala.grado ?? ""}`.trim();
-    }
-    const found = salas.find((s) => s.id === aula.sala_id);
-    if (found) {
-      return `${found.nombre ?? ""} ${found.grado ?? ""}`.trim();
+    const sala = aula.sala ?? salas.find((s) => s.id === aula.sala_id);
+    if (sala) {
+      if (sala.nombre) return sala.nombre;
+      if (sala.grado) return `Sala ${sala.grado}`;
     }
     return `Sala ${aula.sala_id}`;
   };
@@ -422,7 +411,7 @@ export default function AulasPage() {
             </Box>
 
             {/* Botón de Acción */}
-            {mode === "list" && (
+            {mode === "list" && !selectedAulaForEstudiantes && (
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
@@ -454,7 +443,7 @@ export default function AulasPage() {
       <Container maxWidth="lg" sx={{ py: 4 }}>
         {mode === "list" && (
           <>
-            {loading ? (
+            {loading || pendingAulaId || (loadingAulaEstudiantes && !selectedAulaForEstudiantes) ? (
               <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
                 <CircularProgress />
               </Box>
@@ -474,9 +463,45 @@ export default function AulasPage() {
                   {renderSalaLabel(selectedAulaForEstudiantes)} - {selectedAulaForEstudiantes.comision} (
                   {selectedAulaForEstudiantes.turno})
                 </Typography>
-                <Typography variant="body2" sx={{ color: "#666", mb: 2 }}>
+                <Typography variant="body2" sx={{ color: "#666", mb: 3 }}>
                   Tocá en un alumno para ver su historial de evaluaciones.
                 </Typography>
+
+                {/* Agregar estudiante */}
+                <Box sx={{ display: "flex", gap: 1, mb: 3, maxWidth: 500 }}>
+                  <TextField
+                    select
+                    fullWidth
+                    size="small"
+                    label="Agregar estudiante al aula"
+                    value={selectedEstudianteId}
+                    onChange={(e) => setSelectedEstudianteId(e.target.value)}
+                  >
+                    {estudiantesDisponiblesParaAula.map((e) => (
+                      <MenuItem key={e.id} value={e.id}>
+                        {e.personas?.primer_apellido}, {e.personas?.nombre}
+                      </MenuItem>
+                    ))}
+                    {estudiantesDisponiblesParaAula.length === 0 && (
+                      <MenuItem disabled>No hay más estudiantes disponibles</MenuItem>
+                    )}
+                  </TextField>
+                  <Button
+                    variant="contained"
+                    sx={{
+                      textTransform: "none",
+                      bgcolor: "#5fb878",
+                      color: "#fff",
+                      fontWeight: 600,
+                      whiteSpace: "nowrap",
+                      "&:hover": { bgcolor: "#4a9960" },
+                    }}
+                    disabled={!selectedEstudianteId}
+                    onClick={handleAsignarEstudiante}
+                  >
+                    Agregar
+                  </Button>
+                </Box>
 
                 {loadingAulaEstudiantes ? (
                   <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
@@ -484,7 +509,7 @@ export default function AulasPage() {
                   </Box>
                 ) : aulaEstudiantes.length === 0 ? (
                   <Alert severity="info">
-                    Esta aula existe, pero todavía no tiene alumnos asignados.
+                    Esta aula todavía no tiene alumnos asignados.
                   </Alert>
                 ) : (
                   <Paper elevation={0} sx={{ border: "1px solid #eee", borderRadius: 3 }}>
@@ -493,14 +518,65 @@ export default function AulasPage() {
                         <ListItem
                           key={est.id}
                           divider={index < aulaEstudiantes.length - 1}
+                          secondaryAction={
+                            <Stack direction="row" spacing={1}>
+                              <Button
+                                size="small"
+                                sx={{ textTransform: "none" }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const aulaLabel = `${renderSalaLabel(selectedAulaForEstudiantes!)} - ${selectedAulaForEstudiantes!.comision} (${selectedAulaForEstudiantes!.turno})`;
+                                  navigate(`/evaluaciones?estudianteId=${est.id}&nombre=${encodeURIComponent(`${est.personas?.nombre ?? ""} ${est.personas?.primer_apellido ?? ""}`)}&salaId=${selectedAulaForEstudiantes!.sala_id}&aulaId=${selectedAulaForEstudiantes!.id}&aulaLabel=${encodeURIComponent(aulaLabel)}&escuelaNombre=${encodeURIComponent("Mi escuela")}&backTo=${encodeURIComponent(`/aulas?aulaId=${selectedAulaForEstudiantes!.id}`)}&backLabel=${encodeURIComponent("Volver al aula")}`);
+                                }}
+                              >
+                                Evaluar
+                              </Button>
+                              <Button
+                                size="small"
+                                sx={{ textTransform: "none" }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const nombre = `${est.personas?.nombre ?? ""} ${est.personas?.primer_apellido ?? ""}`.trim();
+                                  const params = new URLSearchParams({
+                                    estudianteId: est.id,
+                                    nombre,
+                                    backTo: `/aulas?aulaId=${selectedAulaForEstudiantes!.id}`,
+                                    backLabel: "Volver al aula",
+                                  });
+                                  navigate(`/historial-estudiante?${params.toString()}`);
+                                }}
+                              >
+                                Historial
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                sx={{
+                                  textTransform: "none",
+                                  borderColor: "#d32f2f",
+                                  color: "#d32f2f",
+                                  "&:hover": {
+                                    bgcolor: "rgba(211, 47, 47, 0.04)",
+                                    borderColor: "#d32f2f",
+                                  },
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDesasignarEstudiante(est.id);
+                                }}
+                              >
+                                Quitar
+                              </Button>
+                            </Stack>
+                          }
                           sx={{ cursor: "pointer" }}
                           onClick={() => {
                             const nombre = `${est.personas?.nombre ?? ""} ${est.personas?.primer_apellido ?? ""}`.trim();
                             const params = new URLSearchParams({
                               estudianteId: est.id,
                               nombre,
-                              backTo: "/aulas",
-                              backLabel: "Volver a aulas",
+                              backTo: `/aulas?aulaId=${selectedAulaForEstudiantes!.id}`,
+                              backLabel: "Volver al aula",
                             });
                             navigate(`/historial-estudiante?${params.toString()}`);
                           }}
@@ -578,25 +654,6 @@ export default function AulasPage() {
                               }}
                             >
                               Docentes
-                            </Button>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              sx={{
-                                textTransform: "none",
-                                borderColor: '#2e7d32',
-                                color: '#2e7d32',
-                                '&:hover': {
-                                  bgcolor: 'rgba(46, 125, 50, 0.04)',
-                                  borderColor: '#2e7d32'
-                                }
-                              }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openEstudiantesDialog(a);
-                              }}
-                            >
-                              Estudiantes
                             </Button>
                             <Button
                               size="small"
@@ -758,130 +815,6 @@ export default function AulasPage() {
         </Box>
       )}
 
-      {selectedAulaForEstudiantes && (
-        <Box
-          sx={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            bgcolor: "rgba(0,0,0,0.4)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1300,
-          }}
-        >
-          <Box
-            sx={{
-              bgcolor: "#fff",
-              p: 3,
-              borderRadius: 2,
-              minWidth: 400,
-              maxWidth: 500,
-            }}
-          >
-            <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
-              Estudiantes del aula
-            </Typography>
-            <Typography variant="body2" sx={{ mb: 2, color: "#666" }}>
-              {renderSalaLabel(selectedAulaForEstudiantes)} - {selectedAulaForEstudiantes.comision} (
-              {selectedAulaForEstudiantes.turno})
-            </Typography>
-
-            <Box sx={{ mb: 2, maxHeight: 200, overflowY: "auto" }}>
-              {aulaEstudiantes.length === 0 ? (
-                <Typography variant="body2" sx={{ color: "#777" }}>
-                  No hay estudiantes asignados a esta aula.
-                </Typography>
-              ) : (
-                aulaEstudiantes.map((ae) => (
-                  <Box
-                    key={ae.id}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      py: 0.5,
-                    }}
-                  >
-                    <Typography variant="body2">
-                      {ae.personas?.nombre} {ae.personas?.primer_apellido}
-                    </Typography>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      sx={{
-                        textTransform: "none",
-                        borderColor: '#d32f2f',
-                        color: '#d32f2f',
-                        '&:hover': {
-                          bgcolor: 'rgba(211, 47, 47, 0.04)',
-                          borderColor: '#d32f2f'
-                        }
-                      }}
-                      onClick={() => handleDesasignarEstudiante(ae.id)}
-                    >
-                      Quitar
-                    </Button>
-                  </Box>
-                ))
-              )}
-            </Box>
-
-            <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
-              <TextField
-                select
-                fullWidth
-                size="small"
-                label="Agregar estudiante"
-                value={selectedEstudianteId}
-                onChange={(e) => setSelectedEstudianteId(e.target.value)}
-              >
-                {estudiantesDisponiblesParaAula.map((e) => (
-                  <MenuItem key={e.id} value={e.id}>
-                    {e.personas?.primer_apellido}, {e.personas?.nombre}
-                  </MenuItem>
-                ))}
-                {estudiantesDisponiblesParaAula.length === 0 && (
-                  <MenuItem disabled>No hay más estudiantes disponibles</MenuItem>
-                )}
-              </TextField>
-              <Button
-                variant="contained"
-                sx={{
-                  textTransform: "none",
-                  bgcolor: '#000',
-                  color: '#fff',
-                  fontWeight: 600,
-                  '&:hover': { bgcolor: '#333' }
-                }}
-                disabled={!selectedEstudianteId}
-                onClick={handleAsignarEstudiante}
-              >
-                Asignar
-              </Button>
-            </Box>
-
-            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-              <Button
-                variant="outlined"
-                sx={{
-                  textTransform: "none",
-                  borderColor: '#000',
-                  color: '#000',
-                  fontWeight: 600,
-                  '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' }
-                }}
-                onClick={closeEstudiantesDialog}
-              >
-                Cerrar
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      )}
     </Box>
   );
 }

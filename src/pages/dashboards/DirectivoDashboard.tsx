@@ -44,6 +44,16 @@ export default function DirectivoDashboard() {
                         onClick={() => navigate("/estudiantes")}
                     />
                 </Grid>
+
+                <Grid item xs={12} sm={6} md={4}>
+                    <DashboardCard
+                        title="Evaluaciones"
+                        description="Ver y gestionar evaluaciones de tu escuela."
+                        icon="📋"
+                        color="#FF9800"
+                        onClick={() => navigate("/evaluaciones")}
+                    />
+                </Grid>
             </Grid>
         </Box>
     );

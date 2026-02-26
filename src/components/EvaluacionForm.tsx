@@ -79,8 +79,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
         const data = await getEstudiantes();
         setEstudiantes(data);
       } catch (err) {
-        // Para docentes sin escuela única asignada, usamos sus aulas asignadas como fuente.
-        if (profile?.rol === "docente") {
+        if (profile?.rol === "docente" || profile?.rol === "director") {
           try {
             const aulas = await getDocenteAulasConEstudiantes();
             const dedup = new Map<string, Estudiante>();

@@ -19,6 +19,7 @@ import { useSearchParams } from "react-router-dom"
 import type { Estudiante } from "../api/estudiantes"
 import { getSalas, type Sala } from "../api/estudiantes"
 import { getEscuelas, type Escuela } from "../api/escuelas"
+import { permissions } from "../utils/permissions"
 
 interface EstudiantesListProps {
     estudiantes: Estudiante[]
@@ -30,16 +31,16 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
     const navigate = useNavigate()
     const [filtroTexto, setFiltroTexto] = useState("")
     const [userRole, setUserRole] = useState<string>("")
-    
+
     // Filtros de selección
     const [escuelaFiltro, setEscuelaFiltro] = useState<string>("todas")
     const [salaFiltro, setSalaFiltro] = useState<string>("todas")
-    
+
     // Datos de selectores
     const [listaEscuelas, setListaEscuelas] = useState<Escuela[]>([])
     const [listaSalas, setListaSalas] = useState<Sala[]>([])
     const [puedeVerEscuelas, setPuedeVerEscuelas] = useState(false)
-    
+
     // UI States
     const [openFilterDialog, setOpenFilterDialog] = useState(false)
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
@@ -80,7 +81,7 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
         }
         loadInitialData()
     }, [])
- 
+
     const handleMenuClose = () => {
         setAnchorEl(null);
         setSelectedStudent(null);
@@ -111,7 +112,7 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
         if (selectedStudent) {
             // Cambiamos la vista a "form" y pasamos el estudiante a editar
             // Si usas el estado 'view' en Estudiantes.tsx, asegúrate de pasarle el objeto
-            onEditEstudiante(selectedStudent); 
+            onEditEstudiante(selectedStudent);
         }
         handleMenuClose();
     };
@@ -191,7 +192,7 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
                 <DialogTitle sx={{ fontWeight: 700 }}>Opciones de Filtro</DialogTitle>
                 <DialogContent>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
-                        
+
                         {/* FILTRO DE ESCUELAS: Solo se muestra si tiene permisos  */}
                         {puedeVerEscuelas && (
                             <FormControl fullWidth variant="filled">
@@ -234,8 +235,8 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
                     <Paper elevation={0} sx={{ border: "1px solid #eee", borderRadius: 3, overflow: "hidden" }}>
                         <List disablePadding>
                             {agrupados[salaNombre].map((est, index) => (
-                                <ListItem 
-                                    key={est.id} 
+                                <ListItem
+                                    key={est.id}
                                     divider={index < agrupados[salaNombre].length - 1}
                                     secondaryAction={
                                         <IconButton edge="end" onClick={(e) => handleMenuOpen(e, est)}>
@@ -254,8 +255,8 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
                 </Box>
             ))}
 
-            {/* Solo mostramos el FAB si NO es docente */}
-            {userRole !== "docente" && (
+            {/* Mostramos el FAB solo si el usuario tiene permisos para crear estudiantes */}
+            {permissions.createEstudiante(userRole) && (
                 <Fab
                     color="primary"
                     onClick={onAddEstudiante}
@@ -265,9 +266,9 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
                 </Fab>
             )}
 
-            <Menu 
-                anchorEl={anchorEl} 
-                open={Boolean(anchorEl)} 
+            <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
                 onClose={handleMenuClose}
             >
                 <Box sx={{ px: 2, py: 1, borderBottom: "1px solid #eee", mb: 1 }}>

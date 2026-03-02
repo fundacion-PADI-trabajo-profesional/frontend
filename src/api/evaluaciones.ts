@@ -222,11 +222,22 @@ export async function getEvaluacionesInstancias(filters?: {
  * POST: Crear evaluación. 
  * Ajustado para apuntar a /evaluaciones 
  */
-export async function crearEvaluacionInstancia(data: CreateEvaluacionPayload): Promise<EvaluacionInstancia> {
+export async function crearEvaluacionInstancia(
+  data: CreateEvaluacionPayload,
+  userInfo?: { userId: string; userRole: string }
+): Promise<EvaluacionInstancia> {
+  const payload = {
+    ...data,
+    ...(userInfo && {
+      userId: userInfo.userId,
+      userRole: userInfo.userRole
+    })
+  };
+
   const res = await fetch(`${API_URL}/evaluaciones`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   });
 
   const responseData = await res.json();
@@ -282,11 +293,24 @@ export async function actualizarEvaluacionInstancia(
   return mapToCamelCase(responseData.data)
 }
 
-export async function eliminarEvaluacionInstancia(id: string): Promise<void> {
-  const res = await fetch(`${API_URL}/evaluaciones/${id}`, {
+export async function eliminarEvaluacionInstancia(
+  id: string,
+  userInfo?: { userId: string; userRole: string }
+): Promise<void> {
+  const params = new URLSearchParams();
+  if (userInfo?.userId) params.append("userId", userInfo.userId);
+  if (userInfo?.userRole) params.append("userRole", userInfo.userRole);
+
+  const url = `${API_URL}/evaluaciones/${id}${params.toString() ? `?${params.toString()}` : ''}`;
+
+  const res = await fetch(url, {
     method: "DELETE",
-  })
-  if (!res.ok) throw new Error("Error al eliminar la evaluación")
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Error al eliminar la evaluación");
+  }
 }
 
 /**

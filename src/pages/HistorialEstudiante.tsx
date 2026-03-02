@@ -33,7 +33,13 @@ export default function HistorialEstudiante() {
   const handleDeleteEvaluacion = async (evaluacion: EvaluacionInstancia) => {
     if (!window.confirm("¿Seguro que querés eliminar esta evaluación?")) return
     try {
-      await eliminarEvaluacionInstancia(evaluacion.id)
+      const stored = localStorage.getItem("padiUser");
+      const user = stored ? JSON.parse(stored) : null;
+      const userInfo = {
+        userId: user?.id,
+        userRole: user?.rol
+      };
+      await eliminarEvaluacionInstancia(evaluacion.id, userInfo)
       setItems((prev) => prev.filter((e) => e.id !== evaluacion.id))
     } catch (e: any) {
       alert(e.message || "Error al eliminar la evaluación")
@@ -81,40 +87,40 @@ export default function HistorialEstudiante() {
         </>
       ) : (
         <>
-      <PageHeader
-        backTo={backTo}
-        backLabel={backLabel}
-        title={estudianteNombre ? `Historial de ${estudianteNombre}` : "Historial del estudiante"}
-        subtitle="Listado de evaluaciones realizadas"
-      />
+          <PageHeader
+            backTo={backTo}
+            backLabel={backLabel}
+            title={estudianteNombre ? `Historial de ${estudianteNombre}` : "Historial del estudiante"}
+            subtitle="Listado de evaluaciones realizadas"
+          />
 
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        {loading && (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-            <CircularProgress />
-          </Box>
-        )}
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-        {!loading && !error && (
-          items.length === 0 ? (
-            <Box sx={{ textAlign: "center", py: 8 }}>
-              <Typography variant="h6" sx={{ color: "#999", mb: 2 }}>
-                No hay evaluaciones registradas para este estudiante
-              </Typography>
-            </Box>
-          ) : (
-            <EvaluacionesTable
-              items={items}
-              onRowClick={(evaluacion) => setSelectedEvaluacionId(evaluacion.id)}
-              onDelete={canDelete ? handleDeleteEvaluacion : undefined}
-            />
-          )
-        )}
-      </Container>
+          <Container maxWidth="lg" sx={{ py: 4 }}>
+            {loading && (
+              <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+                <CircularProgress />
+              </Box>
+            )}
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+            {!loading && !error && (
+              items.length === 0 ? (
+                <Box sx={{ textAlign: "center", py: 8 }}>
+                  <Typography variant="h6" sx={{ color: "#999", mb: 2 }}>
+                    No hay evaluaciones registradas para este estudiante
+                  </Typography>
+                </Box>
+              ) : (
+                <EvaluacionesTable
+                  items={items}
+                  onRowClick={(evaluacion) => setSelectedEvaluacionId(evaluacion.id)}
+                  onDelete={canDelete ? handleDeleteEvaluacion : undefined}
+                />
+              )
+            )}
+          </Container>
         </>
       )}
     </Box>

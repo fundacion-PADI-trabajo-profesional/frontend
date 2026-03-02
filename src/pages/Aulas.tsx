@@ -39,6 +39,7 @@ import {
 } from "../api/aulas";
 import { getEstudiantes, getSalas, Sala, Estudiante } from "../api/estudiantes";
 import { getDocentes, Docente } from "../api/docentes";
+import { permissions } from "../utils/permissions";
 
 type Mode = "list" | "create" | "edit";
 
@@ -94,7 +95,7 @@ export default function AulasPage() {
   }, []);
 
   useEffect(() => {
-    if (currentRole && currentRole !== "director") {
+    if (currentRole && !["director", "encargado_zona", "equipo_padi"].includes(currentRole)) {
       navigate("/home");
     }
   }, [currentRole, navigate]);
@@ -411,7 +412,7 @@ export default function AulasPage() {
             </Box>
 
             {/* Botón de Acción */}
-            {mode === "list" && !selectedAulaForEstudiantes && (
+            {mode === "list" && !selectedAulaForEstudiantes && permissions.createAula(currentRole) && (
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}

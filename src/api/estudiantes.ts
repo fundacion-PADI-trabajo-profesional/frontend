@@ -105,7 +105,7 @@ export const getEstudiantes = async (): Promise<Estudiante[]> => {
     // Obtenemos los datos del usuario logueado desde localStorage [cite: 1, 2]
     const stored = localStorage.getItem("padiUser");
     const user = stored ? JSON.parse(stored) : null;
-    
+
     const params = new URLSearchParams();
     if (user) {
         // Enviamos el rol para que el backend sepa qué nivel de acceso aplicar [cite: 1, 15]
@@ -165,4 +165,68 @@ export async function updateEstudiante(id: string, data: any): Promise<Estudiant
         throw new Error(body.message || "Error al actualizar estudiante");
     }
     return body.data;
+}
+
+// Función para asignar un estudiante a un aula
+export async function asignarEstudianteAula(
+    estudianteId: string,
+    aulaId: string,
+    userInfo?: { userId: string; userRole: string }
+): Promise<void> {
+    const stored = localStorage.getItem("padiUser");
+    const user = stored ? JSON.parse(stored) : null;
+
+    const payload = {
+        aulaId,
+        ...(userInfo && {
+            userId: userInfo.userId,
+            userRole: userInfo.userRole
+        }),
+        ...(user && !userInfo && {
+            userId: user.id,
+            userRole: user.rol
+        })
+    };
+
+    const response = await fetch(`${API_URL}/estudiantes/${estudianteId}/asignar-aula`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Error al asignar estudiante al aula");
+    }
+}
+
+// Función para desasignar un estudiante de un aula
+export async function desasignarEstudianteAula(
+    estudianteId: string,
+    userInfo?: { userId: string; userRole: string }
+): Promise<void> {
+    const stored = localStorage.getItem("padiUser");
+    const user = stored ? JSON.parse(stored) : null;
+
+    const payload = {
+        ...(userInfo && {
+            userId: userInfo.userId,
+            userRole: userInfo.userRole
+        }),
+        ...(user && !userInfo && {
+            userId: user.id,
+            userRole: user.rol
+        })
+    };
+
+    const response = await fetch(`${API_URL}/estudiantes/${estudianteId}/desasignar-aula`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Error al desasignar estudiante del aula");
+    }
 }

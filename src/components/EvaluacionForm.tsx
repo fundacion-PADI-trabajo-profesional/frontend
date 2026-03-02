@@ -222,7 +222,11 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
         }
 
         // 3. Enviar
-        await crearEvaluacionInstancia(payloadBackend);
+        const userInfo = {
+          userId: profile.id,
+          userRole: profile.rol
+        };
+        await crearEvaluacionInstancia(payloadBackend, userInfo);
         console.log("[v0] Evaluación creada:", payloadBackend);
       }
 

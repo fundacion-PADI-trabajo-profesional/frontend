@@ -276,10 +276,10 @@ export default function Estudiantes() {
                                                                                     {`${est.personas.primer_apellido ?? ""}, ${est.personas.nombre ?? ""}`}
                                                                                 </Typography>
                                                                                 <Typography variant="body2" sx={{ color: "#666" }}>
-                                                                                    Colegio: {aula.escuela?.nombre ?? "Sin colegio"}
+                                                                                    {aula.escuela?.nombre ?? "Sin colegio"}
                                                                                 </Typography>
                                                                                 <Typography variant="body2" sx={{ color: "#666" }}>
-                                                                                    Aula: {(aula.sala?.nombre || `Sala ${aula.sala?.grado ?? aula.sala_id}`)} - {aula.comision} ({aula.turno})
+                                                                                    {(aula.sala?.nombre || `Sala ${aula.sala?.grado ?? aula.sala_id}`)} - {aula.comision} ({aula.turno})
                                                                                 </Typography>
                                                                             </Box>
                                                                         }

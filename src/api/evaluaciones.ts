@@ -295,11 +295,13 @@ export async function actualizarEvaluacionInstancia(
 
 export async function eliminarEvaluacionInstancia(
   id: string,
-  userInfo?: { userId: string; userRole: string }
+  userInfo?: { userId?: string; userRole?: string; usuario_id?: string; rol?: string }
 ): Promise<void> {
   const params = new URLSearchParams();
-  if (userInfo?.userId) params.append("userId", userInfo.userId);
-  if (userInfo?.userRole) params.append("userRole", userInfo.userRole);
+  const usuarioId = userInfo?.usuario_id ?? userInfo?.userId;
+  const rol = userInfo?.rol ?? userInfo?.userRole;
+  if (usuarioId) params.append("usuario_id", usuarioId);
+  if (rol) params.append("rol", rol);
 
   const url = `${API_URL}/evaluaciones/${id}${params.toString() ? `?${params.toString()}` : ''}`;
 

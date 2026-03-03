@@ -49,7 +49,7 @@ export default function Evaluaciones() {
     }
   }, [searchParams])
 
-  if (profile && profile.rol !== "docente" && profile.rol !== "director" && profile.rol !== "encargado_zona") {
+  if (profile && profile.rol !== "docente" && profile.rol !== "director" && profile.rol !== "encargado_zona" && profile.rol !== "equipo_padi") {
     return (
       <Container maxWidth="lg" sx={{ py: 8, textAlign: "center" }}>
         <Typography variant="h5" color="error">

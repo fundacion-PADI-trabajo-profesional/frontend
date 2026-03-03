@@ -3,7 +3,7 @@
 import {
     Box, List, ListItem, ListItemText, Typography, Paper, Fab, InputAdornment,
     TextField, Button, IconButton, Menu, MenuItem, ListItemIcon,
-    Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select
+    Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, Tooltip
 } from "@mui/material"
 import { useState, useMemo, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
@@ -46,16 +46,15 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
     const [selectedStudent, setSelectedStudent] = useState<Estudiante | null>(null)
 
-    const [tabValue, setTabValue] = useState(0)
     const [searchParams] = useSearchParams()
     const prefillEstudianteId = searchParams.get("estudianteId")
 
     useEffect(() => {
         // Si venimos con un ID de estudiante, saltamos directo al formulario
         if (prefillEstudianteId) {
-            setTabValue(1);
+            onAddEstudiante();
         }
-    }, [prefillEstudianteId]);
+    }, [prefillEstudianteId, onAddEstudiante]);
 
     useEffect(() => {
         const loadInitialData = async () => {
@@ -147,20 +146,39 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
         return { agrupados: grupos, salasOrdenadas: ordenadas };
     }, [estudiantes, filtroTexto]);
 
-    const estudiantesFiltrados = useMemo(() => {
-        return estudiantes.filter((est) => {
-            const cumpleTexto = `${est.personas.nombre} ${est.personas.primer_apellido} ${est.personas.dni}`
-                .toLowerCase().includes(filtroTexto.toLowerCase())
-            const cumpleEscuela = escuelaFiltro === "todas" || est.escuela.escuela_id === escuelaFiltro
-            const cumpleSala = salaFiltro === "todas" || est.sala_id === Number(salaFiltro)
-            return cumpleTexto && cumpleEscuela && cumpleSala
-        })
-    }, [estudiantes, filtroTexto, escuelaFiltro, salaFiltro])
-
     const resetFiltros = () => {
         setEscuelaFiltro("todas")
         setSalaFiltro("todas")
     }
+
+    const renderAulaLabel = (est: Estudiante) => {
+        const aula = est.aula_asignada;
+        if (!aula) return "Sin aula asignada";
+
+        const salaNombre = aula.sala?.nombre || (aula.sala?.grado ? `Sala ${aula.sala.grado}` : `Sala ${aula.sala_id}`);
+        const comision = aula.comision || "Sin comisión";
+        const turno = aula.turno || "Sin turno";
+        return `${salaNombre} - ${comision} (${turno})`;
+    };
+
+    const renderColegioLabel = (est: Estudiante) => {
+        const maybeEscuelas = (est as any).escuelas;
+        return est.escuela?.nombre || maybeEscuelas?.nombre || "Sin colegio";
+    };
+
+    const getEstadoColor = (estado: string | null | undefined) => {
+        if (estado === "A") return "#2e7d32";
+        if (estado === "E") return "#f9a825";
+        if (estado === "D") return "#d32f2f";
+        return "transparent";
+    };
+
+    const getEstadoLabel = (estado: string | null | undefined) => {
+        if (estado === "A") return "Aprobada";
+        if (estado === "E") return "En progreso";
+        if (estado === "D") return "Desaprobada";
+        return "Sin evaluación";
+    };
 
     return (
         <Box sx={{ position: "relative", pb: 10 }}>
@@ -239,14 +257,49 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
                                     key={est.id}
                                     divider={index < agrupados[salaNombre].length - 1}
                                     secondaryAction={
-                                        <IconButton edge="end" onClick={(e) => handleMenuOpen(e, est)}>
-                                            <MoreVertIcon />
-                                        </IconButton>
+                                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                            <Tooltip title={`Inicial: ${getEstadoLabel(est.evaluaciones_resumen?.inicial)}`}>
+                                                <Box
+                                                    sx={{
+                                                        width: 14,
+                                                        height: 14,
+                                                        borderRadius: "50%",
+                                                        border: "1.5px solid #bdbdbd",
+                                                        bgcolor: getEstadoColor(est.evaluaciones_resumen?.inicial),
+                                                    }}
+                                                />
+                                            </Tooltip>
+                                            <Tooltip title={`Cierre: ${getEstadoLabel(est.evaluaciones_resumen?.cierre)}`}>
+                                                <Box
+                                                    sx={{
+                                                        width: 14,
+                                                        height: 14,
+                                                        borderRadius: "50%",
+                                                        border: "1.5px solid #bdbdbd",
+                                                        bgcolor: getEstadoColor(est.evaluaciones_resumen?.cierre),
+                                                    }}
+                                                />
+                                            </Tooltip>
+                                            <IconButton edge="end" onClick={(e) => handleMenuOpen(e, est)}>
+                                                <MoreVertIcon />
+                                            </IconButton>
+                                        </Box>
                                     }
                                 >
                                     <ListItemText
-                                        primary={<Typography sx={{ fontWeight: 600 }}>{est.personas.primer_apellido}, {est.personas.nombre}</Typography>}
-                                        secondary={`DNI: ${est.personas.dni}`}
+                                        primary={
+                                            <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap", pr: 14 }}>
+                                                <Typography sx={{ fontWeight: 600 }}>
+                                                    {est.personas.primer_apellido}, {est.personas.nombre}
+                                                </Typography>
+                                                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                                                    Colegio: {renderColegioLabel(est)}
+                                                </Typography>
+                                                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                                                    Aula: {renderAulaLabel(est)}
+                                                </Typography>
+                                            </Box>
+                                        }
                                     />
                                 </ListItem>
                             ))}

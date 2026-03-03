@@ -122,10 +122,13 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
     }
 
     const { agrupados, salasOrdenadas } = useMemo(() => {
-        // 1. Filtrado por texto
+        // 1. Filtrado combinado (texto + escuela + sala)
         const filtrados = estudiantes.filter((est) => {
             const nombreCompleto = `${est.personas.nombre} ${est.personas.primer_apellido} ${est.personas.dni}`.toLowerCase();
-            return nombreCompleto.includes(filtroTexto.toLowerCase());
+            const cumpleTexto = nombreCompleto.includes(filtroTexto.toLowerCase());
+            const cumpleEscuela = escuelaFiltro === "todas" || est.escuela?.escuela_id === escuelaFiltro;
+            const cumpleSala = salaFiltro === "todas" || est.sala_id === Number(salaFiltro);
+            return cumpleTexto && cumpleEscuela && cumpleSala;
         });
 
         // 2. Agrupación por Sala (Comisión)
@@ -144,7 +147,7 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
         });
 
         return { agrupados: grupos, salasOrdenadas: ordenadas };
-    }, [estudiantes, filtroTexto]);
+    }, [estudiantes, filtroTexto, escuelaFiltro, salaFiltro]);
 
     const resetFiltros = () => {
         setEscuelaFiltro("todas")
@@ -293,10 +296,10 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
                                                     {est.personas.primer_apellido}, {est.personas.nombre}
                                                 </Typography>
                                                 <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                                                    Colegio: {renderColegioLabel(est)}
+                                                    {renderColegioLabel(est)}
                                                 </Typography>
                                                 <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                                                    Aula: {renderAulaLabel(est)}
+                                                    {renderAulaLabel(est)}
                                                 </Typography>
                                             </Box>
                                         }

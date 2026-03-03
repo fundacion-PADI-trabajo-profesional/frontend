@@ -101,7 +101,7 @@ export default function AulasPage() {
   }, [currentRole, navigate]);
 
   useEffect(() => {
-    if (!currentRole || currentRole !== "director") return;
+    if (!currentRole || !["director", "encargado_zona", "equipo_padi"].includes(currentRole)) return;
     const loadInitial = async () => {
       setLoading(true);
       setError(null);

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Box, Container, Typography, Button, CircularProgress, Alert, Paper, List, ListItem, ListItemText, Stack } from "@mui/material"
+import { Box, Container, Typography, Button, CircularProgress, Alert, Paper, List, ListItem, ListItemText, Stack, Tooltip } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import { useNavigate } from "react-router-dom"
 import EstudiantesList from "../components/EstudiantesList"
@@ -112,6 +112,20 @@ export default function Estudiantes() {
         return 'Estudiantes';
     }
 
+    const getEstadoColor = (estado: string | null | undefined) => {
+        if (estado === "A") return "#2e7d32";
+        if (estado === "E") return "#f9a825";
+        if (estado === "D") return "#d32f2f";
+        return "transparent";
+    };
+
+    const getEstadoLabel = (estado: string | null | undefined) => {
+        if (estado === "A") return "Aprobada";
+        if (estado === "E") return "En progreso";
+        if (estado === "D") return "Desaprobada";
+        return "Sin evaluación";
+    };
+
     return (
         <Box sx={{ minHeight: "100vh", bgcolor: view === 'form' ? '#fff' : '#f5f5f5' }}>
             {/* Header: Solo se muestra en List y Success */}
@@ -212,6 +226,30 @@ export default function Estudiantes() {
                                                                     divider={index < aula.estudiantes.length - 1}
                                                                     secondaryAction={
                                                                         <Stack direction="row" spacing={1}>
+                                                                            <Tooltip title={`Inicial: ${getEstadoLabel(est.evaluaciones_resumen?.inicial)}`}>
+                                                                                <Box
+                                                                                    sx={{
+                                                                                        width: 14,
+                                                                                        height: 14,
+                                                                                        borderRadius: "50%",
+                                                                                        border: "1.5px solid #bdbdbd",
+                                                                                        bgcolor: getEstadoColor(est.evaluaciones_resumen?.inicial),
+                                                                                        alignSelf: "center",
+                                                                                    }}
+                                                                                />
+                                                                            </Tooltip>
+                                                                            <Tooltip title={`Cierre: ${getEstadoLabel(est.evaluaciones_resumen?.cierre)}`}>
+                                                                                <Box
+                                                                                    sx={{
+                                                                                        width: 14,
+                                                                                        height: 14,
+                                                                                        borderRadius: "50%",
+                                                                                        border: "1.5px solid #bdbdbd",
+                                                                                        bgcolor: getEstadoColor(est.evaluaciones_resumen?.cierre),
+                                                                                        alignSelf: "center",
+                                                                                    }}
+                                                                                />
+                                                                            </Tooltip>
                                                                             <Button
                                                                                 size="small"
                                                                                 onClick={() =>
@@ -232,8 +270,19 @@ export default function Estudiantes() {
                                                                     }
                                                                 >
                                                                     <ListItemText
-                                                                        primary={`${est.personas.primer_apellido ?? ""}, ${est.personas.nombre ?? ""}`}
-                                                                        secondary={`DNI: ${est.personas.dni ?? "-"}`}
+                                                                        primary={
+                                                                            <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap", pr: 22 }}>
+                                                                                <Typography sx={{ fontWeight: 600 }}>
+                                                                                    {`${est.personas.primer_apellido ?? ""}, ${est.personas.nombre ?? ""}`}
+                                                                                </Typography>
+                                                                                <Typography variant="body2" sx={{ color: "#666" }}>
+                                                                                    Colegio: {aula.escuela?.nombre ?? "Sin colegio"}
+                                                                                </Typography>
+                                                                                <Typography variant="body2" sx={{ color: "#666" }}>
+                                                                                    Aula: {(aula.sala?.nombre || `Sala ${aula.sala?.grado ?? aula.sala_id}`)} - {aula.comision} ({aula.turno})
+                                                                                </Typography>
+                                                                            </Box>
+                                                                        }
                                                                     />
                                                                 </ListItem>
                                                             ))}

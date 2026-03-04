@@ -149,3 +149,9 @@ export const desasignarEstudianteAula = async (aulaId: string, estudianteId: str
   return response.data;
 };
 
+export const getAulasPorEscuela = async (escuelaId: string): Promise<Aula[]> => {
+  const { usuario_id, rol } = getUserData();
+  // Pasamos escuela_id como query param adicional
+  const response = await api.get(`/aulas?usuario_id=${usuario_id}&rol=${rol}&escuela_id=${escuelaId}`);
+  return response.data.data || [];
+};

@@ -27,6 +27,7 @@ import {
     type Sala 
 } from "../api/estudiantes"
 import { getEscuelas, type Escuela } from "../api/escuelas"
+import { getAulasPorEscuela, type Aula } from "../api/aulas";
 
 interface EstudianteFormProps {
     onCancel: () => void
@@ -51,6 +52,8 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
     const [salas, setSalas] = useState<Sala[]>([])
     const [escuelas, setEscuelas] = useState<Escuela[]>([])
 
+    const [aulasDisponibles, setAulasDisponibles] = useState<Aula[]>([]);
+
     const [formData, setFormData] = useState({
         dni: "",
         nombre: "",
@@ -59,7 +62,25 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
         genero_id: "",
         sala_id: "",
         escuela_id: "",
+        aula_id: "", // Nuevo campo para asignar aula al estudiante (opcional)
     })
+
+    const handleAulaChange = (aulaId: string) => {
+    // 1. Buscamos el objeto aula completo en nuestra lista de disponibles
+    const aulaSeleccionada = aulasDisponibles.find(a => a.id === aulaId);
+
+    if (aulaSeleccionada) {
+            // 2. Si seleccionó un aula, actualizamos aula_id Y sala_id automáticamente
+            setFormData({
+                ...formData,
+                aula_id: aulaId,
+                sala_id: String(aulaSeleccionada.sala_id) // Sincronizamos la sala
+            });
+        } else {
+            // Si deselecciona el aula
+            setFormData({ ...formData, aula_id: "" });
+        }
+    };
 
     const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -96,6 +117,7 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
                         genero_id: estudianteAEditar.genero_id || "",
                         sala_id: String(estudianteAEditar.sala_id),
                         escuela_id: estudianteAEditar.escuela.escuela_id || "",
+                        aula_id: estudianteAEditar.aula_id || "",
                     })
                 } else if (aulaContext) {
                     // MODO CREACIÓN DESDE AULA (docente)
@@ -117,6 +139,28 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
         }
         loadInitialData()
     }, [estudianteAEditar, aulaContext])
+
+    useEffect(() => {
+    const fetchAulas = async () => {
+        if (formData.escuela_id) {
+            try {
+                const data = await getAulasPorEscuela(formData.escuela_id);
+                setAulasDisponibles(data);
+                // Si el aula seleccionada previamente no pertenece a la nueva escuela, la limpiamos
+                setFormData(prev => ({ ...prev, aula_id: "" }));
+            } catch (err) {
+                console.error("Error cargando aulas:", err);
+            }
+        } else {
+            setAulasDisponibles([]);
+        }
+    };
+    
+    // Si ya tenemos un aulaContext (venimos de la vista de aula), no hace falta buscar
+    if (!aulaContext) {
+        fetchAulas();
+    }
+}, [formData.escuela_id, aulaContext]);
 
     const validate = () => {
         const newErrors: Record<string, string> = {}
@@ -142,6 +186,8 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
         e.preventDefault()
         if (!validate()) return
 
+        console.log("Enviando a la API:", formData);
+
         setLoading(true)
         setError(null)
         try {
@@ -157,7 +203,7 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
                 const nuevo = await createEstudiante({
                     ...formData,
                     sala_id: Number(formData.sala_id),
-                    aula_id: aulaContext?.aula_id,
+                    aula_id: formData.aula_id || "",
                 })
                 onSuccess(nuevo)
             }
@@ -225,19 +271,47 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
                 </Grid>
 
                 <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth variant="filled" error={!!errors.sala_id}>
-                        <InputLabel>Sala / Comisión</InputLabel>
+                    <FormControl fullWidth size="small">
+                        <InputLabel>Sala</InputLabel>
                         <Select
-                            name="sala_id"
-                            value={formData.sala_id}
-                            onChange={handleChange}
-                            disabled={!!aulaContext && !estudianteAEditar}
+                            label="Sala"
+                            value={formData.sala_id || ""} // Aseguramos que no sea undefined
+                            onChange={(e) => setFormData({ ...formData, sala_id: String(e.target.value) })}
+                            disabled={!!formData.aula_id} // Bloqueado si hay aula elegida
                         >
                             {salas.map((s) => (
-                                <MenuItem key={s.id} value={String(s.id)}>{s.nombre} ({s.grado}° grado)</MenuItem>
+                                <MenuItem key={s.id} value={s.id}>
+                                    {s.nombre}
+                                </MenuItem>
                             ))}
                         </Select>
-                        {errors.sala_id && <FormHelperText>{errors.sala_id}</FormHelperText>}
+                        {formData.aula_id && (
+                            <FormHelperText sx={{ color: 'info.main' }}>
+                                Sala asignada automáticamente por el aula.
+                            </FormHelperText>
+                        )}
+                    </FormControl>
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth size="small">
+                        <InputLabel>Aula (Opcional)</InputLabel>
+                        <Select
+                            label="Aula (Opcional)"
+                            value={formData.aula_id || ""}
+                            onChange={(e) => handleAulaChange(e.target.value)} // Usamos la nueva función
+                            disabled={!formData.escuela_id || !!aulaContext}
+                        >
+                            <MenuItem value=""><em>Sin asignar</em></MenuItem>
+                            {aulasDisponibles.map((aula) => (
+                                <MenuItem key={aula.id} value={aula.id}>
+                                    {aula.sala?.nombre} - {aula.comision} ({aula.turno})
+                                </MenuItem>
+                            ))}
+                        </Select>
+                        {formData.escuela_id && aulasDisponibles.length === 0 && (
+                            <FormHelperText error>No hay aulas creadas en esta escuela</FormHelperText>
+                        )}
                     </FormControl>
                 </Grid>
 

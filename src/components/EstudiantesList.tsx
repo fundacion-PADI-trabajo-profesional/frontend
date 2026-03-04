@@ -15,6 +15,11 @@ import AssessmentIcon from "@mui/icons-material/Assessment"
 import EditIcon from "@mui/icons-material/Edit"
 import VisibilityIcon from "@mui/icons-material/Visibility"
 import { useSearchParams } from "react-router-dom"
+import SpeedDial from '@mui/material/SpeedDial';
+import SpeedDialIcon from '@mui/material/SpeedDialIcon';
+import SpeedDialAction from '@mui/material/SpeedDialAction';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 import type { Estudiante } from "../api/estudiantes"
 import { getSalas, type Sala } from "../api/estudiantes"
@@ -25,9 +30,10 @@ interface EstudiantesListProps {
     estudiantes: Estudiante[]
     onAddEstudiante: () => void
     onEditEstudiante: (estudiante: Estudiante) => void
+    onBulkAdd: () => void
 }
 
-export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEstudiante }: EstudiantesListProps) {
+export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEstudiante, onBulkAdd }: EstudiantesListProps) {
     const navigate = useNavigate()
     const [filtroTexto, setFiltroTexto] = useState("")
     const [userRole, setUserRole] = useState<string>("")
@@ -155,10 +161,10 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
     }
 
     const renderAulaLabel = (est: Estudiante) => {
-        const aula = est.aula_asignada;
+        const aula = est.aula_id ? { id: est.aula_id, comision: null, turno: null, sala_id: est.sala_id, sala: est.salas } : null;
         if (!aula) return "Sin aula asignada";
 
-        const salaNombre = aula.sala?.nombre || (aula.sala?.grado ? `Sala ${aula.sala.grado}` : `Sala ${aula.sala_id}`);
+        const salaNombre = aula.sala?.nombre;
         const comision = aula.comision || "Sin comisión";
         const turno = aula.turno || "Sin turno";
         return `${salaNombre} - ${comision} (${turno})`;
@@ -313,13 +319,24 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
 
             {/* Mostramos el FAB solo si el usuario tiene permisos para crear estudiantes */}
             {permissions.createEstudiante(userRole) && (
-                <Fab
-                    color="primary"
-                    onClick={onAddEstudiante}
-                    sx={{ position: "fixed", bottom: 40, right: 40, bgcolor: "#000" }}
+                <SpeedDial
+                    ariaLabel="Opciones de agregado"
+                    sx={{ position: 'fixed', bottom: 40, right: 40 }}
+                    icon={<SpeedDialIcon />}
                 >
-                    <AddIcon />
-                </Fab>
+                    <SpeedDialAction
+                        key="Manual"
+                        icon={<PersonAddIcon />}
+                        tooltipTitle="Crear uno solo"
+                        onClick={onAddEstudiante}
+                    />
+                    <SpeedDialAction
+                        key="Bulk"
+                        icon={<UploadFileIcon />}
+                        tooltipTitle="Carga masiva (Excel)"
+                        onClick={onBulkAdd}
+                    />
+                </SpeedDial>
             )}
 
             <Menu

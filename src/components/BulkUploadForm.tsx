@@ -6,7 +6,7 @@ import { bulkCreateEstudiantes } from '../api/estudiantes';
 
 // Definimos la estructura de las Props para quitar el error ts(7031)
 interface BulkUploadProps {
-    onSuccess: () => void;
+    onSuccess: (data: any[]) => void;
     onCancel: () => void;
 }
 
@@ -18,36 +18,51 @@ export default function BulkUploadForm({ onCancel, onSuccess }: BulkUploadProps)
         const file = e.target.files?.[0];
         if (!file) return;
 
-        setLoading(true);
         const reader = new FileReader();
-
         reader.onload = async (evt) => {
             try {
                 const bstr = evt.target?.result;
-                const wb = XLSX.read(bstr, { type: 'binary' });
-                const wsname = wb.SheetNames[0];
-                const ws = wb.Sheets[wsname];
+                const wb = XLSX.read(bstr, { type: 'binary', cellDates: true }); 
+                const ws = wb.Sheets[wb.SheetNames[0]];
                 const data = XLSX.utils.sheet_to_json(ws);
 
-                // Aquí puedes mapear las columnas del Excel a lo que espera tu API
-                const estudiantes = data.map((row: any) => ({
-                    dni: row.DNI,
-                    nombre: row.Nombre,
-                    apellido: row.Apellido,
-                    fecha_nacimiento: row.FechaNacimiento,
-                    genero_id: row.Genero,
-                    sala_id: row.SalaID,
-                    aula_id: row.AulaID || null, // Si el aula_id es opcional
-                }));
+                const estudiantes = data.map((row: any) => {
+                let fecha = row["Fecha Nacimiento"];
+                
+                // Si la fecha viene como string o formato extraño, intentamos normalizarla
+                const dateObj = new Date(fecha);
+                const finalDate = isNaN(dateObj.getTime()) ? null : dateObj.toISOString();
 
-                await bulkCreateEstudiantes({ estudiantes });
-                onSuccess();
+                return {
+                    dni: String(row["DNI"]),
+                    nombre: row["Nombre"],
+                    apellido: row["Apellido"],
+                    fecha_nacimiento: finalDate, // Enviamos ISOString que el backend entiende perfecto
+                    genero_id: row["Genero"],
+                    sala_id: Number(row["SalaID"]),
+                    escuela_id: row["EscuelaID"] // Como lo agregaste al final
+                };
+            });
+
+            // Validar si hay fechas inválidas antes de enviar
+            if (estudiantes.some(e => !e.fecha_nacimiento)) {
+                setError("Hay alumnos con fechas de nacimiento inválidas. Usa el formato AAAA-MM-DD.");
+                setLoading(false);
+                return;
+            }
+
+            const response = await bulkCreateEstudiantes({ estudiantes });
+                
+            onSuccess(response.data); 
+
             } catch (err: any) {
-                setError("Error al procesar el archivo. Revisa el formato.");
+                const serverMsg = err.response?.data?.message || err.message || "Error desconocido";
+                setError(serverMsg);
             } finally {
                 setLoading(false);
             }
         };
+
         reader.readAsBinaryString(file);
     };
 

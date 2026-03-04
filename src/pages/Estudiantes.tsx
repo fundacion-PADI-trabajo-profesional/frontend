@@ -15,7 +15,8 @@ import BulkUploadForm from "../components/BulkUploadForm"
  * Página principal de Estudiantes.
  */
 export default function Estudiantes() {
-    const [view, setView] = useState<"list" | "form" | "success" | "bulk">("list")
+    const [view, setView] = useState<"list" | "form" | "success" | "bulk" | "successBulk">("list")
+    const [cantidadCreados, setCantidadCreados] = useState(0); // Estado para el conteo
     const [estudiantes, setEstudiantes] = useState<Estudiante[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -351,11 +352,32 @@ export default function Estudiantes() {
                 {view === 'bulk' && (
                     <BulkUploadForm                      
                         onCancel={handleBackToList}
-                        onSuccess={() => {
-                            setView('list');
+                        onSuccess={(data) => {
+                            setView('successBulk');
                             setRefreshKey(k => k + 1);
+                            setCantidadCreados(data.length);
+                            
                         }}
                     />
+                )}
+                {view === 'successBulk' && (
+                <Paper sx={{ p: 5, textAlign: 'center', borderRadius: 3 }}>
+                    <CheckCircleOutlineIcon sx={{ fontSize: 80, color: 'success.main', mb: 3 }} />
+                    <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
+                        ¡Carga Masiva Exitosa!
+                    </Typography>
+                    <Typography variant="body1" color="textSecondary" sx={{ mb: 4 }}>
+                        Se han registrado {cantidadCreados} estudiantes correctamente 
+                        en el sistema.
+                    </Typography>
+                    <Button 
+                        variant="contained" 
+                        onClick={() => setView('list')}
+                        sx={{ bgcolor: '#000', px: 4, py: 1.5, borderRadius: 2 }}
+                    >
+                        Volver a la lista
+                    </Button>
+                </Paper>
                 )}
             </Container>
         </Box>

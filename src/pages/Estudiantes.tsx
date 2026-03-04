@@ -9,12 +9,13 @@ import EstudianteForm from "../components/EstudianteForm"
 import { getEstudiantes, type Estudiante, type EstudianteCreado } from "../api/estudiantes"
 import { getDocenteAulasConEstudiantes, type DocenteAulaConEstudiantes } from "../api/aulas"
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import BulkUploadForm from "../components/BulkUploadForm"
 
 /**
  * Página principal de Estudiantes.
  */
 export default function Estudiantes() {
-    const [view, setView] = useState<"list" | "form" | "success">("list")
+    const [view, setView] = useState<"list" | "form" | "success" | "bulk">("list")
     const [estudiantes, setEstudiantes] = useState<Estudiante[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -297,8 +298,9 @@ export default function Estudiantes() {
                         ) : (
                             <EstudiantesList 
                                 estudiantes={estudiantes} 
-                                onAddEstudiante={handleGoToForm} 
-                                onEditEstudiante={handleEdit} 
+                                onAddEstudiante={() => setView("form")} 
+                                onEditEstudiante={handleEdit}
+                                onBulkAdd={() => setView("bulk")} // Nueva prop
                             />
                         )}
                     </>
@@ -345,6 +347,15 @@ export default function Estudiantes() {
                             </Button>
                         </Box>
                     </Box>
+                )}
+                {view === 'bulk' && (
+                    <BulkUploadForm                      
+                        onCancel={handleBackToList}
+                        onSuccess={() => {
+                            setView('list');
+                            setRefreshKey(k => k + 1);
+                        }}
+                    />
                 )}
             </Container>
         </Box>

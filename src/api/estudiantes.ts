@@ -1,3 +1,5 @@
+import { api } from "./auth"
+
 const API_URL = import.meta.env.VITE_API_URL
 
 interface ApiResponse<T> {
@@ -44,21 +46,22 @@ export interface Estudiante {
         escuela_id: string
         nombre: string | null
     }
-    aula_asignada?: {
-        id: string
-        comision: string | null
-        turno: string | null
-        sala_id: number
-        sala?: {
-            id: number
-            nombre: string | null
-            grado: number | null
-        } | null
-    } | null
+    // aula_asignada?: {
+    //     id: string
+    //     comision: string | null
+    //     turno: string | null
+    //     sala_id: number
+    //     sala?: {
+    //         id: number
+    //         nombre: string | null
+    //         grado: number | null
+    //     } | null
+    // } | null
     evaluaciones_resumen?: {
         inicial: string | null
         cierre: string | null
     } | null
+    aula_id?: string | null
 }
 
 // Tipo para el estudiante recién creado (respuesta del POST)
@@ -244,4 +247,25 @@ export async function desasignarEstudianteAula(
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || "Error al desasignar estudiante del aula");
     }
+}
+
+export async function getAulasPorEscuela(escuelaId: string): Promise<any[]> {
+    const response = await fetch(`${API_URL}/aulas?escuela_id=${escuelaId}`);
+    if (!response.ok) throw new Error("Error al obtener aulas");
+    const result = await response.json();
+    return result.success ? result.data : [];
+}
+
+export async function bulkCreateEstudiantes(data: { estudiantes: any[] }) {
+    const user = JSON.parse(localStorage.getItem("padiUser") || "{}");
+    
+    const payload = {
+        ...data,
+        usuario_id: user.id,
+        rol: user.rol,
+        escuela_id: user.escuela_id // Si es director/docente
+    };
+
+    const response = await api.post('/estudiantes/bulk', payload);
+    return response.data;
 }

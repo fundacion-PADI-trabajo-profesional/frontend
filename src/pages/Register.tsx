@@ -34,6 +34,7 @@ export default function Register() {
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   const handleChange = (e: any) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -44,7 +45,11 @@ export default function Register() {
     setError("");
     setSuccess("");
 
-    // Validación simple para que no manden rol vacío
+    if (!emailRegex.test(formData.email)) {
+      setError("Por favor, ingresá un correo electrónico válido.");
+      return;
+    }
+
     if (!formData.rol) {
       setError("Por favor, seleccioná un rol.");
       return;
@@ -186,7 +191,7 @@ export default function Register() {
           </Alert>
         )}
 
-        <form onSubmit={handleRegister}>
+        <form onSubmit={handleRegister} autoComplete="off">
           <TextField
             fullWidth
             placeholder="Nombre"

@@ -26,6 +26,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility"
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { getEvaluacionesInstancias, eliminarEvaluacionInstancia, type EvaluacionInstancia } from "../api/evaluaciones"
 import { permissions } from "../utils/permissions"
+import { TextField, MenuItem, Grid } from "@mui/material"
 
 const TOTAL_AREAS_EVALUACION = 4;
 const ESTADO_NO_INICIADA = "N"
@@ -44,6 +45,14 @@ export default function EvaluacionesList({ onEditar }: {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
   const [evaluacionToDelete, setEvaluacionToDelete] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+
+  const [filtros, setFiltros] = useState({
+    busqueda: "", // Para DNI o Nombre
+    sala: "todas",
+    comision: "todas",
+    tipo: "todos",
+    estado: "todos"
+  });
 
   useEffect(() => {
     // Obtener información del usuario
@@ -173,7 +182,21 @@ export default function EvaluacionesList({ onEditar }: {
     }
   }
 
-  const evaluacionesAgrupadas = evaluaciones.reduce((acc: any, curr) => {
+  const evaluacionesFiltradas = evaluaciones.filter((ev) => {
+    const cumpleBusqueda =
+      ev.estudianteNombre?.toLowerCase().includes(filtros.busqueda.toLowerCase()) ||
+      ev.estudiante?.dni?.includes(filtros.busqueda);
+
+    const cumpleSala = filtros.sala === "todas" || ev.salaNombre === filtros.sala;
+    const cumpleComision = filtros.comision === "todas" || ev.aulaLabel === filtros.comision;
+    const cumpleTipo = filtros.tipo === "todos" || ev.tipoId === filtros.tipo;
+    const cumpleEstado = filtros.estado === "todos" || ev.estadoId === filtros.estado;
+
+    return cumpleBusqueda && cumpleSala && cumpleComision && cumpleTipo && cumpleEstado;
+  });
+
+  // Ahora agrupamos las FILTRADAS
+  const evaluacionesAgrupadas = evaluacionesFiltradas.reduce((acc: any, curr) => {
     const escuela = curr.escuelaNombre || "Sin Escuela";
     const sala = curr.salaNombre || `Sala de ${curr.salaId}`;
     const aula = curr.aulaLabel || "Sin Comisión";
@@ -216,8 +239,97 @@ export default function EvaluacionesList({ onEditar }: {
     )
   }
 
+  const salasUnicas = Array.from(new Set(evaluaciones.map(ev => ev.salaNombre).filter(Boolean)));
+  const comisionesUnicas = Array.from(new Set(evaluaciones.map(ev => ev.aulaLabel).filter(Boolean)));
+
   return (
     <>
+      {/* Filtros evaluaciones */}
+      <Paper sx={{ p: 3, mb: 4, borderRadius: '12px' }} elevation={1}>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 700, color: '#555' }}>Filtros de búsqueda</Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              label="Buscar por Nombre o DNI"
+              variant="outlined"
+              size="small"
+              value={filtros.busqueda}
+              onChange={(e) => setFiltros({ ...filtros, busqueda: e.target.value })}
+            />
+          </Grid>
+          <Grid item xs={6} md={2}>
+            <TextField
+              select
+              fullWidth
+              label="Sala"
+              size="small"
+              value={filtros.sala}
+              onChange={(e) => setFiltros({ ...filtros, sala: e.target.value })}
+            >
+              <MenuItem value="todas">Todas las salas</MenuItem>
+              {salasUnicas.map(sala => (
+                <MenuItem key={sala} value={sala}>{sala}</MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+
+          {/* Filtro por Comisión */}
+          <Grid item xs={6} md={2}>
+            <TextField
+              select
+              fullWidth
+              label="Comisión"
+              size="small"
+              value={filtros.comision}
+              onChange={(e) => setFiltros({ ...filtros, comision: e.target.value })}
+            >
+              <MenuItem value="todas">Todas</MenuItem>
+              {comisionesUnicas.map(com => (
+                <MenuItem key={com} value={com}>{com}</MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid item xs={6} md={2}>
+            <TextField
+              select
+              fullWidth
+              label="Instancia de Evaluación"
+              size="small"
+              value={filtros.tipo}
+              onChange={(e) => setFiltros({ ...filtros, tipo: e.target.value })}
+            >
+              <MenuItem value="todos">Todos</MenuItem>
+              <MenuItem value="inicial">Inicial</MenuItem>
+              <MenuItem value="cierre">Cierre</MenuItem>
+            </TextField>
+          </Grid>
+          <Grid item xs={6} md={3}>
+            <TextField
+              select
+              fullWidth
+              label="Estado"
+              size="small"
+              value={filtros.estado}
+              onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })}
+            >
+              <MenuItem value="todos">Todos los estados</MenuItem>
+              <MenuItem value={ESTADO_APROBADA}>Aprobada</MenuItem>
+              <MenuItem value={ESTADO_DESAPROBADA}>Desaprobada</MenuItem>
+              <MenuItem value={ESTADO_EN_PROGRESO}>En Progreso</MenuItem>
+              <MenuItem value={ESTADO_NO_INICIADA}>No Iniciada</MenuItem>
+            </TextField>
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <Button
+              variant="text"
+              onClick={() => setFiltros({ busqueda: "", sala: "todas", comision: "todas", tipo: "todos", estado: "todos" })}
+            >
+              Limpiar Filtros
+            </Button>
+          </Grid>
+        </Grid>
+      </Paper>
       {Object.keys(evaluacionesAgrupadas).map((escuela) => (
         <Box key={escuela} sx={{ mb: 6 }}>
           {/* Título de la Escuela */}
@@ -244,11 +356,12 @@ export default function EvaluacionesList({ onEditar }: {
                     <Table size="small">
                       <TableHead sx={{ bgcolor: "#f9f9f9" }}>
                         <TableRow>
+                          <TableCell sx={{ fontWeight: 700 }}>DNI</TableCell>
                           <TableCell sx={{ fontWeight: 700 }}>Estudiante</TableCell>
                           <TableCell align="center" sx={{ fontWeight: 700 }}>Tipo</TableCell>
                           <TableCell align="center" sx={{ fontWeight: 700 }}>Estado</TableCell>
                           <TableCell align="center" sx={{ fontWeight: 700 }}>Áreas aprobadas</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 700 }}>Acciones</TableCell> {/* <-- Esta columna debe existir */}
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>Acciones</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -256,9 +369,12 @@ export default function EvaluacionesList({ onEditar }: {
                           <TableRow
                             key={evaluacion.id}
                             hover
-                            // Quitamos el onClick de aquí para que solo funcionen los botones
                             sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                           >
+                            <TableCell sx={{ fontWeight: 500, color: "#666" }}>
+                              {evaluacion.estudiante.dni}
+                            </TableCell>
+
                             <TableCell>{evaluacion.estudianteNombre}</TableCell>
                             <TableCell align="center">{getTipoLabel(evaluacion.tipoId)}</TableCell>
                             <TableCell align="center">
@@ -322,8 +438,9 @@ export default function EvaluacionesList({ onEditar }: {
               ))}
             </Box>
           ))}
-        </Box>
-      ))}
+        </Box >
+      ))
+      }
       <Dialog
         open={openDeleteDialog}
         onClose={handleCloseDialog}

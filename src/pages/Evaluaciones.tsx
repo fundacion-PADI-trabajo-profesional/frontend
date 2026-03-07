@@ -5,6 +5,9 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { Box, Container, Typography, Button } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
+import Fab from "@mui/material/Fab";
+import AddIcon from "@mui/icons-material/Add";
+import Tooltip from "@mui/material/Tooltip";
 import { useNavigate, useSearchParams } from "react-router-dom"
 import EvaluacionesList from "../components/EvaluacionesList"
 import EvaluacionForm from "../components/EvaluacionForm"
@@ -32,6 +35,13 @@ export default function Evaluaciones() {
 
   const backTo = searchParams.get("backTo") || "/home"
   const backLabel = searchParams.get("backLabel") || "Volver a inicio"
+
+  const handleBackToList = () => {
+    // Limpia los parámetros de la URL y los estados locales
+    setEvaluacionSeleccionadaId(null);
+    setPrefillEstudianteId(null);
+    navigate("/evaluaciones", { replace: true });
+  };
 
   useEffect(() => {
     const evaluarAhora = searchParams.get("evaluarAhora")
@@ -82,6 +92,10 @@ export default function Evaluaciones() {
     }
   };
 
+  const handleCrearNueva = () => {
+    navigate("/evaluaciones?crear=true");
+  };
+
   const showCreateView = prefillEstudianteId !== null || searchParams.get("crear") === "true";
 
   // Si hay una evaluación seleccionada, mostramos SU DETALLE ocupando todo el área de contenido
@@ -129,7 +143,7 @@ export default function Evaluaciones() {
       </Box>
 
       {/* Contenido */}
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* <Container maxWidth="lg" sx={{ py: 4 }}>
         {showCreateView ? (
           <>
             <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
@@ -154,7 +168,53 @@ export default function Evaluaciones() {
             onEditar={handleVerEvaluacion}
           />
         )}
+      </Container> */}
+
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        {evaluacionSeleccionadaId ? (
+          // SI HAY ID: Mostramos el detalle
+          <EvaluacionDetalle
+            evaluacionId={evaluacionSeleccionadaId}
+            onBack={handleVolverALista}
+          />
+        ) : showCreateView ? (
+          // SI NO HAY ID PERO URL DICE "CREAR": Mostramos el formulario
+          <EvaluacionForm
+            onSuccess={handleSuccessForm}
+            onCancel={handleVolverALista} // Agregamos esta prop
+            profile={profile}
+            prefillEstudianteId={prefillEstudianteId || undefined}
+          />
+        ) : (
+          // POR DEFECTO: Mostramos la lista agrupada que armamos antes
+          <EvaluacionesList
+            key={refreshKey}
+            onEditar={handleVerEvaluacion}
+          />
+        )}
       </Container>
+
+      {/* Botón Flotante "+" */}
+      {!showCreateView && !evaluacionSeleccionadaId && (
+        <Tooltip title="Crear nueva evaluación" placement="left">
+          <Fab
+            color="primary"
+            aria-label="add"
+            onClick={handleCrearNueva}
+            sx={{
+              position: "fixed",
+              bottom: 32,
+              right: 32,
+              bgcolor: "#A3BE54", // Usando el verde de PADI
+              '&:hover': {
+                bgcolor: "#8da647",
+              },
+            }}
+          >
+            <AddIcon />
+          </Fab>
+        </Tooltip>
+      )}
     </Box>
   )
 }

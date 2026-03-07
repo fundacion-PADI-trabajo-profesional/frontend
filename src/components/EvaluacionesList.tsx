@@ -172,6 +172,20 @@ export default function EvaluacionesList({ onEditar }: {
     }
   }
 
+  const evaluacionesAgrupadas = evaluaciones.reduce((acc: any, curr) => {
+    const escuela = curr.escuelaNombre || "Sin Escuela";
+    const sala = curr.salaNombre || `Sala de ${curr.salaId}`;
+    const aula = curr.aulaLabel || "Sin Comisión";
+
+    if (!acc[escuela]) acc[escuela] = {};
+    if (!acc[escuela][sala]) acc[escuela][sala] = {};
+    if (!acc[escuela][sala][aula]) acc[escuela][sala][aula] = [];
+
+    acc[escuela][sala][aula].push(curr);
+    return acc;
+  }, {});
+
+
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
@@ -203,80 +217,97 @@ export default function EvaluacionesList({ onEditar }: {
 
   return (
     <>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead sx={{ bgcolor: "#f5f5f5" }}>
-            <TableRow>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>Estudiante</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>Colegio</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>Aula</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>Sala</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>Tipo</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>Estado</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>Áreas aprobadas</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {evaluaciones.map((evaluacion) => (
-              <TableRow
-                key={evaluacion.id}
-                hover
+      {Object.keys(evaluacionesAgrupadas).map((escuela) => (
+        <Box key={escuela} sx={{ mb: 6 }}>
+          {/* Título de la Escuela */}
+          <Typography variant="h4" sx={{ mb: 3, fontWeight: 800, color: "#333", borderBottom: "2px solid #A3BE54", pb: 1 }}>
+            Escuela: {escuela}
+          </Typography>
 
-                onClick={() => onEditar(evaluacion)}
-                sx={{ cursor: 'pointer' }}
-              >
-                <TableCell>{evaluacion.estudianteNombre || evaluacion.estudianteId}</TableCell>
-                <TableCell align="center">{evaluacion.escuelaNombre || "-"}</TableCell>
-                <TableCell align="center">{evaluacion.aulaLabel || "-"}</TableCell>
-                <TableCell align="center">{evaluacion.salaId || evaluacion.salaId}</TableCell>
-                <TableCell>{getTipoLabel(evaluacion.tipoId)}</TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={getEstadoLabel(evaluacion.estadoId)}
+          {Object.keys(evaluacionesAgrupadas[escuela]).map((sala) => (
+            <Box key={sala} sx={{ mb: 4, ml: 2 }}>
+              {/* Separador de Sala */}
+              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', color: "#555", fontWeight: 600 }}>
+                <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#A3BE54', mr: 1 }} />
+                {sala}
+              </Typography>
 
-                    sx={{
-                      fontWeight: 600,
-                      ...getEstadoColor(evaluacion.estadoId)
-                    }}
-                    size="small"
-                    variant="outlined"
-                  />
-                </TableCell>
-                <TableCell align="center">
-                  {(() => {
-                    const totalAreas = TOTAL_AREAS_EVALUACION;
-                    const aprobadas = evaluacion.areas?.filter((a) => a.estadoId === ESTADO_APROBADA).length ?? 0;
+              {Object.keys(evaluacionesAgrupadas[escuela][sala]).map((aula) => (
+                <Box key={aula} sx={{ mb: 3, ml: 3 }}>
+                  {/* Separador de Comisión/Aula */}
+                  <Typography variant="subtitle1" sx={{ mb: 1, fontStyle: 'italic', color: "#777" }}>
+                    Comisión: {aula}
+                  </Typography>
 
-                    // Si no vinieron áreas en el listado, evitamos mostrar 0/4 engañoso
-                    if (evaluacion.estadoId === ESTADO_NO_INICIADA) return "-";
-
-                    if (!evaluacion.areas) return "-";
-
-                    return `${aprobadas}/${totalAreas}`;
-                  })()}
-                </TableCell>
-                <TableCell align="center">
-                  <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-                    {permissions.deleteEvaluacion(profile?.rol) && (
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        color="error"
-                        startIcon={<DeleteIcon />}
-                        onClick={(e) => handleClickDelete(e, evaluacion.id)}
-                        sx={{ textTransform: "none" }}
-                      >
-                        Eliminar
-                      </Button>
-                    )}
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                  <TableContainer component={Paper} elevation={2}>
+                    <Table size="small">
+                      <TableHead sx={{ bgcolor: "#f9f9f9" }}>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 700 }}>Estudiante</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>Tipo</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>Estado</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>Áreas aprobadas</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>Acciones</TableCell> {/* <-- Esta columna debe existir */}
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {evaluacionesAgrupadas[escuela][sala][aula].map((evaluacion: any) => (
+                          <TableRow
+                            key={evaluacion.id}
+                            hover
+                            onClick={() => onEditar(evaluacion)}
+                            sx={{ cursor: 'pointer', '&:last-child td, &:last-child th': { border: 0 } }}
+                          >
+                            <TableCell>{evaluacion.estudianteNombre}</TableCell>
+                            <TableCell align="center">{getTipoLabel(evaluacion.tipoId)}</TableCell>
+                            <TableCell align="center">
+                              <Chip
+                                label={getEstadoLabel(evaluacion.estadoId)}
+                                sx={{ fontWeight: 600, ...getEstadoColor(evaluacion.estadoId) }}
+                                size="small"
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              {(() => {
+                                const aprobadas = evaluacion.areas?.filter((a: any) => a.estadoId === ESTADO_APROBADA).length ?? 0;
+                                return evaluacion.estadoId === ESTADO_NO_INICIADA ? "-" : `${aprobadas}/${TOTAL_AREAS_EVALUACION}`;
+                              })()}
+                            </TableCell>
+                            <TableCell align="center">
+                              <Box
+                                sx={{ display: "flex", gap: 1, justifyContent: "center" }}
+                                onClick={(e) => e.stopPropagation()} // Importante: evita que al hacer clic en el botón se abra el detalle
+                              >
+                                {permissions.deleteEvaluacion(profile?.rol) && (
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="error"
+                                    startIcon={<DeleteIcon />}
+                                    onClick={(e) => handleClickDelete(e, evaluacion.id)}
+                                    sx={{
+                                      textTransform: "none",
+                                      fontWeight: 600,
+                                      borderRadius: '8px',
+                                      '&:hover': { bgcolor: '#fff5f5' }
+                                    }}
+                                  >
+                                    Eliminar
+                                  </Button>
+                                )}
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+              ))}
+            </Box>
+          ))}
+        </Box>
+      ))}
       <Dialog
         open={openDeleteDialog}
         onClose={handleCloseDialog}

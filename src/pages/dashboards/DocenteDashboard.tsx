@@ -19,7 +19,7 @@ export default function DocenteDashboard() {
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard
                         title="Mis Estudiantes"
-                        description="Buscar estudiante específico (Global)."
+                        description="Listado de estudiantes asignados"
                         icon="🎓"
                         color="#5c7cfa"
                         onClick={() => navigate("/estudiantes")}

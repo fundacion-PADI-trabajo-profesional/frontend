@@ -164,6 +164,32 @@ export default function Perfil({ open, onClose, user, profile, onUpdateSuccess }
                 EDITAR INFORMACIÓN PERSONAL
               </Typography>
 
+              {/* Campo de Email - Solo lectura */}
+              <TextField
+                fullWidth
+                label="Email institucional"
+                variant="outlined"
+                size="small"
+                value={user?.email} //
+                disabled
+                sx={{
+                  mb: 2,
+                  "& .MuiInputBase-input.Mui-disabled": {
+                    WebkitTextFillColor: PADI_COLORS.gris,
+                  },
+                  "& .MuiInputLabel-root.Mui-disabled": {
+                    color: PADI_COLORS.gris,
+                  }
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailIcon sx={{ color: PADI_COLORS.gris }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
               <TextField
                 fullWidth
                 label="Nombre"

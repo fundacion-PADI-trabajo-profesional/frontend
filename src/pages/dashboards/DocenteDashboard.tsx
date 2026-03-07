@@ -11,7 +11,7 @@ export default function DocenteDashboard() {
                 Hola, Docente 👋
             </Typography>
             <Typography variant="body1" sx={{ mb: 4, color: "#666" }}>
-                Panel de aula y evaluaciones.
+                Panel de estudiantes y evaluaciones.
             </Typography>
 
             <Grid container spacing={3}>

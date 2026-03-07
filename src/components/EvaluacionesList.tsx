@@ -22,6 +22,7 @@ import {
   DialogActions,
 } from "@mui/material"
 import DeleteIcon from "@mui/icons-material/Delete"
+import VisibilityIcon from "@mui/icons-material/Visibility"
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { getEvaluacionesInstancias, eliminarEvaluacionInstancia, type EvaluacionInstancia } from "../api/evaluaciones"
 import { permissions } from "../utils/permissions"
@@ -255,8 +256,8 @@ export default function EvaluacionesList({ onEditar }: {
                           <TableRow
                             key={evaluacion.id}
                             hover
-                            onClick={() => onEditar(evaluacion)}
-                            sx={{ cursor: 'pointer', '&:last-child td, &:last-child th': { border: 0 } }}
+                            // Quitamos el onClick de aquí para que solo funcionen los botones
+                            sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                           >
                             <TableCell>{evaluacion.estudianteNombre}</TableCell>
                             <TableCell align="center">{getTipoLabel(evaluacion.tipoId)}</TableCell>
@@ -274,10 +275,25 @@ export default function EvaluacionesList({ onEditar }: {
                               })()}
                             </TableCell>
                             <TableCell align="center">
-                              <Box
-                                sx={{ display: "flex", gap: 1, justifyContent: "center" }}
-                                onClick={(e) => e.stopPropagation()} // Importante: evita que al hacer clic en el botón se abra el detalle
-                              >
+                              <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+
+                                {/* Botón Ver (Ojo) */}
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  color="primary"
+                                  startIcon={<VisibilityIcon />}
+                                  onClick={() => onEditar(evaluacion)}
+                                  sx={{
+                                    textTransform: "none",
+                                    fontWeight: 600,
+                                    borderRadius: '8px',
+                                  }}
+                                >
+                                  Ver
+                                </Button>
+
+                                {/* Botón Eliminar (Tachito) */}
                                 {permissions.deleteEvaluacion(profile?.rol) && (
                                   <Button
                                     size="small"

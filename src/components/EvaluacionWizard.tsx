@@ -24,8 +24,7 @@ import React from "react"
 import {
     getPreguntasArea,
     enviarRespuestas,
-    type PreguntaBase,
-    type RespuestaPrevia
+    type PreguntaBase
 } from "../api/evaluaciones"
 
 const Transition = React.forwardRef(function Transition(
@@ -104,7 +103,7 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
 
 
     // Función de guardado que recibe el ID y el valor exacto a guardar
-    const saveAnswersAndAdvance = async (isFinalSave: boolean, nextIndex: number | 'CLOSE', questionId: string, answerValue: number | null) => {
+    const saveAnswersAndAdvance = async (_isFinalSave: boolean, nextIndex: number | 'CLOSE', questionId: string, answerValue: number | null) => {
         setSaving(true);
 
         // 1. Preparar el payload (usando el valor directo)

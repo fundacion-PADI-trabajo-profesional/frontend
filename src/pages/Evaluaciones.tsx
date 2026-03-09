@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Box, Container, Typography, Button } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
@@ -36,12 +34,12 @@ export default function Evaluaciones() {
   const backTo = searchParams.get("backTo") || "/home"
   const backLabel = searchParams.get("backLabel") || "Volver a inicio"
 
-  const handleBackToList = () => {
-    // Limpia los parámetros de la URL y los estados locales
-    setEvaluacionSeleccionadaId(null);
-    setPrefillEstudianteId(null);
-    navigate("/evaluaciones", { replace: true });
-  };
+  // const handleBackToList = () => {
+  //   // Limpia los parámetros de la URL y los estados locales
+  //   setEvaluacionSeleccionadaId(null);
+  //   setPrefillEstudianteId(null);
+  //   navigate("/evaluaciones", { replace: true });
+  // };
 
   useEffect(() => {
     const evaluarAhora = searchParams.get("evaluarAhora")

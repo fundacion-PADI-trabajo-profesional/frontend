@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"; // Agregamos useEffect
 import { Box, TextField, Button, Grid, Paper, Typography, MenuItem, CircularProgress, Alert } from "@mui/material";
-import { createEscuela, CreateEscuelaDto } from "../api/escuelas";
+import { createEscuela} from "../api/escuelas";
 import { getZonas, Zona } from "../api/zonas";
 import { getCurrentEncargado } from "../api/encargados-zona";
 

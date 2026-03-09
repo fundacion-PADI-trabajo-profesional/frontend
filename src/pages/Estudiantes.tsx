@@ -67,10 +67,10 @@ export default function Estudiantes() {
         setView("form");
     };
 
-    const handleGoToForm = () => {
-        setSelectedForEdit(null); // Limpiamos por si veníamos de una edición
-        setView("form");
-    };
+    // const handleGoToForm = () => {
+    //     setSelectedForEdit(null); // Limpiamos por si veníamos de una edición
+    //     setView("form");
+    // };
 
     const handleBackToList = () => {
         setSelectedForEdit(null);

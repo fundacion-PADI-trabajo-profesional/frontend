@@ -169,7 +169,7 @@ export default function EvaluacionRevision({ open, onClose, evaluacionId, areaId
                                     {/* Preguntas del grupo */}
                                     <List disablePadding>
                                         {preguntasDelGrupo.map((p: any, idx: number) => {
-                                            const { text, icon } = getAnswerText(p.id);
+                                            const { text } = getAnswerText(p.id);
                                             return (
                                                 <React.Fragment key={p.id}>
                                                     <ListItem alignItems="flex-start" sx={{ px: 2, py: 1.25 }}>

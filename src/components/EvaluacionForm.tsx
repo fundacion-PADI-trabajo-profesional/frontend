@@ -39,7 +39,7 @@ const getCurrentMonth = () => {
   return `${now.getFullYear()}-${month}`;
 };
 
-export default function EvaluacionForm({ onSuccess, onCancel, evaluacionAEditar, profile, prefillEstudianteId }: EvaluacionFormProps) {
+export default function EvaluacionForm({ onSuccess,  evaluacionAEditar, profile, prefillEstudianteId }: EvaluacionFormProps) {
   const [formData, setFormData] = useState({
     estudianteId: "",
     salaId: "",
@@ -301,7 +301,7 @@ export default function EvaluacionForm({ onSuccess, onCancel, evaluacionAEditar,
                 // Para que la búsqueda funcione comparando IDs
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 // QUÉ HACER CUANDO SE SELECCIONA UN ALUMNO
-                onChange={(event, newValue: Estudiante | null) => {
+                onChange={(_event, newValue: Estudiante | null) => {
                   // 1. Actualiza el valor del Autocomplete
                   setSelectedEstudiante(newValue);
                   // 2. Actualiza el formData con el ID para el backend

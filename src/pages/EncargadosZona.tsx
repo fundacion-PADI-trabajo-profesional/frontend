@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import {
     Container, Table, TableBody, TableCell, TableContainer,
     TableHead, TableRow, Paper, IconButton, Dialog, DialogTitle, DialogContentText, DialogActions, Button,
-    Alert, Menu, MenuItem, Checkbox, ListItemText, Divider, Badge,
+    Menu, MenuItem, Checkbox, ListItemText, Divider, Badge,
     CircularProgress,
     DialogContent,
     Box,
@@ -12,9 +12,9 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete"; // Opcional si agregamos borrar despues
 import PageHeader from "../components/PageHeader"; // Tu componente existente
 import EncargadoForm from "../components/EncargadoZonaForm";
-import { getEncargados, createEncargado, type Encargado, type CreateEncargadoDto } from "../api/encargados-zona";
+import { getEncargados, createEncargado, type Encargado} from "../api/encargados-zona";
 import EditIcon from "@mui/icons-material/Edit";
-import { updateEncargado, type UpdateEncargadoDto } from "../api/encargados-zona";
+import { updateEncargado} from "../api/encargados-zona";
 import { deleteEncargado } from "../api/encargados-zona";
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { getZonas, type Zona } from "../api/zonas";
@@ -26,7 +26,7 @@ export default function EncargadosZona() {
     const [encargados, setEncargados] = useState<Encargado[]>([]);
     const [zonas, setZonas] = useState<Zona[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
+    const [_error, setError] = useState("");
     const [modalOpen, setModalOpen] = useState(false);
     const [editingEncargado, setEditingEncargado] = useState<Encargado | null>(null);
     const [saving, setSaving] = useState(false);

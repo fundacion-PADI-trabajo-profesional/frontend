@@ -1,8 +1,8 @@
-import { Box, Typography, Grid, Paper, Divider, List, ListItem, ListItemText, Button, Chip } from "@mui/material";
+import { Box, Typography, Grid, Paper, List, ListItem, ListItemText, Button} from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 
 
-export default function EscuelaDetalle({ escuela, onBack, onEdit }: any) {
+export default function EscuelaDetalle({ escuela,onEdit }: any) {
     return (
         <Box>
             <Paper sx={{ p: 4, borderRadius: 3 }}>

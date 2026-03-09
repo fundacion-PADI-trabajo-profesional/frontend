@@ -83,7 +83,7 @@ export interface CreateEvaluacionPayload {
 }
 
 function mapToCamelCase(data: any): EvaluacionInstancia {
-  const estudianteInfo = data.estudiantes || {};
+  // const estudianteInfo = data.estudiantes || {};
   //const personaInfo = estudianteInfo.personas || {};
 
   const nombre = data?.estudiantes?.personas?.nombre ?? "";

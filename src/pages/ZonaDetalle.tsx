@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams} from "react-router-dom";
 import {
     Container, Box, Paper, Table, TableBody,
     TableCell, TableContainer, TableHead, TableRow,
@@ -16,7 +16,6 @@ import { desvincularEncargado } from "../api/zonas";
 
 export default function ZonaDetalle() {
     const { id } = useParams();
-    const navigate = useNavigate();
     const [zona, setZona] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -58,9 +57,9 @@ export default function ZonaDetalle() {
 
     if (error) return <Container sx={{ py: 4 }}><Alert severity="error">{error}</Alert></Container>;
 
-    const nombresEncargados = zona.encargados?.length > 0
-        ? zona.encargados.map((e: any) => `${e.usuario.nombre} ${e.usuario.apellido}`).join(", ")
-        : "Sin encargados asignados";
+    // const nombresEncargados = zona.encargados?.length > 0
+    //     ? zona.encargados.map((e: any) => `${e.usuario.nombre} ${e.usuario.apellido}`).join(", ")
+    //     : "Sin encargados asignados";
 
     const handleDesvincularEncargado = async (encargadoId: string, nombre: string) => {
         if (!window.confirm(`¿Deseas quitar a ${nombre} como encargado de esta zona?`)) return;

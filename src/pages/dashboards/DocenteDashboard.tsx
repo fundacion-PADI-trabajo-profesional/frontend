@@ -11,7 +11,7 @@ export default function DocenteDashboard() {
                 Hola, Docente 👋
             </Typography>
             <Typography variant="body1" sx={{ mb: 4, color: "#666" }}>
-                Panel de aula y evaluaciones.
+                Panel de estudiantes y evaluaciones.
             </Typography>
 
             <Grid container spacing={3}>
@@ -19,7 +19,7 @@ export default function DocenteDashboard() {
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard
                         title="Mis Estudiantes"
-                        description="Buscar estudiante específico (Global)."
+                        description="Listado de estudiantes asignados"
                         icon="🎓"
                         color="#5c7cfa"
                         onClick={() => navigate("/estudiantes")}

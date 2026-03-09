@@ -23,9 +23,11 @@ import { crearEvaluacionInstancia, actualizarEvaluacionInstancia, type Evaluacio
 import { getEstudiantes, type Estudiante } from "../api/estudiantes";
 import { getDocenteAulasConEstudiantes } from "../api/aulas";
 import { useSearchParams } from "react-router-dom"
+import { useNavigate } from "react-router-dom";
 
 interface EvaluacionFormProps {
   onSuccess: () => void;
+  onCancel: () => void;
   evaluacionAEditar?: EvaluacionInstancia | null;
   profile: any | null;
   prefillEstudianteId?: string;
@@ -37,7 +39,7 @@ const getCurrentMonth = () => {
   return `${now.getFullYear()}-${month}`;
 };
 
-export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, prefillEstudianteId }: EvaluacionFormProps) {
+export default function EvaluacionForm({ onSuccess, onCancel, evaluacionAEditar, profile, prefillEstudianteId }: EvaluacionFormProps) {
   const [formData, setFormData] = useState({
     estudianteId: "",
     salaId: "",
@@ -61,6 +63,8 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
   const prefillAulaId = searchParams.get("aulaId");
   const prefillAulaLabel = searchParams.get("aulaLabel");
   const prefillEscuelaNombre = searchParams.get("escuelaNombre");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (prefillEstudianteId) {
@@ -164,17 +168,12 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
     }))
   }
 
-  const handleEstudianteChange = (newValue: Estudiante | null) => {
-    // 1. Actualiza el valor del Autocomplete
-    setSelectedEstudiante(newValue);
-    // 2. Actualiza el formData con el ID, y con la Sala del estudiante seleccionado
-    setFormData((prev) => ({
-      ...prev,
-      estudianteId: newValue ? newValue.id : "",
-      // *** MODIFICACIÓN CLAVE: Autocarga la sala del estudiante al seleccionar ***
-      salaId: newValue ? String(newValue.sala_id) : "", // Asumo que el campo es 'grado'
-    }));
+  const handleCancel = () => {
+    // En lugar de ir a /home, navegamos a /evaluaciones 
+    // Esto recargará el componente Evaluaciones y mostrará la lista por defecto
+    navigate("/evaluaciones", { replace: true });
   };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -426,11 +425,11 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
                 <Button
                   variant="outlined"
                   startIcon={<CancelIcon />}
-                  onClick={handleClear} // El botón Limpiar solo limpia
+                  onClick={handleCancel}
                   disabled={loading}
                   sx={{ textTransform: "none" }}
                 >
-                  Limpiar
+                  Cancelar
                 </Button>
                 <Button
                   type="submit"

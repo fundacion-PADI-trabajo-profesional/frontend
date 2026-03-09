@@ -24,17 +24,21 @@ export function canDirector(userRole: string): boolean {
 
 // Permisos específicos para las nuevas funcionalidades
 export const permissions = {
-    // Crear evaluación: equipo_padi, encargado_zona, director
+    // Crear evaluación: equipo_padi, encargado_zona, director, docente
     createEvaluacion: (userRole: string) =>
-        ["equipo_padi", "encargado_zona", "director"].includes(userRole),
+        ["equipo_padi", "encargado_zona", "director", "docente"].includes(userRole),
 
-    // Eliminar evaluación: equipo_padi, encargado_zona
+    // Eliminar evaluación: equipo_padi, encargado_zona, director, docente
     deleteEvaluacion: (userRole: string) =>
-        ["equipo_padi", "encargado_zona"].includes(userRole),
+        ["equipo_padi", "encargado_zona", "docente"].includes(userRole),
 
-    // Crear estudiante: equipo_padi, encargado_zona, director
+    // Comenzar evaluación: equipo_padi, encargado_zona, director, docente
+    startEvaluacion: (userRole: string) =>
+        ["equipo_padi", "encargado_zona", "director", "docente"].includes(userRole),
+
+    // Crear estudiante: equipo_padi, encargado_zona, director, docente
     createEstudiante: (userRole: string) =>
-        ["equipo_padi", "encargado_zona", "director"].includes(userRole),
+        ["equipo_padi", "encargado_zona", "director", "docente"].includes(userRole),
 
     // Crear aula: equipo_padi, encargado_zona, director
     createAula: (userRole: string) =>
@@ -47,10 +51,6 @@ export const permissions = {
     // Asignar estudiante a aula: equipo_padi, encargado_zona, director
     assignEstudianteAula: (userRole: string) =>
         ["equipo_padi", "encargado_zona", "director"].includes(userRole),
-
-    // Comenzar evaluación: equipo_padi, encargado_zona, director, docente
-    startEvaluacion: (userRole: string) =>
-        ["equipo_padi", "encargado_zona", "director", "docente"].includes(userRole),
 
     // Ver todas las escuelas (para equipo_padi)
     viewAllEscuelas: (userRole: string) =>

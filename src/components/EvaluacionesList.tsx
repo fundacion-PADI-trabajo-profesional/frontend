@@ -22,9 +22,11 @@ import {
   DialogActions,
 } from "@mui/material"
 import DeleteIcon from "@mui/icons-material/Delete"
+import VisibilityIcon from "@mui/icons-material/Visibility"
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { getEvaluacionesInstancias, eliminarEvaluacionInstancia, type EvaluacionInstancia } from "../api/evaluaciones"
 import { permissions } from "../utils/permissions"
+import { TextField, MenuItem, Grid } from "@mui/material"
 
 const TOTAL_AREAS_EVALUACION = 4;
 const ESTADO_NO_INICIADA = "N"
@@ -43,6 +45,14 @@ export default function EvaluacionesList({ onEditar }: {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
   const [evaluacionToDelete, setEvaluacionToDelete] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+
+  const [filtros, setFiltros] = useState({
+    busqueda: "", // Para DNI o Nombre
+    sala: "todas",
+    comision: "todas",
+    tipo: "todos",
+    estado: "todos"
+  });
 
   useEffect(() => {
     // Obtener información del usuario
@@ -172,6 +182,34 @@ export default function EvaluacionesList({ onEditar }: {
     }
   }
 
+  const evaluacionesFiltradas = evaluaciones.filter((ev) => {
+    const cumpleBusqueda =
+      ev.estudianteNombre?.toLowerCase().includes(filtros.busqueda.toLowerCase()) ||
+      ev.estudiante?.dni?.includes(filtros.busqueda);
+
+    const cumpleSala = filtros.sala === "todas" || ev.salaNombre === filtros.sala;
+    const cumpleComision = filtros.comision === "todas" || ev.aulaLabel === filtros.comision;
+    const cumpleTipo = filtros.tipo === "todos" || ev.tipoId === filtros.tipo;
+    const cumpleEstado = filtros.estado === "todos" || ev.estadoId === filtros.estado;
+
+    return cumpleBusqueda && cumpleSala && cumpleComision && cumpleTipo && cumpleEstado;
+  });
+
+  // Ahora agrupamos las FILTRADAS
+  const evaluacionesAgrupadas = evaluacionesFiltradas.reduce((acc: any, curr) => {
+    const escuela = curr.escuelaNombre || "Sin Escuela";
+    const sala = curr.salaNombre || `Sala de ${curr.salaId}`;
+    const aula = curr.aulaLabel || "Sin Comisión";
+
+    if (!acc[escuela]) acc[escuela] = {};
+    if (!acc[escuela][sala]) acc[escuela][sala] = {};
+    if (!acc[escuela][sala][aula]) acc[escuela][sala][aula] = [];
+
+    acc[escuela][sala][aula].push(curr);
+    return acc;
+  }, {});
+
+
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
@@ -201,82 +239,208 @@ export default function EvaluacionesList({ onEditar }: {
     )
   }
 
+  const salasUnicas = Array.from(new Set(evaluaciones.map(ev => ev.salaNombre).filter(Boolean)));
+  const comisionesUnicas = Array.from(new Set(evaluaciones.map(ev => ev.aulaLabel).filter(Boolean)));
+
   return (
     <>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead sx={{ bgcolor: "#f5f5f5" }}>
-            <TableRow>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>Estudiante</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>Colegio</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>Aula</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>Sala</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>Tipo</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>Estado</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>Áreas aprobadas</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {evaluaciones.map((evaluacion) => (
-              <TableRow
-                key={evaluacion.id}
-                hover
+      {/* Filtros evaluaciones */}
+      <Paper sx={{ p: 3, mb: 4, borderRadius: '12px' }} elevation={1}>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 700, color: '#555' }}>Filtros de búsqueda</Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              label="Buscar por Nombre o DNI"
+              variant="outlined"
+              size="small"
+              value={filtros.busqueda}
+              onChange={(e) => setFiltros({ ...filtros, busqueda: e.target.value })}
+            />
+          </Grid>
+          <Grid item xs={6} md={2}>
+            <TextField
+              select
+              fullWidth
+              label="Sala"
+              size="small"
+              value={filtros.sala}
+              onChange={(e) => setFiltros({ ...filtros, sala: e.target.value })}
+            >
+              <MenuItem value="todas">Todas las salas</MenuItem>
+              {salasUnicas.map(sala => (
+                <MenuItem key={sala} value={sala}>{sala}</MenuItem>
+              ))}
+            </TextField>
+          </Grid>
 
-                onClick={() => onEditar(evaluacion)}
-                sx={{ cursor: 'pointer' }}
-              >
-                <TableCell>{evaluacion.estudianteNombre || evaluacion.estudianteId}</TableCell>
-                <TableCell align="center">{evaluacion.escuelaNombre || "-"}</TableCell>
-                <TableCell align="center">{evaluacion.aulaLabel || "-"}</TableCell>
-                <TableCell align="center">{evaluacion.salaId || evaluacion.salaId}</TableCell>
-                <TableCell>{getTipoLabel(evaluacion.tipoId)}</TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={getEstadoLabel(evaluacion.estadoId)}
+          {/* Filtro por Comisión */}
+          <Grid item xs={6} md={2}>
+            <TextField
+              select
+              fullWidth
+              label="Comisión"
+              size="small"
+              value={filtros.comision}
+              onChange={(e) => setFiltros({ ...filtros, comision: e.target.value })}
+            >
+              <MenuItem value="todas">Todas</MenuItem>
+              {comisionesUnicas.map(com => (
+                <MenuItem key={com} value={com}>{com}</MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid item xs={6} md={2}>
+            <TextField
+              select
+              fullWidth
+              label="Instancia de Evaluación"
+              size="small"
+              value={filtros.tipo}
+              onChange={(e) => setFiltros({ ...filtros, tipo: e.target.value })}
+            >
+              <MenuItem value="todos">Todos</MenuItem>
+              <MenuItem value="inicial">Inicial</MenuItem>
+              <MenuItem value="cierre">Cierre</MenuItem>
+            </TextField>
+          </Grid>
+          <Grid item xs={6} md={3}>
+            <TextField
+              select
+              fullWidth
+              label="Estado"
+              size="small"
+              value={filtros.estado}
+              onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })}
+            >
+              <MenuItem value="todos">Todos los estados</MenuItem>
+              <MenuItem value={ESTADO_APROBADA}>Aprobada</MenuItem>
+              <MenuItem value={ESTADO_DESAPROBADA}>Desaprobada</MenuItem>
+              <MenuItem value={ESTADO_EN_PROGRESO}>En Progreso</MenuItem>
+              <MenuItem value={ESTADO_NO_INICIADA}>No Iniciada</MenuItem>
+            </TextField>
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <Button
+              variant="text"
+              onClick={() => setFiltros({ busqueda: "", sala: "todas", comision: "todas", tipo: "todos", estado: "todos" })}
+            >
+              Limpiar Filtros
+            </Button>
+          </Grid>
+        </Grid>
+      </Paper>
+      {Object.keys(evaluacionesAgrupadas).map((escuela) => (
+        <Box key={escuela} sx={{ mb: 6 }}>
+          {/* Título de la Escuela */}
+          <Typography variant="h4" sx={{ mb: 3, fontWeight: 800, color: "#333", borderBottom: "2px solid #A3BE54", pb: 1 }}>
+            Escuela: {escuela}
+          </Typography>
 
-                    sx={{
-                      fontWeight: 600,
-                      ...getEstadoColor(evaluacion.estadoId)
-                    }}
-                    size="small"
-                    variant="outlined"
-                  />
-                </TableCell>
-                <TableCell align="center">
-                  {(() => {
-                    const totalAreas = TOTAL_AREAS_EVALUACION;
-                    const aprobadas = evaluacion.areas?.filter((a) => a.estadoId === ESTADO_APROBADA).length ?? 0;
+          {Object.keys(evaluacionesAgrupadas[escuela]).map((sala) => (
+            <Box key={sala} sx={{ mb: 4, ml: 2 }}>
+              {/* Separador de Sala */}
+              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', color: "#555", fontWeight: 600 }}>
+                <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#A3BE54', mr: 1 }} />
+                {sala}
+              </Typography>
 
-                    // Si no vinieron áreas en el listado, evitamos mostrar 0/4 engañoso
-                    if (evaluacion.estadoId === ESTADO_NO_INICIADA) return "-";
+              {Object.keys(evaluacionesAgrupadas[escuela][sala]).map((aula) => (
+                <Box key={aula} sx={{ mb: 3, ml: 3 }}>
+                  {/* Separador de Comisión/Aula */}
+                  <Typography variant="subtitle1" sx={{ mb: 1, fontStyle: 'italic', color: "#777" }}>
+                    Comisión: {aula}
+                  </Typography>
 
-                    if (!evaluacion.areas) return "-";
+                  <TableContainer component={Paper} elevation={2}>
+                    <Table size="small">
+                      <TableHead sx={{ bgcolor: "#f9f9f9" }}>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 700 }}>DNI</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>Estudiante</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>Tipo</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>Estado</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>Áreas aprobadas</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>Acciones</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {evaluacionesAgrupadas[escuela][sala][aula].map((evaluacion: any) => (
+                          <TableRow
+                            key={evaluacion.id}
+                            hover
+                            sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                          >
+                            <TableCell sx={{ fontWeight: 500, color: "#666" }}>
+                              {evaluacion.estudiante.dni}
+                            </TableCell>
 
-                    return `${aprobadas}/${totalAreas}`;
-                  })()}
-                </TableCell>
-                <TableCell align="center">
-                  <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-                    {permissions.deleteEvaluacion(profile?.rol) && (
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        color="error"
-                        startIcon={<DeleteIcon />}
-                        onClick={(e) => handleClickDelete(e, evaluacion.id)}
-                        sx={{ textTransform: "none" }}
-                      >
-                        Eliminar
-                      </Button>
-                    )}
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                            <TableCell>{evaluacion.estudianteNombre}</TableCell>
+                            <TableCell align="center">{getTipoLabel(evaluacion.tipoId)}</TableCell>
+                            <TableCell align="center">
+                              <Chip
+                                label={getEstadoLabel(evaluacion.estadoId)}
+                                sx={{ fontWeight: 600, ...getEstadoColor(evaluacion.estadoId) }}
+                                size="small"
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              {(() => {
+                                const aprobadas = evaluacion.areas?.filter((a: any) => a.estadoId === ESTADO_APROBADA).length ?? 0;
+                                return evaluacion.estadoId === ESTADO_NO_INICIADA ? "-" : `${aprobadas}/${TOTAL_AREAS_EVALUACION}`;
+                              })()}
+                            </TableCell>
+                            <TableCell align="center">
+                              <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+
+                                {/* Botón Ver (Ojo) */}
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  color="primary"
+                                  startIcon={<VisibilityIcon />}
+                                  onClick={() => onEditar(evaluacion)}
+                                  sx={{
+                                    textTransform: "none",
+                                    fontWeight: 600,
+                                    borderRadius: '8px',
+                                  }}
+                                >
+                                  Ver
+                                </Button>
+
+                                {/* Botón Eliminar (Tachito) */}
+                                {permissions.deleteEvaluacion(profile?.rol) && (
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="error"
+                                    startIcon={<DeleteIcon />}
+                                    onClick={(e) => handleClickDelete(e, evaluacion.id)}
+                                    sx={{
+                                      textTransform: "none",
+                                      fontWeight: 600,
+                                      borderRadius: '8px',
+                                      '&:hover': { bgcolor: '#fff5f5' }
+                                    }}
+                                  >
+                                    Eliminar
+                                  </Button>
+                                )}
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+              ))}
+            </Box>
+          ))}
+        </Box >
+      ))
+      }
       <Dialog
         open={openDeleteDialog}
         onClose={handleCloseDialog}

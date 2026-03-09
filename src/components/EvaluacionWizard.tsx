@@ -55,6 +55,13 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
     // Data
     const [preguntas, setPreguntas] = useState<PreguntaBase[]>([])
     const [respuestas, setRespuestas] = useState<Record<string, number | null>>({})
+    const materialesNecesarios = Array.from(
+        new Set(
+            preguntas
+                .map((p) => p.materiales)
+                .filter((m) => m && m.trim() !== "") // Filtramos vacíos
+        )
+    );
 
     // Control del wizard
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
@@ -207,31 +214,82 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
 
                     {/* VISTA 1: INTRO / DISCLAIMER */}
                     {step === "INTRO" && (
-                        <Card sx={{ maxWidth: 600, mx: 'auto', mt: 4, borderRadius: 4, p: 2 }}>
-                            <CardContent>
-                                <Typography variant="h5" gutterBottom sx={{ fontWeight: 700 }}>
-                                    Antes de comenzar
-                                </Typography>
-                                <Typography variant="body1" color="text.secondary" paragraph>
-                                    Vas a evaluar el área de <strong>{areaNombre}</strong>. Esta sección se cerrará automáticamente al finalizar la última pregunta, actualizando el puntaje y el estado.
-                                </Typography>
+                        // <Card sx={{ maxWidth: 600, mx: 'auto', mt: 4, borderRadius: 4, p: 2 }}>
+                        //     <CardContent>
+                        //         <Typography variant="h5" gutterBottom sx={{ fontWeight: 700 }}>
+                        //             Antes de comenzar
+                        //         </Typography>
+                        //         <Typography variant="body1" color="text.secondary" paragraph>
+                        //             Vas a evaluar el área de <strong>{areaNombre}</strong>. Esta sección se cerrará automáticamente al finalizar la última pregunta, actualizando el puntaje y el estado.
+                        //         </Typography>
 
-                                <Button
-                                    variant="contained"
-                                    fullWidth
-                                    size="large"
-                                    onClick={() => setStep("QUESTIONS")}
-                                    sx={{
-                                        bgcolor: '#111827',
-                                        color: '#fff',
-                                        py: 1.5,
-                                        '&:hover': { bgcolor: '#374151' }
-                                    }}
-                                >
-                                    Iniciar Evaluación ({preguntas.length} Preguntas)
-                                </Button>
-                            </CardContent>
+                        //         <Button
+                        //             variant="contained"
+                        //             fullWidth
+                        //             size="large"
+                        //             onClick={() => setStep("QUESTIONS")}
+                        //             sx={{
+                        //                 bgcolor: '#111827',
+                        //                 color: '#fff',
+                        //                 py: 1.5,
+                        //                 '&:hover': { bgcolor: '#374151' }
+                        //             }}
+                        //         >
+                        //             Iniciar Evaluación ({preguntas.length} Preguntas)
+                        //         </Button>
+                        //     </CardContent>
+                        // </Card>
+                        <Card sx={{ maxWidth: 600, mx: 'auto', mt: 4, borderRadius: 4, p: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+                            <Typography variant="h5" gutterBottom sx={{ fontWeight: 700, color: '#111827' }}>
+                                Antes de comenzar
+                            </Typography>
+                            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                                Vas a evaluar el área: <strong>{areaNombre}</strong>. Asegúrate de estar en un ambiente tranquilo con el niño/a.
+                            </Typography>
+                            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                                Esta sección se cerrará automáticamente al finalizar la última pregunta, actualizando el puntaje y el estado.
+                            </Typography>
+
+
+                            {/* SECCIÓN DE MATERIALES */}
+                            {materialesNecesarios.length > 0 && (
+                                <Box sx={{
+                                    mb: 4,
+                                    p: 2,
+                                    bgcolor: '#eef2ff',
+                                    borderRadius: 2,
+                                    borderLeft: '4px solid #5c7cfa'
+                                }}>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#373a40', mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        📋 Materiales necesarios para esta sala y área:
+                                    </Typography>
+                                    <ul style={{ margin: 0, paddingLeft: '20px', color: '#495057' }}>
+                                        {materialesNecesarios.map((material, idx) => (
+                                            <li key={idx}>
+                                                <Typography variant="body2">{material}</Typography>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </Box>
+                            )}
+
+                            <Button
+                                fullWidth
+                                variant="contained"
+                                size="large"
+                                onClick={() => setStep("QUESTIONS")}
+                                sx={{
+                                    bgcolor: '#111827',
+                                    py: 1.5,
+                                    borderRadius: 2,
+                                    textTransform: 'none',
+                                    fontSize: '1.1rem'
+                                }}
+                            >
+                                Comenzar evaluación
+                            </Button>
                         </Card>
+
                     )}
 
                     {/* VISTA 2: PREGUNTAS (WIZARD) */}

@@ -170,7 +170,14 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
         <Box>
             {/* Header Nav */}
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <IconButton onClick={onBack} sx={{ mr: 1 }}>
+                <IconButton
+                    onClick={onBack}
+                    sx={{
+                        mr: 2,
+                        bgcolor: '#f0f2f5',
+                        '&:hover': { bgcolor: '#e4e6e9' }
+                    }}
+                >
                     <ArrowBackIcon />
                 </IconButton>
                 <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold' }}>

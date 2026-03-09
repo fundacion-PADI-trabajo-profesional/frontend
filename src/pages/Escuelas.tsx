@@ -160,7 +160,7 @@ export default function Escuelas() {
                 return (
                     <EscuelaDetalle
                         escuela={escuelaDetalle!}
-                        onBack={() => setView("list")}
+                        // onBack={() => setView("list")}
                         onEdit={() => {
                             setEscuelaAEditar(escuelaDetalle);
                             setView("edit");

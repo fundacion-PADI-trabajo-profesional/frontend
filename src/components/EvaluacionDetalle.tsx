@@ -136,27 +136,27 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
         setWizardOpen(true);
     }
 
-    // Handler para cerrar la Revisión
-    const handleRevisionClose = () => {
-        setRevisionOpen(false);
-        setRevisionData(null);
-    }
+    // // Handler para cerrar la Revisión
+    // const handleRevisionClose = () => {
+    //     setRevisionOpen(false);
+    //     setRevisionData(null);
+    // }
 
     // Handler para cerrar el wizard y refrescar
-    const handleWizardClose = () => {
-        setWizardOpen(false)
-        setSelectedArea(null)
-        // Recargamos los datos para actualizar el estado del área y la evaluación general
-        loadEvaluationData();
-    }
+    // const handleWizardClose = () => {
+    //     setWizardOpen(false)
+    //     setSelectedArea(null)
+    //     // Recargamos los datos para actualizar el estado del área y la evaluación general
+    //     loadEvaluationData();
+    // }
 
     if (loading) return <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
     if (error) return <Box sx={{ p: 4 }}><Typography color="error">{error}</Typography><Button onClick={onBack}>Volver</Button></Box>
     if (!data || !data.estudiante) return <Box sx={{ p: 4 }}><Typography>No se encontraron datos del estudiante.</Typography></Box>
     const evaluacion = data
-    const areas = evaluacion.areas || []
+    // const areas = evaluacion.areas || []
 
-    const fechaCreacion = new Date(data.createdAt).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    // const fechaCreacion = new Date(data.createdAt).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
     const overallStatus = getStatusColor(evaluacion.estadoId);
 
     const fechaObj = evaluacion.createdAt;

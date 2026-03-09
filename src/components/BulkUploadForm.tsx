@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Button, Typography, CircularProgress, Alert, Paper } from '@mui/material';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
+// import UploadFileIcon from '@mui/icons-material/UploadFile';
 import * as XLSX from 'xlsx';
 import { bulkCreateEstudiantes } from '../api/estudiantes';
 

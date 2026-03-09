@@ -18,7 +18,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 import SchoolIcon from "@mui/icons-material/School";
 import EmailIcon from "@mui/icons-material/Email";
-import PublicIcon from "@mui/icons-material/Public";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import SaveIcon from "@mui/icons-material/Save";
 
@@ -80,7 +79,7 @@ export default function Perfil({ open, onClose, user, profile, onUpdateSuccess }
 
   // Datos jerárquicos solicitados: Usuario -> Escuela -> Zona
   const nombreEscuela = profile?.escuela?.nombre || profile?.escuelas?.[0]?.nombre || "Escuela no asignada";
-  const nombreZona = profile?.escuela?.zona?.nombre || profile?.escuelas?.[0]?.zona || "Zona no definida";
+  // const nombreZona = profile?.escuela?.zona?.nombre || profile?.escuelas?.[0]?.zona || "Zona no definida";
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();

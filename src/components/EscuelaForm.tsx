@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react"; // Agregamos useEffect
+import { useState, useEffect } from "react";
 import { Box, TextField, Button, Grid, Paper, Typography, MenuItem, CircularProgress, Alert } from "@mui/material";
-import { createEscuela} from "../api/escuelas";
+import { createEscuela } from "../api/escuelas";
 import { getZonas, Zona } from "../api/zonas";
 import { getCurrentEncargado } from "../api/encargados-zona";
 
@@ -15,19 +15,6 @@ export default function EscuelaForm({ onCancel, onSuccess }: Props) {
     const [loadingZonas, setLoadingZonas] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [userRole, setUserRole] = useState("");
-
-    //    useEffect(() => {
-    //        const storedUser = localStorage.getItem("padiUser");
-    //        if (storedUser) {
-    //            const parsed = JSON.parse(storedUser);
-    //            console.log("Rol detectado en formulario:", parsed.rol); // Para depurar
-    //            setUserRole(parsed.rol);
-    //        } else {
-    //            // Fallback por si acaso
-    //            setUserRole(localStorage.getItem("userRole") || "");
-    //        }
-    //    }, []);
-
     const [formData, setFormData] = useState({
         nombre: "",
         direccion: "",

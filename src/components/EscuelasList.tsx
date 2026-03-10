@@ -13,7 +13,6 @@ interface Props {
     onView: (escuela: Escuela) => void;
     isEquipoPadi: boolean;
     onAssignDirector: (escuela: Escuela) => void;
-    onRemoveDirector: (directorUserId: string) => void;
 }
 
 export default function EscuelasList({
@@ -22,17 +21,14 @@ export default function EscuelasList({
     onView,
     isEquipoPadi,
     onAssignDirector,
-    onRemoveDirector,
 }: Props) {
     return (
         <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
             <Table>
                 <TableHead sx={{ bgcolor: "#f8f9fa" }}>
                     <TableRow>
-                        {/* Todas las cabeceras con align="center" */}
                         <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Institución</TableCell>
                         <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Zona</TableCell>
-                        <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Director</TableCell>
                         <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Dirección</TableCell>
                         <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Acciones</TableCell>
                     </TableRow>
@@ -48,12 +44,10 @@ export default function EscuelasList({
                                 '&:last-child td, &:last-child th': { border: 0 },
                             }}
                         >
-                            {/* Nombre de la institución centrado */}
                             <TableCell align="center" sx={{ fontWeight: 500 }}>
                                 {escuela.nombre}
                             </TableCell>
 
-                            {/* Chip de Zona centrado */}
                             <TableCell align="center">
                                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                                     <Chip
@@ -66,36 +60,10 @@ export default function EscuelasList({
                                 </Box>
                             </TableCell>
 
-                            <TableCell align="center">
-                                {escuela.directivos?.length ? (
-                                    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 0.5 }}>
-                                        <Typography variant="body2">
-                                            {`${escuela.directivos[0].nombre} ${escuela.directivos[0].apellido}`}
-                                        </Typography>
-                                        {isEquipoPadi && (
-                                            <IconButton
-                                                size="small"
-                                                color="error"
-                                                title="Quitar director"
-                                                onClick={() => onRemoveDirector(escuela.directivos![0].id)}
-                                            >
-                                                <CloseIcon fontSize="small" />
-                                            </IconButton>
-                                        )}
-                                    </Box>
-                                ) : (
-                                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                                        Sin asignar
-                                    </Typography>
-                                )}
-                            </TableCell>
-
-                            {/* Dirección centrada */}
                             <TableCell align="center" sx={{ color: "text.secondary" }}>
                                 {escuela.direccion || "—"}
                             </TableCell>
 
-                            {/* Iconos de acciones centrados */}
                             <TableCell align="center">
                                 <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
                                     <Tooltip title="Ver detalles y estudiantes">
@@ -122,18 +90,6 @@ export default function EscuelasList({
                                             <EditIcon fontSize="small" />
                                         </IconButton>
                                     </Tooltip>
-                                    {isEquipoPadi && (
-                                        <Button
-                                            size="small"
-                                            sx={{ textTransform: "none", ml: 1 }}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onAssignDirector(escuela);
-                                            }}
-                                        >
-                                            {escuela.directivos?.length ? "Cambiar director" : "Asignar director"}
-                                        </Button>
-                                    )}
                                 </Box>
                             </TableCell>
                         </TableRow>

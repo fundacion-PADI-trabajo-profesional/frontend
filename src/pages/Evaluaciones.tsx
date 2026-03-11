@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Box, Container, Typography, Button } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
@@ -22,7 +20,6 @@ export default function Evaluaciones() {
   const [prefillEstudianteId, setPrefillEstudianteId] = useState<string | null>(null)
   const [evaluacionSeleccionadaId, setEvaluacionSeleccionadaId] = useState<string | null>(null);
 
-
   useEffect(() => {
     // Load profile from localStorage
     const storedProfile = localStorage.getItem("padiProfile")
@@ -35,6 +32,7 @@ export default function Evaluaciones() {
 
   const backTo = searchParams.get("backTo") || "/home"
   const backLabel = searchParams.get("backLabel") || "Volver a inicio"
+  const docenteId = searchParams.get("docenteId")
 
   const handleBackToList = () => {
     // Limpia los parámetros de la URL y los estados locales
@@ -142,34 +140,6 @@ export default function Evaluaciones() {
         </Container>
       </Box>
 
-      {/* Contenido */}
-      {/* <Container maxWidth="lg" sx={{ py: 4 }}>
-        {showCreateView ? (
-          <>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-              <Button
-                startIcon={<ArrowBackIcon />}
-                onClick={() => navigate(backTo, { replace: true })}
-                sx={{ textTransform: "none" }}
-              >
-                {backLabel}
-              </Button>
-            </Box>
-            <EvaluacionForm
-              onSuccess={handleSuccessForm}
-              evaluacionAEditar={null}
-              profile={profile}
-              prefillEstudianteId={prefillEstudianteId || undefined}
-            />
-          </>
-        ) : (
-          <EvaluacionesList
-            key={refreshKey}
-            onEditar={handleVerEvaluacion}
-          />
-        )}
-      </Container> */}
-
       <Container maxWidth="lg" sx={{ py: 4 }}>
         {evaluacionSeleccionadaId ? (
           // SI HAY ID: Mostramos el detalle
@@ -190,6 +160,7 @@ export default function Evaluaciones() {
           <EvaluacionesList
             key={refreshKey}
             onEditar={handleVerEvaluacion}
+            docenteId={docenteId || undefined}
           />
         )}
       </Container>

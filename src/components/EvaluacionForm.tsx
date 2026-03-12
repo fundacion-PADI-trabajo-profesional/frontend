@@ -26,7 +26,7 @@ import { useSearchParams } from "react-router-dom"
 import { useNavigate } from "react-router-dom";
 
 interface EvaluacionFormProps {
-  onSuccess: () => void;
+  onSuccess: (evaluacionId: string) => void;
   onCancel: () => void;
   evaluacionAEditar?: EvaluacionInstancia | null;
   profile: any | null;
@@ -199,9 +199,12 @@ export default function EvaluacionForm({ onSuccess,  evaluacionAEditar, profile,
         estadoId: formData.estadoId as "N" | "C" | "R",
       }
 
+      let resultId: string;
+
       if (evaluacionAEditar) {
         // --- MODO EDITAR ---
-        await actualizarEvaluacionInstancia(evaluacionAEditar.id, payload);
+        const updated = await actualizarEvaluacionInstancia(evaluacionAEditar.id, payload);
+        resultId = updated.id;
         console.log("[v0] Evaluación actualizada:", payload);
       } else {
         // --- MODO CREAR ---
@@ -225,16 +228,15 @@ export default function EvaluacionForm({ onSuccess,  evaluacionAEditar, profile,
           userId: profile.id,
           userRole: profile.rol
         };
-        await crearEvaluacionInstancia(payloadBackend, userInfo);
-        console.log("[v0] Evaluación creada:", payloadBackend);
+        const result = await crearEvaluacionInstancia(payloadBackend, userInfo);
+        resultId = result.id;
+        console.log("[v0] Evaluación creada:", result.id, payloadBackend);
       }
 
       setSuccess(true)
 
-
-      // Reload list after success
       setTimeout(() => {
-        onSuccess()
+        onSuccess(resultId)
       }, 1500)
     } catch (err: any) {
       setError(err.message || (evaluacionAEditar ? "Error al actualizar" : "Error al crear"));

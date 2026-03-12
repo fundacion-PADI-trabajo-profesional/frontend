@@ -160,10 +160,10 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
     }
 
     const renderAulaLabel = (est: Estudiante) => {
-        const aula = est.aula_id ? { id: est.aula_id, comision: null, turno: null, sala_id: est.sala_id, sala: est.salas } : null;
+        const aula = est.aula_asignada;
         if (!aula) return "Sin aula asignada";
 
-        const salaNombre = aula.sala?.nombre;
+        const salaNombre = aula.sala?.nombre ?? `Sala ${aula.sala_id}`;
         const comision = aula.comision || "Sin comisión";
         const turno = aula.turno || "Sin turno";
         return `${salaNombre} - ${comision} (${turno})`;

@@ -46,17 +46,17 @@ export interface Estudiante {
         escuela_id: string
         nombre: string | null
     }
-    // aula_asignada?: {
-    //     id: string
-    //     comision: string | null
-    //     turno: string | null
-    //     sala_id: number
-    //     sala?: {
-    //         id: number
-    //         nombre: string | null
-    //         grado: number | null
-    //     } | null
-    // } | null
+    aula_asignada?: {
+        id: string
+        comision: string | null
+        turno: string | null
+        sala_id: number
+        sala?: {
+            id: number
+            nombre: string | null
+            grado: number | null
+        } | null
+    } | null
     evaluaciones_resumen?: {
         inicial: string | null
         cierre: string | null

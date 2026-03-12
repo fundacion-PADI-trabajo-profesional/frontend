@@ -78,12 +78,13 @@ export default function EvaluacionForm({ onSuccess,  evaluacionAEditar, profile,
   }, [prefillEstudianteId, prefillSalaId, prefillAulaId]);
 
   useEffect(() => {
+    if (!profile) return;
     const loadEstudiantes = async () => {
       try {
         const data = await getEstudiantes();
         setEstudiantes(data);
       } catch (err) {
-        if (profile?.rol === "docente" || profile?.rol === "director") {
+        if (profile.rol === "docente" || profile.rol === "director") {
           try {
             const aulas = await getDocenteAulasConEstudiantes();
             const dedup = new Map<string, Estudiante>();

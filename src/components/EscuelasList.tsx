@@ -1,10 +1,9 @@
 import {
     Table, TableBody, TableCell, TableContainer, TableHead,
-    TableRow, Paper, IconButton, Tooltip, Box, Chip, Button, Typography
+    TableRow, Paper, IconButton, Tooltip, Box, Chip
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import CloseIcon from "@mui/icons-material/Close";
 import { Escuela } from "../api/escuelas";
 
 interface Props {
@@ -13,14 +12,13 @@ interface Props {
     onView: (escuela: Escuela) => void;
     isEquipoPadi: boolean;
     onAssignDirector: (escuela: Escuela) => void;
+    onRemoveDirector?: (directorUserId: string) => Promise<void>;
 }
 
 export default function EscuelasList({
     escuelas,
     onEdit,
     onView,
-    isEquipoPadi,
-    onAssignDirector,
 }: Props) {
     return (
         <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>

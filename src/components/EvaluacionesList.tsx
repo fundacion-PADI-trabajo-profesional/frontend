@@ -24,7 +24,7 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete"
 import VisibilityIcon from "@mui/icons-material/Visibility"
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import { getEvaluacionesInstancias, eliminarEvaluacionInstancia, type EvaluacionInstancia } from "../api/evaluaciones"
+import { getEvaluacionesInstancias, eliminarEvaluacionInstancia, getEvaluacionesInstanciasByProfesor, type EvaluacionInstancia } from "../api/evaluaciones"
 import { permissions } from "../utils/permissions"
 import { TextField, MenuItem, Grid } from "@mui/material"
 
@@ -34,8 +34,12 @@ const ESTADO_APROBADA = "A"
 const ESTADO_DESAPROBADA = "D"
 const ESTADO_EN_PROGRESO = "E"
 
-export default function EvaluacionesList({ onEditar }: {
+export default function EvaluacionesList({
+  onEditar,
+  docenteId
+}: {
   onEditar: (evaluacion: EvaluacionInstancia) => void
+  docenteId?: string
 }) {
   const [evaluaciones, setEvaluaciones] = useState<EvaluacionInstancia[]>([])
   const [loading, setLoading] = useState(true)
@@ -70,21 +74,27 @@ export default function EvaluacionesList({ onEditar }: {
     if (profile) {
       loadEvaluaciones()
     }
-  }, [profile])
+  }, [profile, docenteId])
 
   const loadEvaluaciones = async () => {
     setLoading(true);
     setError(null);
     try {
-      // 1. Obtener datos del usuario logueado
       const userStr = localStorage.getItem("padiUser");
       const user = userStr ? JSON.parse(userStr) : null;
 
-      const data = await getEvaluacionesInstancias({
-        escuela_id: user?.escuela_id,
-        rol: user?.rol,
-        profesorId: user?.rol === "docente" ? user?.id : undefined,
-      });
+      let data: EvaluacionInstancia[] = [];
+
+      // Si nos pasan un docenteId por prop, buscamos las de ese docente
+      if (docenteId) {
+        data = await getEvaluacionesInstanciasByProfesor(docenteId, { limit: 50 });
+      } else {
+        data = await getEvaluacionesInstancias({
+          escuela_id: user?.escuela_id,
+          rol: user?.rol,
+          profesorId: user?.rol === "docente" ? user?.id : undefined,
+        });
+      }
 
       setEvaluaciones(data);
     } catch (err: any) {

@@ -6,7 +6,6 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import { useNavigate } from "react-router-dom"
 import { asignarDocenteAEscuela, desasignarDocenteDeEscuela, getDocentes, type Docente } from "../api/docentes"
 import { getEscuelas, type Escuela } from "../api/escuelas"
-// import { getEvaluacionesInstanciasByProfesor } from "../api/evaluaciones"
 
 export default function DocentesPage() {
   const [items, setItems] = useState<Docente[]>([])
@@ -142,7 +141,7 @@ export default function DocentesPage() {
                     key={d.id}
                     hover
                     sx={{ cursor: "pointer", '&:last-child td, &:last-child th': { border: 0 } }}
-                    onClick={() => navigate(`/evaluaciones-docente?profesorId=${d.id}&nombre=${encodeURIComponent(`${d.apellido}, ${d.nombre}`)}`)}
+                    onClick={() => navigate(`/evaluaciones?docenteId=${d.id}&backTo=/docentes&backLabel=Volver%20a%20docentes`)}
                   >
                     <TableCell align="center">{d.apellido}</TableCell>
                     <TableCell align="center">{d.nombre}</TableCell>
@@ -262,5 +261,3 @@ export default function DocentesPage() {
     </Box>
   )
 }
-
-

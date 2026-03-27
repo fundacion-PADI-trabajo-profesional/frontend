@@ -24,7 +24,7 @@ export default function BulkUploadForm({ onCancel, onSuccess }: BulkUploadProps)
                 const bstr = evt.target?.result;
                 const wb = XLSX.read(bstr, { type: 'binary', cellDates: true }); 
                 const ws = wb.Sheets[wb.SheetNames[0]];
-                const data = XLSX.utils.sheet_to_json(ws);
+                const data = XLSX.utils.sheet_to_json(ws, { raw: false, defval: null });
 
                 const estudiantes = data.map((row: any) => {
                 let fecha = row["Fecha Nacimiento"];
@@ -43,6 +43,12 @@ export default function BulkUploadForm({ onCancel, onSuccess }: BulkUploadProps)
                     escuela_id: row["EscuelaID"] // Como lo agregaste al final
                 };
             });
+
+            if (estudiantes.some(e => !e.escuela_id)) {
+                setError("Hay alumnos sin EscuelaID válido. Asegurate de que el Excel esté guardado con los valores calculados.");
+                setLoading(false);
+                return;
+            }
 
             // Validar si hay fechas inválidas antes de enviar
             if (estudiantes.some(e => !e.fecha_nacimiento)) {

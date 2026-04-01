@@ -1,7 +1,5 @@
 "use client"
 
-// src/App.tsx
-
 import { useState, useEffect } from "react"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import Login from "./pages/Login"
@@ -19,6 +17,7 @@ import AulasPage from "./pages/Aulas"
 import Zonas from "./pages/Zonas"
 import ZonaDetalle from "./pages/ZonaDetalle"
 import PanelControl from "./pages/PanelControl"
+import ActualizarContrasena from "./pages/ActualizarContrasena"
 
 // Define a type for your user object
 interface User {
@@ -88,6 +87,7 @@ function App() {
         {/* Registro y Fallback */}
         <Route path="/register" element={currentUser ? <Navigate to="/home" replace /> : <Register />} />
         <Route path="*" element={<Navigate to={currentUser ? "/home" : "/login"} replace />} />
+        <Route path="/actualizar-password" element={<ActualizarContrasena />} />
       </Routes>
     </BrowserRouter>
   )

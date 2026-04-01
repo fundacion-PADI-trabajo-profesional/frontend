@@ -20,6 +20,7 @@ import SchoolIcon from "@mui/icons-material/School";
 import EmailIcon from "@mui/icons-material/Email";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import SaveIcon from "@mui/icons-material/Save";
+import { updateProfileData } from "../api/auth";
 
 const modalStyle = {
   position: "absolute" as "absolute",
@@ -87,14 +88,13 @@ export default function Perfil({ open, onClose, user, profile, onUpdateSuccess }
     setError(null);
 
     try {
-      if (onUpdateSuccess) {
-        // Esta función debe llamar al backend para actualizar la tabla de personas
-        await onUpdateSuccess({
-          ...profile,
-          nombre: nombre,
-          apellido: apellido
-        });
+
+      const response = await updateProfileData(user.id, nombre, apellido);
+
+      if (onUpdateSuccess && response.profile) {
+        await onUpdateSuccess(response.profile);
       }
+      
       setIsEditing(false);
     } catch (err: any) {
       setError(err.message || "Error al actualizar los datos");

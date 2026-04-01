@@ -118,3 +118,8 @@ export async function register(
   }
   return data.user;
 }
+
+export async function updateProfileData(userId: string, nombre: string, apellido: string) {
+  const response = await api.put("/auth/profile", { userId, nombre, apellido });
+  return response.data;
+}

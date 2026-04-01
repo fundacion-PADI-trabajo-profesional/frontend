@@ -45,8 +45,9 @@ export default function Home({ onLogout }: HomeProps) {
     }
   }, [navigate]);
 
-  const handleProfileUpdate = async () => {
-    await loadUserData();
+  const handleProfileUpdate = async (updatedProfile: any) => {
+    setProfile(updatedProfile);
+    localStorage.setItem("padiProfile", JSON.stringify(updatedProfile));
   };
 
   if (loadingUser) {

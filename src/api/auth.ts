@@ -123,3 +123,8 @@ export async function updateProfileData(userId: string, nombre: string, apellido
   const response = await api.put("/auth/profile", { userId, nombre, apellido });
   return response.data;
 }
+
+export async function requestPasswordReset(email: string) {
+  const response = await api.post("/auth/reset-password-request", { email });
+  return response.data;
+}

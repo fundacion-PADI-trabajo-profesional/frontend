@@ -20,7 +20,7 @@ import SchoolIcon from "@mui/icons-material/School";
 import EmailIcon from "@mui/icons-material/Email";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import SaveIcon from "@mui/icons-material/Save";
-import { updateProfileData } from "../api/auth";
+import { updateProfileData, requestPasswordReset } from "../api/auth";
 
 const modalStyle = {
   position: "absolute" as "absolute",
@@ -81,6 +81,21 @@ export default function Perfil({ open, onClose, user, profile, onUpdateSuccess }
   // Datos jerárquicos solicitados: Usuario -> Escuela -> Zona
   const nombreEscuela = profile?.escuela?.nombre || profile?.escuelas?.[0]?.nombre || "Escuela no asignada";
   // const nombreZona = profile?.escuela?.zona?.nombre || profile?.escuelas?.[0]?.zona || "Zona no definida";
+
+  const [resetSent, setResetSent] = useState(false);
+
+  const handlePasswordReset = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      await requestPasswordReset(user.email);
+      setResetSent(true);
+    } catch (err: any) {
+      setError(err.message || "Error al solicitar el cambio de contraseña");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,7 +178,7 @@ export default function Perfil({ open, onClose, user, profile, onUpdateSuccess }
                 EDITAR INFORMACIÓN PERSONAL
               </Typography>
 
-              {/* Campo de Email - Solo lectura */}
+              {/* Campo de Email */}
               <TextField
                 fullWidth
                 label="Email institucional"
@@ -188,6 +203,16 @@ export default function Perfil({ open, onClose, user, profile, onUpdateSuccess }
                   ),
                 }}
               />
+
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handlePasswordReset}
+                disabled={loading || resetSent}
+                sx={{ mb: 3, textTransform: 'none', fontWeight: 600, color: PADI_COLORS.azul, borderColor: PADI_COLORS.azul }}
+              >
+                {resetSent ? "¡Mail enviado! Revisá tu casilla" : "Enviar mail para cambiar contraseña"}
+              </Button>
 
               <TextField
                 fullWidth

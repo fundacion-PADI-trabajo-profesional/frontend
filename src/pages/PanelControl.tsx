@@ -39,7 +39,6 @@ import {
     type EncargadoZonaOption,
     type Zona,
 } from "../api/zonas";
-
 type ViewMode = "zonas" | "escuelas" | "aulas" | "estudiantes";
 
 export default function PanelControl() {
@@ -944,12 +943,14 @@ export default function PanelControl() {
                     >
                         Volver a inicio
                     </Button>
-                    <Typography variant="h3" component="h1" sx={{ fontWeight: 700 }}>
-                        Panel de control
-                    </Typography>
-                    <Typography variant="body1" sx={{ color: "#666" }}>
-                        {panelSubtitle}
-                    </Typography>
+                    <Box>
+                        <Typography variant="h3" component="h1" sx={{ fontWeight: 700 }}>
+                            Panel de control
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: "#666" }}>
+                            {panelSubtitle}
+                        </Typography>
+                    </Box>
                 </Container>
             </Box>
 

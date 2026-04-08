@@ -89,6 +89,18 @@ export default function AdminDashboard({ rol }: Props) {
                         />
                     </Grid>
                 )}
+
+                {isEquipoPadi && (
+                    <Grid item xs={12} sm={6} md={4}>
+                        <DashboardCard
+                            title="Usuarios"
+                            description="Invitá nuevos usuarios al sistema de forma individual o masiva desde un Excel."
+                            icon="👥"
+                            color="#7B1FA2"
+                            onClick={() => navigate("/usuarios")}
+                        />
+                    </Grid>
+                )}
             </Grid>
         </Box>
     );

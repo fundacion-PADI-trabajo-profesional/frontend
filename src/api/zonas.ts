@@ -1,3 +1,5 @@
+import { getAuthHeaders } from "./auth"
+
 const API_URL = import.meta.env.VITE_API_URL
 
 interface ApiResponse<T> {
@@ -51,8 +53,9 @@ const getUserData = () => {
 
 export async function getZonas(): Promise<Zona[]> {
     const { rol } = getUserData();
-    // Pasamos el rol por query string como espera tu backend
-    const res = await fetch(`${API_URL}/zonas?rol=${rol}`)
+    const res = await fetch(`${API_URL}/zonas?rol=${rol}`, {
+        headers: getAuthHeaders(),
+    })
     const body: ApiResponse<Zona[]> = await res.json()
     if (!res.ok || !body.success) {
         throw new Error(body.error?.description || body.message || "Error al cargar zonas")
@@ -64,7 +67,7 @@ export async function createZona(nombre: string): Promise<Zona> {
     const { usuario_id, rol } = getUserData();
     const res = await fetch(`${API_URL}/zonas`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ nombre, usuario_id, rol }),
     });
     const body: ApiResponse<Zona> = await res.json();
@@ -76,7 +79,9 @@ export async function createZona(nombre: string): Promise<Zona> {
 
 export async function getEscuelasSinZona(): Promise<any[]> {
     const { rol } = getUserData();
-    const res = await fetch(`${API_URL}/escuelas-sin-zona?rol=${rol}`)
+    const res = await fetch(`${API_URL}/escuelas-sin-zona?rol=${rol}`, {
+        headers: getAuthHeaders(),
+    })
     const body: ApiResponse<any[]> = await res.json()
     if (!res.ok || !body.success) {
         throw new Error(body.error?.description || body.message || "Error al cargar escuelas disponibles")
@@ -86,7 +91,9 @@ export async function getEscuelasSinZona(): Promise<any[]> {
 
 export async function getZonaById(id: string): Promise<any> {
     const { rol } = getUserData();
-    const res = await fetch(`${API_URL}/zonas/${id}?rol=${rol}`)
+    const res = await fetch(`${API_URL}/zonas/${id}?rol=${rol}`, {
+        headers: getAuthHeaders(),
+    })
     const body: ApiResponse<any> = await res.json()
     if (!res.ok || !body.success) {
         throw new Error(body.error?.description || body.message || "Error al cargar detalle")
@@ -99,10 +106,7 @@ export async function asignarEscuela(zonaId: string, escuelaId: string): Promise
 
     const res = await fetch(`${API_URL}/zonas/${zonaId}/asignar-escuela`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        // Enviamos escuelaId (camelCase) para que coincida con lo que definimos en el controlador del backend
+        headers: getAuthHeaders(),
         body: JSON.stringify({ escuelaId, usuario_id, rol }),
     });
 
@@ -119,7 +123,7 @@ export async function desvincularEscuela(escuelaId: string): Promise<any> {
     const { rol } = getUserData();
     const res = await fetch(`${API_URL}/escuelas/${escuelaId}/quitar-escuela`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ rol }),
     });
     const body: ApiResponse<any> = await res.json();
@@ -133,7 +137,7 @@ export async function updateZona(id: string, nombre: string): Promise<Zona> {
     const { usuario_id, rol } = getUserData();
     const res = await fetch(`${API_URL}/zonas/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ nombre, usuario_id, rol }),
     });
     const body: ApiResponse<Zona> = await res.json();
@@ -145,7 +149,9 @@ export async function updateZona(id: string, nombre: string): Promise<Zona> {
 
 export async function getEncargadosSinZona(): Promise<any[]> {
     const { rol } = getUserData();
-    const res = await fetch(`${API_URL}/encargados-sin-zona?rol=${rol}`)
+    const res = await fetch(`${API_URL}/encargados-sin-zona?rol=${rol}`, {
+        headers: getAuthHeaders(),
+    })
     const body: ApiResponse<any[]> = await res.json()
     if (!res.ok || !body.success) throw new Error(body.message || "Error al cargar encargados");
     return body.data || []
@@ -153,7 +159,9 @@ export async function getEncargadosSinZona(): Promise<any[]> {
 
 export async function getEncargadosZonaOptions(): Promise<EncargadoZonaOption[]> {
     const { rol } = getUserData();
-    const res = await fetch(`${API_URL}/zonas/encargados?rol=${rol}`)
+    const res = await fetch(`${API_URL}/zonas/encargados?rol=${rol}`, {
+        headers: getAuthHeaders(),
+    })
     const body: ApiResponse<EncargadoZonaOption[]> = await res.json()
     if (!res.ok || !body.success) throw new Error(body.message || "Error al cargar encargados");
     return body.data || []
@@ -163,7 +171,7 @@ export async function asignarEncargadoAZona(zonaId: string, encargadoId: string)
     const { usuario_id, rol } = getUserData();
     const res = await fetch(`${API_URL}/zonas/${zonaId}/asignar-encargado`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ encargadoId, usuario_id, rol }),
     });
     const body: ApiResponse<any> = await res.json();
@@ -175,7 +183,7 @@ export async function desvincularEncargado(encargadoId: string): Promise<any> {
     const { rol } = getUserData();
     const res = await fetch(`${API_URL}/encargados/${encargadoId}/quitar-zona`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ rol }),
     });
     const body: ApiResponse<any> = await res.json();

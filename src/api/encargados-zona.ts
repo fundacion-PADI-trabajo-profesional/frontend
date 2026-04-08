@@ -1,3 +1,5 @@
+import { getAuthHeaders } from "./auth"
+
 const API_URL = import.meta.env.VITE_API_URL
 
 export interface Encargado {
@@ -23,11 +25,13 @@ export interface UpdateEncargadoDto {
     nombre: string;
     apellido: string;
     email: string;
-    zona_id: string; // Enviamos el ID de la nueva zona
+    zona_id: string;
 }
 
 export async function getEncargados(): Promise<Encargado[]> {
-    const response = await fetch(`${API_URL}/encargados`);
+    const response = await fetch(`${API_URL}/encargados`, {
+        headers: getAuthHeaders(),
+    });
     const json = await response.json();
 
     if (!json.success) {
@@ -40,9 +44,7 @@ export async function getEncargados(): Promise<Encargado[]> {
 export async function createEncargado(data: CreateEncargadoDto): Promise<Encargado> {
     const response = await fetch(`${API_URL}/encargados`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
     });
 
@@ -58,7 +60,7 @@ export async function createEncargado(data: CreateEncargadoDto): Promise<Encarga
 export async function updateEncargado(id: string, data: UpdateEncargadoDto): Promise<Encargado> {
     const response = await fetch(`${API_URL}/encargados/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
     });
 
@@ -68,7 +70,9 @@ export async function updateEncargado(id: string, data: UpdateEncargadoDto): Pro
 }
 
 export async function getCurrentEncargado(userId: string): Promise<Encargado> {
-    const response = await fetch(`${API_URL}/encargados/me?usuario_id=${userId}`);
+    const response = await fetch(`${API_URL}/encargados/me?usuario_id=${userId}`, {
+        headers: getAuthHeaders(),
+    });
     const json = await response.json();
 
     if (!json.success) {
@@ -81,6 +85,7 @@ export async function getCurrentEncargado(userId: string): Promise<Encargado> {
 export async function deleteEncargado(id: string): Promise<void> {
     const response = await fetch(`${API_URL}/encargados/${id}`, {
         method: "DELETE",
+        headers: getAuthHeaders(),
     });
 
     const json = await response.json();

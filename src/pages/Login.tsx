@@ -35,6 +35,10 @@ export default function Login({ onLogin }: LoginProps) {
         localStorage.setItem("token", session.access_token);
       }
 
+      if (session && session.refresh_token) {
+        localStorage.setItem("refreshToken", session.refresh_token);
+      }
+
       if (profile && profile.rol) {
         localStorage.setItem("userRole", profile.rol);
       }

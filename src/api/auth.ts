@@ -1,9 +1,15 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
 /**
+ * Flag para evitar múltiples refreshes simultáneos.
+ */
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
+
+/**
  * Helper para obtener el token almacenado.
  */
-const getAuthHeaders = () => {
+export const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
   return {
     "Content-Type": "application/json",
@@ -12,9 +18,117 @@ const getAuthHeaders = () => {
 };
 
 /**
+ * Intenta renovar el access_token usando el refresh_token almacenado.
+ * Llama al endpoint del backend /auth/refresh-token.
+ * Retorna el nuevo access_token o null si falla.
+ */
+async function refreshAccessToken(): Promise<string | null> {
+  const refreshToken = localStorage.getItem("refreshToken");
+
+  if (!refreshToken) {
+    console.warn("No hay refresh token almacenado.");
+    return null;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/auth/refresh-token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!response.ok) {
+      console.warn("No se pudo renovar la sesión.");
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.access_token) {
+      localStorage.setItem("token", data.access_token);
+    }
+    if (data.refresh_token) {
+      localStorage.setItem("refreshToken", data.refresh_token);
+    }
+
+    return data.access_token || null;
+  } catch (error) {
+    console.error("Error al renovar token:", error);
+    return null;
+  }
+}
+
+/**
+ * Wrapper que garantiza que solo se haga un refresh a la vez,
+ * incluso si múltiples requests fallan con 401 simultáneamente.
+ */
+async function getRefreshedToken(): Promise<string | null> {
+  if (isRefreshing && refreshPromise) {
+    return refreshPromise;
+  }
+
+  isRefreshing = true;
+  refreshPromise = refreshAccessToken().finally(() => {
+    isRefreshing = false;
+    refreshPromise = null;
+  });
+
+  return refreshPromise;
+}
+
+/**
+ * Maneja la respuesta del fetch. Si recibe 401, intenta refresh y reintenta UNA vez.
+ */
+async function handleResponse(response: Response, retryFn?: () => Promise<Response>) {
+  if (response.status === 401 && retryFn) {
+    // Intentar renovar el token
+    const newToken = await getRefreshedToken();
+
+    if (newToken) {
+      // Reintentar la request original con el nuevo token
+      const retryResponse = await retryFn();
+      const retryData = await retryResponse.json().catch(() => ({}));
+
+      if (!retryResponse.ok) {
+        if (retryResponse.status === 401) {
+          // El refresh no sirvió, forzar logout
+          forceLogout();
+        }
+        throw new Error(retryData.message || retryData.description || "Error en la petición");
+      }
+
+      return { data: retryData };
+    } else {
+      // No se pudo renovar, forzar logout
+      forceLogout();
+      throw new Error("Sesión expirada. Por favor, iniciá sesión nuevamente.");
+    }
+  }
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.message || data.description || "Error en la petición");
+  }
+
+  return { data };
+}
+
+/**
+ * Limpia tokens y redirige al login.
+ */
+function forceLogout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("padiUser");
+  localStorage.removeItem("padiProfile");
+  localStorage.removeItem("userRole");
+  window.location.href = "/login";
+}
+
+/**
  * Objeto API estandarizado para usar en toda la app.
- * Reemplaza a axios y fetch manual.
- * Se encarga de poner la URL base y el Token automáticamente.
+ * Incluye refresh automático de token ante respuestas 401.
  */
 export const api = {
   get: async (endpoint: string) => {
@@ -22,7 +136,12 @@ export const api = {
       method: "GET",
       headers: getAuthHeaders(),
     });
-    return handleResponse(response);
+    return handleResponse(response, () =>
+      fetch(`${API_URL}${endpoint}`, {
+        method: "GET",
+        headers: getAuthHeaders(), // getAuthHeaders() tomará el token ya actualizado
+      })
+    );
   },
 
   post: async (endpoint: string, body: any) => {
@@ -31,7 +150,13 @@ export const api = {
       headers: getAuthHeaders(),
       body: JSON.stringify(body),
     });
-    return handleResponse(response);
+    return handleResponse(response, () =>
+      fetch(`${API_URL}${endpoint}`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(body),
+      })
+    );
   },
 
   put: async (endpoint: string, body: any) => {
@@ -40,7 +165,13 @@ export const api = {
       headers: getAuthHeaders(),
       body: JSON.stringify(body),
     });
-    return handleResponse(response);
+    return handleResponse(response, () =>
+      fetch(`${API_URL}${endpoint}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(body),
+      })
+    );
   },
 
   delete: async (endpoint: string) => {
@@ -48,36 +179,20 @@ export const api = {
       method: "DELETE",
       headers: getAuthHeaders(),
     });
-    return handleResponse(response);
+    return handleResponse(response, () =>
+      fetch(`${API_URL}${endpoint}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      })
+    );
   },
 };
-
-/**
- * Maneja la respuesta del fetch para simular un formato standard (como axios)
- * y lanza errores si falla.
- */
-async function handleResponse(response: Response) {
-  const data = await response.json().catch(() => ({})); // Previene error si body viene vacío
-
-  if (!response.ok) {
-    // Si el token expiró (401), podrías redirigir al login aquí
-    if (response.status === 401) {
-      // Opcional: window.location.href = "/login";
-      console.warn("Sesión expirada o inválida");
-    }
-    throw new Error(data.message || data.description || "Error en la petición");
-  }
-
-  // Devolvemos { data: ... } para ser consistentes con la estructura que espera tu app
-  // Si tu backend devuelve { success: true, data: [...] }, esto lo pasa directo.
-  return { data };
-}
 
 // --- AUTENTICACIÓN ---
 
 /**
  * Envía credenciales.
- * Actualizado: Ahora devuelve también la SESSION para poder guardar el token.
+ * Devuelve user, profile y session (con access_token y refresh_token).
  */
 export async function login(email: string, password: string) {
   const response = await fetch(`${API_URL}/auth/login`, {

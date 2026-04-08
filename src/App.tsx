@@ -55,6 +55,10 @@ function App() {
 
   // This function will be passed to Home.tsx
   const handleLogout = () => {
+    localStorage.removeItem("token")
+    localStorage.removeItem("refreshToken")
+    localStorage.removeItem("padiProfile")
+    localStorage.removeItem("userRole")
     setCurrentUser(null)
   }
 

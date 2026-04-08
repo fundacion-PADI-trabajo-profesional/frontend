@@ -1,4 +1,4 @@
-import { api } from "./auth"
+import { api, getAuthHeaders } from "./auth"
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -103,7 +103,7 @@ export interface EscuelaDropdown {
 // Agrega la función de exportación
 export const getEscuelas = async (): Promise<EscuelaDropdown[]> => {
     const response = await fetch(`${API_URL}/escuelas`, {
-        // headers: { "Authorization": `Bearer ${token}` }
+        headers: getAuthHeaders(),
     });
     return handleApiResponse<EscuelaDropdown[]>(response);
 }
@@ -120,21 +120,20 @@ async function handleApiResponse<T>(response: Response): Promise<T> {
 }
 
 export const getEstudiantes = async (): Promise<Estudiante[]> => {
-    // Obtenemos los datos del usuario logueado desde localStorage [cite: 1, 2]
     const stored = localStorage.getItem("padiUser");
     const user = stored ? JSON.parse(stored) : null;
 
     const params = new URLSearchParams();
     if (user) {
-        // Enviamos el rol para que el backend sepa qué nivel de acceso aplicar [cite: 1, 15]
         params.append("rol", user.rol);
-        // Si el usuario tiene escuela asignada, enviamos el ID [cite: 2, 18]
         if (user.escuela_id) {
             params.append("escuela_id", user.escuela_id);
         }
     }
 
-    const response = await fetch(`${API_URL}/estudiantes?${params.toString()}`);
+    const response = await fetch(`${API_URL}/estudiantes?${params.toString()}`, {
+        headers: getAuthHeaders(),
+    });
     return handleApiResponse<Estudiante[]>(response);
 }
 
@@ -144,10 +143,7 @@ export const createEstudiante = async (formData: EstudianteFormData): Promise<Es
 
     const response = await fetch(`${API_URL}/estudiantes`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            // "Authorization": `Bearer ${token}`
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
             ...formData,
             usuario_id: user?.id,
@@ -160,22 +156,22 @@ export const createEstudiante = async (formData: EstudianteFormData): Promise<Es
 
 export const getGeneros = async (): Promise<Genero[]> => {
     const response = await fetch(`${API_URL}/generos`, {
-        // headers: { "Authorization": `Bearer ${token}` }
+        headers: getAuthHeaders(),
     });
     return handleApiResponse<Genero[]>(response);
 }
 
 export const getSalas = async (): Promise<Sala[]> => {
     const response = await fetch(`${API_URL}/salas`, {
-        // headers: { "Authorization": `Bearer ${token}` }
+        headers: getAuthHeaders(),
     });
     return handleApiResponse<Sala[]>(response);
 }
 
 export async function updateEstudiante(id: string, data: any): Promise<Estudiante> {
     const res = await fetch(`${API_URL}/estudiantes/${id}`, {
-        method: "PUT", // O PATCH según tu backend
-        headers: { "Content-Type": "application/json" },
+        method: "PUT",
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
     });
     const body = await res.json();
@@ -208,7 +204,7 @@ export async function asignarEstudianteAula(
 
     const response = await fetch(`${API_URL}/estudiantes/${estudianteId}/asignar-aula`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload),
     });
 
@@ -239,7 +235,7 @@ export async function desasignarEstudianteAula(
 
     const response = await fetch(`${API_URL}/estudiantes/${estudianteId}/desasignar-aula`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload),
     });
 
@@ -250,7 +246,9 @@ export async function desasignarEstudianteAula(
 }
 
 export async function getAulasPorEscuela(escuelaId: string): Promise<any[]> {
-    const response = await fetch(`${API_URL}/aulas?escuela_id=${escuelaId}`);
+    const response = await fetch(`${API_URL}/aulas?escuela_id=${escuelaId}`, {
+        headers: getAuthHeaders(),
+    });
     if (!response.ok) throw new Error("Error al obtener aulas");
     const result = await response.json();
     return result.success ? result.data : [];
@@ -258,12 +256,12 @@ export async function getAulasPorEscuela(escuelaId: string): Promise<any[]> {
 
 export async function bulkCreateEstudiantes(data: { estudiantes: any[] }) {
     const user = JSON.parse(localStorage.getItem("padiUser") || "{}");
-    
+
     const payload = {
         ...data,
         usuario_id: user.id,
         rol: user.rol,
-        escuela_id: user.escuela_id // Si es director/docente
+        escuela_id: user.escuela_id
     };
 
     const response = await api.post('/estudiantes/bulk', payload);

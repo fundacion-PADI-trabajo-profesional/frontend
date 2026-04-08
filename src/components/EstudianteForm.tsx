@@ -108,6 +108,15 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
 
                 // 4. Lógica de Pre-carga (Edición vs Creación por Director)
                 if (estudianteAEditar) {
+                    if (user && user.rol === "director" && user.escuela_id) {
+                        // MODO DIRECTOR (Nuevo estudiante)
+                        setIsDirector(true)
+                        setFormData(prev => ({
+                            ...prev,
+                            escuela_id: user.escuela_id // Institución automática
+                        }))
+                    }
+
                     // MODO EDICIÓN
                     setFormData({
                         dni: estudianteAEditar.personas.dni || "",
@@ -117,7 +126,7 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
                         genero_id: estudianteAEditar.genero_id || "",
                         sala_id: String(estudianteAEditar.sala_id), // Sala ya asignada
                         escuela_id: estudianteAEditar.escuela.escuela_id || "",
-                        aula_id: estudianteAEditar.aula_id || "",
+                        aula_id: estudianteAEditar.aula_asignada?.id || "",
                     })
                 } else if (aulaContext) {
                     // MODO DOCENTE (Viene de aula específica)
@@ -151,7 +160,7 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
                     const data = await getAulasPorEscuela(formData.escuela_id);
                     setAulasDisponibles(data);
                     // Si el aula seleccionada previamente no pertenece a la nueva escuela, la limpiamos
-                    setFormData(prev => ({ ...prev, aula_id: "" }));
+                    setFormData(prev => ({ ...prev, aula_id: estudianteAEditar?.aula_asignada?.id || ""}));
                 } catch (err) {
                     console.error("Error cargando aulas:", err);
                 }
@@ -171,7 +180,7 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
         if (!formData.dni) newErrors.dni = "El DNI es obligatorio"
         if (!formData.nombre) newErrors.nombre = "El nombre es obligatorio"
         if (!formData.apellido) newErrors.apellido = "El apellido es obligatorio"
-        if (!formData.fecha_nacimiento) newErrors.fecha_nacimiento = "La fecha de nacimiento es obligatoria"
+        //if (!formData.fecha_nacimiento) newErrors.fecha_nacimiento = "La fecha de nacimiento es obligatoria"
         if (!formData.genero_id) newErrors.genero_id = "Seleccione un género"
         if (!formData.sala_id) newErrors.sala_id = "Seleccione una sala"
         if (!formData.escuela_id) newErrors.escuela_id = "Seleccione una institución"
@@ -313,7 +322,11 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
                             <Grid item xs={12}>
                                 <FormControl fullWidth variant="filled" error={!!errors.escuela_id}>
                                     <InputLabel>Institución / Escuela</InputLabel>
-                                    <Select name="escuela_id" value={formData.escuela_id} onChange={handleChange}>
+                                    <Select
+                                        name="escuela_id"
+                                        value={escuelas.length > 0 ? formData.escuela_id : ""}
+                                        onChange={handleChange}
+                                    >
                                         {escuelas.map((e) => (
                                             <MenuItem key={e.id} value={e.id}>{e.nombre}</MenuItem>
                                         ))}

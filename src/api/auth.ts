@@ -209,7 +209,7 @@ export async function login(email: string, password: string) {
   return {
     user: data.user,
     profile: data.profile,
-    session: data.session
+    session: data.session,
   };
 }
 
@@ -256,4 +256,45 @@ export async function updatePasswordUser(accessToken: string, refreshToken: stri
     throw new Error(data.message || "Error al actualizar la contraseña");
   }
   return data;
+}
+
+// --- ADMINISTRACIÓN DE USUARIOS (solo equipo_padi) ---
+
+export interface CreateUserPayload {
+  nombre: string;
+  apellido: string;
+  email: string;
+  rol: string;
+}
+
+/**
+ * Crea un único usuario desde el panel admin.
+ */
+export async function adminCreateUser(data: CreateUserPayload) {
+  const response = await api.post("/admin/users", data);
+  return response.data;
+}
+
+/**
+ * Crea múltiples usuarios en lote.
+ */
+export async function adminCreateUsersBulk(users: CreateUserPayload[]) {
+  const response = await api.post("/admin/users/bulk", { users });
+  return response.data;
+}
+
+/**
+ * Obtiene la lista de todos los usuarios.
+ */
+export async function adminListUsers() {
+  const response = await api.get("/admin/users");
+  return response.data;
+}
+
+/**
+ * Elimina un usuario por ID.
+ */
+export async function adminDeleteUser(userId: string) {
+  const response = await api.delete(`/admin/users/${userId}`);
+  return response.data;
 }

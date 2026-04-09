@@ -1,14 +1,10 @@
 "use client"
 
 import {
-    Box, List, ListItem, ListItemText, Typography, Paper, InputAdornment,
-    TextField, Button, IconButton, Menu, MenuItem, ListItemIcon,
-    Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, Tooltip
+    Box, List, ListItem, ListItemText, Typography, Paper, IconButton, Menu, MenuItem, ListItemIcon, Tooltip
 } from "@mui/material"
 import { useState, useMemo, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import SearchIcon from "@mui/icons-material/Search"
-import FilterListIcon from "@mui/icons-material/FilterList"
 import MoreVertIcon from "@mui/icons-material/MoreVert"
 import AssessmentIcon from "@mui/icons-material/Assessment"
 import EditIcon from "@mui/icons-material/Edit"
@@ -30,25 +26,22 @@ interface EstudiantesListProps {
     onAddEstudiante: () => void
     onEditEstudiante: (estudiante: Estudiante) => void
     onBulkAdd: () => void
-    hideFilters?: boolean
 }
 
-export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEstudiante, onBulkAdd, hideFilters }: EstudiantesListProps) {
+export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEstudiante, onBulkAdd }: EstudiantesListProps) {
     const navigate = useNavigate()
-    const [filtroTexto, setFiltroTexto] = useState("")
+    const [filtroTexto] = useState("")
     const [userRole, setUserRole] = useState<string>("")
 
     // Filtros de selección
-    const [escuelaFiltro, setEscuelaFiltro] = useState<string>("todas")
-    const [salaFiltro, setSalaFiltro] = useState<string>("todas")
+    const [escuelaFiltro] = useState<string>("todas")
+    const [salaFiltro] = useState<string>("todas")
 
     // Datos de selectores
-    const [listaEscuelas, setListaEscuelas] = useState<Escuela[]>([])
-    const [listaSalas, setListaSalas] = useState<Sala[]>([])
-    const [puedeVerEscuelas, setPuedeVerEscuelas] = useState(false)
+    const [_listaEscuelas, setListaEscuelas] = useState<Escuela[]>([])
+    const [_listaSalas, setListaSalas] = useState<Sala[]>([])
 
     // UI States
-    const [openFilterDialog, setOpenFilterDialog] = useState(false)
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
     const [selectedStudent, setSelectedStudent] = useState<Estudiante | null>(null)
 
@@ -77,11 +70,9 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
                 if (user?.rol === "equipo_padi" || user?.rol === "encargado_zona") {
                     const escuelasData = await getEscuelas()
                     setListaEscuelas(escuelasData)
-                    setPuedeVerEscuelas(true)
                 }
             } catch (err) {
                 console.log("No se cargaron escuelas por falta de permisos o error")
-                setPuedeVerEscuelas(false)
             }
         }
         loadInitialData()
@@ -159,26 +150,6 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
 
         return { agrupados: grupos, salasOrdenadas: ordenadas };
     }, [estudiantes, filtroTexto, escuelaFiltro, salaFiltro]);
-
-    const resetFiltros = () => {
-        setEscuelaFiltro("todas")
-        setSalaFiltro("todas")
-    }
-
-    const renderAulaLabel = (est: Estudiante) => {
-        const aula = est.aula_asignada;
-        if (!aula) return "Sin aula asignada";
-
-        const salaNombre = aula.sala?.nombre ?? `Sala ${aula.sala_id}`;
-        const comision = aula.comision || "Sin comisión";
-        const turno = aula.turno || "Sin turno";
-        return `${salaNombre} - ${comision} (${turno})`;
-    };
-
-    const renderColegioLabel = (est: Estudiante) => {
-        const maybeEscuelas = (est as any).escuelas;
-        return est.escuela?.nombre || maybeEscuelas?.nombre || "Sin colegio";
-    };
 
     const getEstadoColor = (estado: string | null | undefined) => {
         if (estado === "A") return "#2e7d32";

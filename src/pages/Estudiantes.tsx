@@ -471,7 +471,6 @@ export default function Estudiantes() {
                                                             onAddEstudiante={() => setView("form")}
                                                             onEditEstudiante={handleEdit}
                                                             onBulkAdd={() => setView("bulk")}
-                                                            hideFilters={true} // Oculta el buscador interno
                                                         />
                                                     </Box>
                                                 ))}

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Box, Container, Typography, Button, CircularProgress, Alert, Paper, List, ListItem, ListItemText, Stack, Tooltip } from "@mui/material"
+import { Box, Container, Typography, Button, CircularProgress, Alert, Paper, List, ListItem, ListItemText, Stack, Tooltip, FormControl, InputLabel, Select, MenuItem } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import { useNavigate } from "react-router-dom"
 import EstudiantesList from "../components/EstudiantesList"
@@ -10,22 +10,29 @@ import { getEstudiantes, type Estudiante, type EstudianteCreado } from "../api/e
 import { getDocenteAulasConEstudiantes, type DocenteAulaConEstudiantes } from "../api/aulas"
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import BulkUploadForm from "../components/BulkUploadForm"
+import { TextField, InputAdornment } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 
 /**
  * Página principal de Estudiantes.
  */
 export default function Estudiantes() {
+    const [searchTerm, setSearchTerm] = useState("");
     const [view, setView] = useState<"list" | "form" | "success" | "bulk" | "successBulk">("list")
     const [cantidadCreados, setCantidadCreados] = useState(0); // Estado para el conteo
     const [estudiantes, setEstudiantes] = useState<Estudiante[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const [refreshKey, setRefreshKey] = useState(0) 
+    const [refreshKey, setRefreshKey] = useState(0)
     const [estudianteCreado, setEstudianteCreado] = useState<EstudianteCreado | null>(null)
     const [selectedForEdit, setSelectedForEdit] = useState<Estudiante | null>(null);
     const [userRole, setUserRole] = useState("");
     const [aulasDocente, setAulasDocente] = useState<DocenteAulaConEstudiantes[]>([]);
     const [selectedAulaId, setSelectedAulaId] = useState<string | null>(null);
+
+    const [escuelaFiltro, setEscuelaFiltro] = useState<string>("todas");
+    const [salaFiltro, setSalaFiltro] = useState<string>("todas");
+    const [comisionFiltro, setComisionFiltro] = useState<string>("todas");
 
     const navigate = useNavigate()
     // --- Carga de Datos Inicial ---
@@ -61,16 +68,76 @@ export default function Estudiantes() {
         }
     }
 
+    const agruparEstudiantes = (lista: Estudiante[]) => {
+        const grupos: any = {};
+
+        // Mapa de ordenamiento: Cuanto menor el número, más arriba aparece
+        const ordenSalas: Record<string, number> = {
+            "Sala: Sin asignar": 0,
+            "Sala de 3": 1,
+            "Sala de 4": 2,
+            "Sala de 5": 3
+        };
+
+        lista.forEach((est) => {
+            const escuela = est.escuela?.nombre || "Sin Escuela";
+            // Normalizamos el nombre para que coincida con nuestro mapa de orden
+            const sala = est.aula_asignada?.sala?.nombre || "Sala: Sin asignar";
+            const comision = `${est.aula_asignada?.comision || 'Única'} (${est.aula_asignada?.turno || 'N/A'})`;
+
+            if (!grupos[escuela]) grupos[escuela] = {};
+            if (!grupos[escuela][sala]) grupos[escuela][sala] = {};
+            if (!grupos[escuela][sala][comision]) grupos[escuela][sala][comision] = [];
+            grupos[escuela][sala][comision].push(est);
+        });
+
+        // Ordenar las salas dentro de cada escuela antes de retornar
+        const gruposOrdenados: any = {};
+        Object.keys(grupos).forEach(esc => {
+            const salasKeys = Object.keys(grupos[esc]).sort((a, b) => {
+                const pesoA = ordenSalas[a] ?? 99; // 99 para nombres que no coincidan
+                const pesoB = ordenSalas[b] ?? 99;
+                return pesoA - pesoB;
+            });
+
+            gruposOrdenados[esc] = {};
+            salasKeys.forEach(key => {
+                gruposOrdenados[esc][key] = grupos[esc][key];
+            });
+        });
+
+        return gruposOrdenados;
+    };
+
+
+    // 2. Filtrado extendido (incluyendo los nuevos dropdowns)
+    const estudiantesFiltrados = estudiantes.filter((est) => {
+        const cumpleTexto = `${est.personas.nombre} ${est.personas.primer_apellido} ${est.personas.dni}`
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase());
+
+        const cumpleEscuela = escuelaFiltro === "todas" || est.escuela?.escuela_id === escuelaFiltro;
+
+        // Filtro de Sala: puede venir de aula_asignada o de la relación directa [cite: 55, 64]
+        const cumpleSala = salaFiltro === "todas" || String(est.sala_id) === salaFiltro;
+
+        // Filtro de Comisión
+        const cumpleComision = comisionFiltro === "todas" || est.aula_asignada?.comision === comisionFiltro;
+
+        return cumpleTexto && cumpleEscuela && cumpleSala && cumpleComision;
+    });
+
+    // 3. Obtener comisiones únicas para el dropdown (opcional)
+    const comisionesUnicas = Array.from(new Set(estudiantes
+        .map(est => est.aula_asignada?.comision)
+        .filter((c): c is string => Boolean(c))
+    ));
+
     // --- Handlers de Navegación ---
     const handleEdit = (estudiante: Estudiante) => {
         setSelectedForEdit(estudiante);
         setView("form");
     };
-
-    // const handleGoToForm = () => {
-    //     setSelectedForEdit(null); // Limpiamos por si veníamos de una edición
-    //     setView("form");
-    // };
 
     const handleBackToList = () => {
         setSelectedForEdit(null);
@@ -297,35 +364,145 @@ export default function Estudiantes() {
                                 )}
                             </>
                         ) : (
-                            <EstudiantesList 
-                                estudiantes={estudiantes} 
-                                onAddEstudiante={() => setView("form")} 
-                                onEditEstudiante={handleEdit}
-                                onBulkAdd={() => setView("bulk")} // Nueva prop
-                            />
+                            <Box>
+                                {/* BARRA DE BUSQUEDA Y DROPDOWNS */}
+                                <Paper elevation={0} sx={{ p: 2, mb: 4, bgcolor: '#fff', border: '1px solid #eee', borderRadius: 3 }}>
+                                    <Stack spacing={2}>
+                                        <TextField
+                                            fullWidth
+                                            placeholder="Buscar por nombre, apellido o DNI..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            InputProps={{
+                                                startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment>,
+                                                sx: { borderRadius: 2 }
+                                            }}
+                                        />
+
+                                        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                                            {/* DROPDOWN ESCUELA [cite: 52, 53] */}
+                                            <FormControl fullWidth size="small">
+                                                <InputLabel>Escuela</InputLabel>
+                                                <Select
+                                                    value={escuelaFiltro}
+                                                    label="Escuela"
+                                                    onChange={(e) => setEscuelaFiltro(e.target.value)}
+                                                >
+                                                    <MenuItem value="todas">Todas las Escuelas</MenuItem>
+                                                    {/* Aquí mapeas tus escuelas cargadas en el estado listaEscuelas */}
+                                                    {Array.from(new Set(estudiantes.map(e => e.escuela?.nombre))).map(nombre => {
+                                                        const id = estudiantes.find(e => e.escuela?.nombre === nombre)?.escuela?.escuela_id;
+                                                        return <MenuItem key={id} value={id}>{nombre}</MenuItem>
+                                                    })}
+                                                </Select>
+                                            </FormControl>
+
+                                            {/* DROPDOWN SALA [cite: 64] */}
+                                            <FormControl fullWidth size="small">
+                                                <InputLabel>Sala</InputLabel>
+                                                <Select
+                                                    value={salaFiltro}
+                                                    label="Sala"
+                                                    onChange={(e) => setSalaFiltro(e.target.value)}
+                                                >
+                                                    <MenuItem value="todas">Todas las Salas</MenuItem>
+                                                    {/* Mapeo de salas únicas */}
+                                                    {Array.from(new Set(estudiantes.map(e => e.salas?.nombre))).map(nombre => {
+                                                        const id = estudiantes.find(e => e.salas?.nombre === nombre)?.sala_id;
+                                                        return <MenuItem key={id} value={String(id)}>{nombre}</MenuItem>
+                                                    })}
+                                                </Select>
+                                            </FormControl>
+
+                                            {/* DROPDOWN COMISION [cite: 55] */}
+                                            <FormControl fullWidth size="small">
+                                                <InputLabel>Comisión</InputLabel>
+                                                <Select
+                                                    value={comisionFiltro}
+                                                    label="Comisión"
+                                                    onChange={(e) => setComisionFiltro(e.target.value)}
+                                                >
+                                                    <MenuItem value="todas">Todas las Comisiones</MenuItem>
+                                                    {comisionesUnicas.map(c => (
+                                                        <MenuItem key={c} value={c}>{c}</MenuItem>
+                                                    ))}
+                                                </Select>
+                                            </FormControl>
+                                        </Stack>
+                                    </Stack>
+                                </Paper>
+
+                                {Object.entries(agruparEstudiantes(estudiantesFiltrados)).map(([escuela, salas]: [string, any]) => (
+                                    <Box key={escuela} sx={{ mb: 4 }}> {/* Reducido el margen entre escuelas */}
+
+                                        {/* NIVEL 1: ESCUELA (Aparece una sola vez por bloque) */}
+                                        <Box sx={{
+                                            bgcolor: '#eaeffd', // Color azul suave de fondo
+                                            p: 1.5,
+                                            borderRadius: 2,
+                                            mb: 2,
+                                            borderLeft: '5px solid #5c7cfa'
+                                        }}>
+                                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#2c3e50' }}>
+                                                Escuela
+                                            </Typography>
+                                            <Typography variant="h5" sx={{ fontWeight: 700, color: '#2c3e50' }}>
+                                                {escuela}
+                                            </Typography>
+                                        </Box>
+
+                                        {Object.entries(salas).map(([sala, comisiones]: [string, any]) => (
+                                            <Box key={sala} sx={{ ml: { md: 2 }, mb: 2 }}> {/* Margen lateral y vertical reducido */}
+
+                                                {/* NIVEL 2: SALA (Con color similar a Evaluaciones) */}
+                                                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', color: "#555", fontWeight: 600 }}>
+                                                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#A3BE54', mr: 1 }} />
+                                                    {sala}
+                                                </Typography>
+
+                                                {Object.entries(comisiones).map(([comision, listaEst]: [string, any]) => (
+                                                    <Box key={comision} sx={{ mb: 1, mt: 0.5 }}> {/* Espaciado mínimo entre comisiones */}
+                                                        <Typography variant="subtitle1" sx={{ mb: 1, fontStyle: 'italic', color: "#777" }}>
+                                                            Comisión: {comision}
+                                                        </Typography>
+
+                                                        <EstudiantesList
+                                                            estudiantes={listaEst}
+                                                            onAddEstudiante={() => setView("form")}
+                                                            onEditEstudiante={handleEdit}
+                                                            onBulkAdd={() => setView("bulk")}
+                                                            hideFilters={true} // Oculta el buscador interno
+                                                        />
+                                                    </Box>
+                                                ))}
+                                            </Box>
+                                        ))}
+                                    </Box>
+                                ))}
+                            </Box>
                         )}
                     </>
                 )}
 
                 {view === 'form' && (
                     <Box sx={{ pt: 4 }}>
-                        <EstudianteForm 
-                            onCancel={handleBackToList} 
-                            onSuccess={handleSuccess} 
+                        <EstudianteForm
+                            onCancel={handleBackToList}
+                            onSuccess={handleSuccess}
                             estudianteAEditar={selectedForEdit}
                             aulaContext={
                                 userRole === "docente" && !selectedForEdit && selectedAulaId
                                     ? (() => {
-                                          const aula = aulasDocente.find((a) => a.id === selectedAulaId);
-                                          if (!aula) return null;
-                                          return {
-                                              aula_id: aula.id,
-                                              sala_id: aula.sala_id,
-                                              escuela_id: aula.escuela_id,
-                                              aulaLabel: `${aula.sala?.grado ?? "?"}° - ${aula.comision} (${aula.turno})`,
-                                              escuelaNombre: aula.escuela?.nombre ?? null,
-                                          };
-                                      })()
+                                        const aula = aulasDocente.find((a) => a.id === selectedAulaId);
+                                        if (!aula) return null;
+                                        return {
+                                            aula_id: aula.id,
+                                            sala_id: aula.sala_id,
+                                            escuela_id: aula.escuela_id,
+                                            aulaLabel: `${aula.sala?.grado ?? "?"}° - ${aula.comision} (${aula.turno})`,
+                                            escuelaNombre: aula.escuela?.nombre ?? null,
+                                        };
+                                    })()
                                     : null
                             }
                         />
@@ -350,34 +527,34 @@ export default function Estudiantes() {
                     </Box>
                 )}
                 {view === 'bulk' && (
-                    <BulkUploadForm                      
+                    <BulkUploadForm
                         onCancel={handleBackToList}
                         onSuccess={(data) => {
                             setView('successBulk');
                             setRefreshKey(k => k + 1);
                             setCantidadCreados(data.length);
-                            
+
                         }}
                     />
                 )}
                 {view === 'successBulk' && (
-                <Paper sx={{ p: 5, textAlign: 'center', borderRadius: 3 }}>
-                    <CheckCircleOutlineIcon sx={{ fontSize: 80, color: 'success.main', mb: 3 }} />
-                    <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
-                        ¡Carga Masiva Exitosa!
-                    </Typography>
-                    <Typography variant="body1" color="textSecondary" sx={{ mb: 4 }}>
-                        Se han registrado {cantidadCreados} estudiantes correctamente 
-                        en el sistema.
-                    </Typography>
-                    <Button 
-                        variant="contained" 
-                        onClick={() => setView('list')}
-                        sx={{ bgcolor: '#000', px: 4, py: 1.5, borderRadius: 2 }}
-                    >
-                        Volver a la lista
-                    </Button>
-                </Paper>
+                    <Paper sx={{ p: 5, textAlign: 'center', borderRadius: 3 }}>
+                        <CheckCircleOutlineIcon sx={{ fontSize: 80, color: 'success.main', mb: 3 }} />
+                        <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
+                            ¡Carga Masiva Exitosa!
+                        </Typography>
+                        <Typography variant="body1" color="textSecondary" sx={{ mb: 4 }}>
+                            Se han registrado {cantidadCreados} estudiantes correctamente
+                            en el sistema.
+                        </Typography>
+                        <Button
+                            variant="contained"
+                            onClick={() => setView('list')}
+                            sx={{ bgcolor: '#000', px: 4, py: 1.5, borderRadius: 2 }}
+                        >
+                            Volver a la lista
+                        </Button>
+                    </Paper>
                 )}
             </Container>
         </Box>

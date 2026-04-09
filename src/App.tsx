@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import Login from "./pages/Login"
-import Register from "./pages/Register"
 import Home from "./pages/Home"
 import Evaluaciones from "./pages/Evaluaciones"
 import Estudiantes from "./pages/Estudiantes"
@@ -106,7 +105,6 @@ function App() {
         <Route path="/cambiar-contrasena-temporal" element={<CambiarContrasenaTemporal />} />
 
         {/* Registro: solo redirige a home si ya está logueado; de lo contrario bloquea */}
-        <Route path="/register" element={<Navigate to={currentUser ? "/home" : "/login"} replace />} />
         <Route path="*" element={<Navigate to={currentUser ? "/home" : "/login"} replace />} />
         <Route path="/actualizar-password" element={<ActualizarContrasena />} />
       </Routes>

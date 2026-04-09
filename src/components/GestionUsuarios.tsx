@@ -183,7 +183,7 @@ export default function GestionUsuarios() {
         }
 
         // Normalizar columnas (case-insensitive)
-        const normalized: CreateUserPayload[] = rows.map((row, i) => {
+        const normalized: CreateUserPayload[] = rows.map((row, _i) => {
           const get = (keys: string[]) => {
             for (const k of keys) {
               const found = Object.keys(row).find(

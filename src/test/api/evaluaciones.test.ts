@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { mockFetchResponse } from "../setup";
 
 // Mock del módulo auth para que getAuthHeaders no rompa en Node

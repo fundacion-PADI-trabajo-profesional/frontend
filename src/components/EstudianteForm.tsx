@@ -308,7 +308,8 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
                                     onChange={(e) => handleAulaChange(e.target.value)}
                                 >
                                     <MenuItem value=""><em>Sin asignar</em></MenuItem>
-                                    {aulasDisponibles.map((aula) => (
+                                    {aulasDisponibles.filter(aula => !estudianteAEditar || !formData.sala_id || String(aula.sala_id) === formData.sala_id)
+                                        .map((aula) => (
                                         <MenuItem key={aula.id} value={aula.id}>
                                             {aula.sala?.nombre} - {aula.comision} ({aula.turno})
                                         </MenuItem>

@@ -241,7 +241,7 @@ export default function Login({ onLogin }: LoginProps) {
                 }}
               >
                 <Button
-                  onClick={() => navigate("/actualizar-password")}
+                  onClick={() => navigate("/recuperar-password")}
                   sx={{
                     color: "#444",
                     textTransform: "none",

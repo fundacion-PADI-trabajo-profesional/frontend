@@ -298,3 +298,11 @@ export async function adminDeleteUser(userId: string) {
   const response = await api.delete(`/admin/users/${userId}`);
   return response.data;
 }
+
+/**
+ * Reenvía el email de invitación a un usuario pendiente de activación.
+ */
+export async function adminResendInvite(userId: string) {
+  const response = await api.post(`/admin/users/${userId}/resend-invite`, {});
+  return response.data;
+}

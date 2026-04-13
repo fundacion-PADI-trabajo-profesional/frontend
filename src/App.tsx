@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import Login from "./pages/Login"
-import Register from "./pages/Register"
 import Home from "./pages/Home"
 import Evaluaciones from "./pages/Evaluaciones"
 import Estudiantes from "./pages/Estudiantes"
@@ -18,6 +17,7 @@ import Zonas from "./pages/Zonas"
 import ZonaDetalle from "./pages/ZonaDetalle"
 import PanelControl from "./pages/PanelControl"
 import ActualizarContrasena from "./pages/ActualizarContrasena"
+import SolicitarRecuperoPassword from "./pages/SolicitarRecuperoPassword"
 import CambiarContrasenaTemporal from "./pages/CambiarContrasenaTemporal"
 import GestionUsuariosPage from "./pages/GestionUsuariosPage"
 
@@ -105,10 +105,12 @@ function App() {
         {/* Cambio de contraseña temporal (primer login) — accesible solo con token activo */}
         <Route path="/cambiar-contrasena-temporal" element={<CambiarContrasenaTemporal />} />
 
-        {/* Registro: solo redirige a home si ya está logueado; de lo contrario bloquea */}
-        <Route path="/register" element={<Navigate to={currentUser ? "/home" : "/login"} replace />} />
-        <Route path="*" element={<Navigate to={currentUser ? "/home" : "/login"} replace />} />
+        {/* Flujo de recuperación de contraseña — rutas públicas */}
+        <Route path="/recuperar-password" element={<SolicitarRecuperoPassword />} />
         <Route path="/actualizar-password" element={<ActualizarContrasena />} />
+
+        {/* Registro: solo redirige a home si ya está logueado; de lo contrario bloquea */}
+        <Route path="*" element={<Navigate to={currentUser ? "/home" : "/login"} replace />} />
       </Routes>
     </BrowserRouter>
   )

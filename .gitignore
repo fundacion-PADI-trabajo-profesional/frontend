@@ -27,3 +27,6 @@ dist-ssr
 *storybook.log
 .env
 .env.local
+.env.test
+
+coverage/

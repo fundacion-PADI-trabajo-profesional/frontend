@@ -1,5 +1,5 @@
 // src/components/GestionUsuarios.tsx
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import * as XLSX from "xlsx";
 import {
   Alert,
@@ -13,6 +13,7 @@ import {
   DialogTitle,
   Divider,
   IconButton,
+  InputAdornment,
   MenuItem,
   Paper,
   Table,
@@ -36,11 +37,14 @@ import CloseIcon from "@mui/icons-material/Close";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import MarkEmailReadIcon from "@mui/icons-material/MarkEmailRead";
+import SearchIcon from "@mui/icons-material/Search";
 import {
   adminCreateUser,
   adminCreateUsersBulk,
   adminDeleteUser,
   adminListUsers,
+  adminResendInvite,
   type CreateUserPayload,
 } from "../api/auth";
 
@@ -70,6 +74,7 @@ interface Usuario {
   nombre: string;
   apellido: string;
   rol: string;
+  estado: "activo" | "pendiente";
 }
 
 const emptyForm: CreateUserPayload = {
@@ -83,6 +88,11 @@ export default function GestionUsuarios() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // ── Filtros ────────────────────────────────────────────────────────────────
+  const [filterText, setFilterText] = useState("");
+  const [filterRol, setFilterRol] = useState("");
+  const [filterEstado, setFilterEstado] = useState("");
 
   // Modal individual
   const [openIndividual, setOpenIndividual] = useState(false);
@@ -102,6 +112,10 @@ export default function GestionUsuarios() {
   const [confirmDelete, setConfirmDelete] = useState<Usuario | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  // Reenvío de invitación
+  const [resendingId, setResendingId] = useState<string | null>(null);
+  const [resendSuccess, setResendSuccess] = useState("");
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchUsuarios = useCallback(async () => {
@@ -120,6 +134,30 @@ export default function GestionUsuarios() {
   useEffect(() => {
     fetchUsuarios();
   }, [fetchUsuarios]);
+
+  // ── Lista filtrada ─────────────────────────────────────────────────────────
+
+  const filteredUsuarios = useMemo(() => {
+    const text = filterText.toLowerCase().trim();
+    return usuarios.filter((u) => {
+      if (text) {
+        const matchNombre = u.nombre.toLowerCase().includes(text);
+        const matchApellido = u.apellido.toLowerCase().includes(text);
+        const matchEmail = u.email.toLowerCase().includes(text);
+        if (!matchNombre && !matchApellido && !matchEmail) return false;
+      }
+      if (filterRol && u.rol !== filterRol) return false;
+      if (filterEstado && u.estado !== filterEstado) return false;
+      return true;
+    });
+  }, [usuarios, filterText, filterRol, filterEstado]);
+
+  const hasFilters = filterText || filterRol || filterEstado;
+  const clearFilters = () => {
+    setFilterText("");
+    setFilterRol("");
+    setFilterEstado("");
+  };
 
   // ─── CREACIÓN INDIVIDUAL ───────────────────────────────────────────────────
 
@@ -142,7 +180,7 @@ export default function GestionUsuarios() {
     try {
       await adminCreateUser(formData);
       setFormSuccess(
-        `Usuario ${formData.nombre} ${formData.apellido} creado. Se envió un correo con la contraseña temporal.`
+        `Usuario ${formData.nombre} ${formData.apellido} creado. Se envió un correo con la invitación.`
       );
       setFormData(emptyForm);
       fetchUsuarios();
@@ -182,8 +220,7 @@ export default function GestionUsuarios() {
           return;
         }
 
-        // Normalizar columnas (case-insensitive)
-        const normalized: CreateUserPayload[] = rows.map((row, i) => {
+        const normalized: CreateUserPayload[] = rows.map((row) => {
           const get = (keys: string[]) => {
             for (const k of keys) {
               const found = Object.keys(row).find(
@@ -202,7 +239,6 @@ export default function GestionUsuarios() {
           };
         });
 
-        // Validaciones básicas
         const invalidos = normalized.filter(
           (r) => !r.nombre || !r.apellido || !r.email || !ROLES.find((rol) => rol.value === r.rol)
         );
@@ -221,8 +257,6 @@ export default function GestionUsuarios() {
       }
     };
     reader.readAsBinaryString(file);
-
-    // Reset input para permitir subir el mismo archivo nuevamente
     e.target.value = "";
   };
 
@@ -251,7 +285,7 @@ export default function GestionUsuarios() {
     setBulkResult(null);
   };
 
-  // ─── DESCARGA DE PLANTILLA ─────────────────────────────────────────────────
+  // ─── PLANTILLA ─────────────────────────────────────────────────────────────
 
   const downloadTemplate = () => {
     const templateData = [
@@ -280,6 +314,23 @@ export default function GestionUsuarios() {
       setConfirmDelete(null);
     } finally {
       setDeleteLoading(false);
+    }
+  };
+
+  // ─── REENVÍO DE INVITACIÓN ─────────────────────────────────────────────────
+
+  const handleResendInvite = async (usuario: Usuario) => {
+    setResendingId(usuario.id);
+    setResendSuccess("");
+    setError("");
+    try {
+      await adminResendInvite(usuario.id);
+      setResendSuccess(`Invitación reenviada a ${usuario.email}.`);
+      setTimeout(() => setResendSuccess(""), 5000);
+    } catch (err: any) {
+      setError(err.message || "No se pudo reenviar la invitación.");
+    } finally {
+      setResendingId(null);
     }
   };
 
@@ -321,10 +372,79 @@ export default function GestionUsuarios() {
         </Box>
       </Box>
 
+      {/* Alertas globales */}
       {error && (
         <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }} onClose={() => setError("")}>
           {error}
         </Alert>
+      )}
+      {resendSuccess && (
+        <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }} onClose={() => setResendSuccess("")}>
+          {resendSuccess}
+        </Alert>
+      )}
+
+      {/* ── Barra de búsqueda y filtros ─────────────────────────────────────── */}
+      <Box sx={{ display: "flex", gap: 1.5, mb: 2, flexWrap: "wrap", alignItems: "center" }}>
+        <TextField
+          size="small"
+          placeholder="Buscar por nombre, apellido o email..."
+          value={filterText}
+          onChange={(e) => setFilterText(e.target.value)}
+          sx={{ flexGrow: 1, minWidth: 220 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" sx={{ color: "#999" }} />
+              </InputAdornment>
+            ),
+          }}
+        />
+
+        <TextField
+          select
+          size="small"
+          label="Rol"
+          value={filterRol}
+          onChange={(e) => setFilterRol(e.target.value)}
+          sx={{ minWidth: 180 }}
+        >
+          <MenuItem value="">Todos los roles</MenuItem>
+          {ROLES.map((r) => (
+            <MenuItem key={r.value} value={r.value}>
+              {r.label}
+            </MenuItem>
+          ))}
+        </TextField>
+
+        <TextField
+          select
+          size="small"
+          label="Estado"
+          value={filterEstado}
+          onChange={(e) => setFilterEstado(e.target.value)}
+          sx={{ minWidth: 160 }}
+        >
+          <MenuItem value="">Todos los estados</MenuItem>
+          <MenuItem value="activo">Activo</MenuItem>
+          <MenuItem value="pendiente">Pendiente</MenuItem>
+        </TextField>
+
+        {hasFilters && (
+          <Button
+            size="small"
+            onClick={clearFilters}
+            sx={{ textTransform: "none", color: "#888", whiteSpace: "nowrap" }}
+          >
+            Limpiar filtros
+          </Button>
+        )}
+      </Box>
+
+      {hasFilters && !loading && (
+        <Typography variant="caption" color="#888" sx={{ display: "block", mb: 1.5 }}>
+          Mostrando {filteredUsuarios.length} de {usuarios.length} usuario(s)
+        </Typography>
       )}
 
       {/* Tabla */}
@@ -341,18 +461,19 @@ export default function GestionUsuarios() {
                 <TableCell sx={{ fontWeight: 700 }}>Apellido</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Email</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Rol</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 60 }} align="center">Acc.</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Estado</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: 90 }} align="center">Acc.</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {usuarios.length === 0 ? (
+              {filteredUsuarios.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4, color: "#999" }}>
-                    No hay usuarios registrados.
+                  <TableCell colSpan={6} align="center" sx={{ py: 4, color: "#999" }}>
+                    {hasFilters ? "No hay usuarios que coincidan con los filtros." : "No hay usuarios registrados."}
                   </TableCell>
                 </TableRow>
               ) : (
-                usuarios.map((u) => (
+                filteredUsuarios.map((u) => (
                   <TableRow key={u.id} hover>
                     <TableCell>{u.nombre}</TableCell>
                     <TableCell>{u.apellido}</TableCell>
@@ -365,16 +486,48 @@ export default function GestionUsuarios() {
                         variant="outlined"
                       />
                     </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={u.estado === "activo" ? "Activo" : "Pendiente"}
+                        size="small"
+                        sx={{
+                          fontWeight: 600,
+                          bgcolor: u.estado === "activo" ? "#e8f5e9" : "#fff8e1",
+                          color: u.estado === "activo" ? "#2e7d32" : "#f57f17",
+                          border: `1px solid ${u.estado === "activo" ? "#a5d6a7" : "#ffe082"}`,
+                        }}
+                      />
+                    </TableCell>
                     <TableCell align="center">
-                      <Tooltip title="Eliminar usuario">
-                        <IconButton
-                          size="small"
-                          onClick={() => setConfirmDelete(u)}
-                          sx={{ color: "#c62828", "&:hover": { bgcolor: "#ffebee" } }}
-                        >
-                          <DeleteOutlineIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                      <Box sx={{ display: "flex", justifyContent: "center", gap: 0.5 }}>
+                        {u.estado === "pendiente" && (
+                          <Tooltip title="Reenviar invitación">
+                            <span>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleResendInvite(u)}
+                                disabled={resendingId === u.id}
+                                sx={{ color: "#f57f17", "&:hover": { bgcolor: "#fff8e1" } }}
+                              >
+                                {resendingId === u.id ? (
+                                  <CircularProgress size={14} sx={{ color: "#f57f17" }} />
+                                ) : (
+                                  <MarkEmailReadIcon fontSize="small" />
+                                )}
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        )}
+                        <Tooltip title="Eliminar usuario">
+                          <IconButton
+                            size="small"
+                            onClick={() => setConfirmDelete(u)}
+                            sx={{ color: "#c62828", "&:hover": { bgcolor: "#ffebee" } }}
+                          >
+                            <DeleteOutlineIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ))
@@ -461,7 +614,7 @@ export default function GestionUsuarios() {
           </TextField>
 
           <Typography variant="caption" color="#888" sx={{ display: "block", mt: 1 }}>
-            Se generará una contraseña temporal y se enviará al email del usuario.
+            El usuario recibirá un email con un enlace para establecer su contraseña.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
@@ -502,14 +655,12 @@ export default function GestionUsuarios() {
         </DialogTitle>
         <Divider />
         <DialogContent sx={{ pt: 3 }}>
-          {/* Instrucciones */}
           <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
             Subí un archivo <strong>.xlsx o .csv</strong> con las columnas:{" "}
             <strong>nombre, apellido, email, rol</strong>. Los valores válidos para el rol son:{" "}
             {ROLES.map((r) => <code key={r.value} style={{ marginRight: 6 }}>{r.value}</code>)}
           </Alert>
 
-          {/* Zona de carga */}
           {!bulkResult && (
             <Box
               onClick={() => fileInputRef.current?.click()}
@@ -557,7 +708,6 @@ export default function GestionUsuarios() {
             </Alert>
           )}
 
-          {/* Vista previa de filas cargadas */}
           {excelRows.length > 0 && !bulkResult && (
             <>
               <Typography variant="subtitle2" fontWeight={700} mb={1} color="#333">
@@ -605,7 +755,6 @@ export default function GestionUsuarios() {
             </>
           )}
 
-          {/* Resultado de la carga */}
           {bulkResult && (
             <Box>
               <Alert
@@ -668,11 +817,7 @@ export default function GestionUsuarios() {
               <Button
                 variant="contained"
                 onClick={handleBulkSubmit}
-                disabled={
-                  bulkLoading ||
-                  excelRows.length === 0 ||
-                  !!excelError
-                }
+                disabled={bulkLoading || excelRows.length === 0 || !!excelError}
                 startIcon={
                   bulkLoading ? (
                     <CircularProgress size={16} color="inherit" />
@@ -687,9 +832,7 @@ export default function GestionUsuarios() {
                   "&:hover": { bgcolor: "#558040" },
                 }}
               >
-                {bulkLoading
-                  ? "Procesando..."
-                  : `Importar ${excelRows.length} usuario(s)`}
+                {bulkLoading ? "Procesando..." : `Importar ${excelRows.length} usuario(s)`}
               </Button>
             </>
           )}

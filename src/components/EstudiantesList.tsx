@@ -1,14 +1,10 @@
 "use client"
 
 import {
-    Box, List, ListItem, ListItemText, Typography, Paper, InputAdornment,
-    TextField, Button, IconButton, Menu, MenuItem, ListItemIcon,
-    Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, Tooltip
+    Box, List, ListItem, ListItemText, Typography, Paper, IconButton, Menu, MenuItem, ListItemIcon, Tooltip
 } from "@mui/material"
 import { useState, useMemo, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import SearchIcon from "@mui/icons-material/Search"
-import FilterListIcon from "@mui/icons-material/FilterList"
 import MoreVertIcon from "@mui/icons-material/MoreVert"
 import AssessmentIcon from "@mui/icons-material/Assessment"
 import EditIcon from "@mui/icons-material/Edit"
@@ -34,20 +30,18 @@ interface EstudiantesListProps {
 
 export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEstudiante, onBulkAdd }: EstudiantesListProps) {
     const navigate = useNavigate()
-    const [filtroTexto, setFiltroTexto] = useState("")
+    const [filtroTexto] = useState("")
     const [userRole, setUserRole] = useState<string>("")
 
     // Filtros de selección
-    const [escuelaFiltro, setEscuelaFiltro] = useState<string>("todas")
-    const [salaFiltro, setSalaFiltro] = useState<string>("todas")
+    const [escuelaFiltro] = useState<string>("todas")
+    const [salaFiltro] = useState<string>("todas")
 
     // Datos de selectores
-    const [listaEscuelas, setListaEscuelas] = useState<Escuela[]>([])
-    const [listaSalas, setListaSalas] = useState<Sala[]>([])
-    const [puedeVerEscuelas, setPuedeVerEscuelas] = useState(false)
+    const [_listaEscuelas, setListaEscuelas] = useState<Escuela[]>([])
+    const [_listaSalas, setListaSalas] = useState<Sala[]>([])
 
     // UI States
-    const [openFilterDialog, setOpenFilterDialog] = useState(false)
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
     const [selectedStudent, setSelectedStudent] = useState<Estudiante | null>(null)
 
@@ -76,11 +70,9 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
                 if (user?.rol === "equipo_padi" || user?.rol === "encargado_zona") {
                     const escuelasData = await getEscuelas()
                     setListaEscuelas(escuelasData)
-                    setPuedeVerEscuelas(true)
                 }
             } catch (err) {
                 console.log("No se cargaron escuelas por falta de permisos o error")
-                setPuedeVerEscuelas(false)
             }
         }
         loadInitialData()
@@ -144,35 +136,20 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
             return acc;
         }, {} as Record<string, Estudiante[]>);
 
-        // 3. Ordenar claves: Alfabético y "Sin comisión" al final
+        // 3. Ordenar claves: Por sala_id ascendente, "Sin comisión" al final
         const ordenadas = Object.keys(grupos).sort((a, b) => {
             if (a === "Sin comisión") return 1;
             if (b === "Sin comisión") return -1;
-            return a.localeCompare(b);
+
+            // Obtener sala_id de los estudiantes en cada grupo
+            const salaIdA = filtrados.find(est => est.salas?.nombre === a)?.sala_id || 0;
+            const salaIdB = filtrados.find(est => est.salas?.nombre === b)?.sala_id || 0;
+
+            return salaIdA - salaIdB;
         });
 
         return { agrupados: grupos, salasOrdenadas: ordenadas };
     }, [estudiantes, filtroTexto, escuelaFiltro, salaFiltro]);
-
-    const resetFiltros = () => {
-        setEscuelaFiltro("todas")
-        setSalaFiltro("todas")
-    }
-
-    const renderAulaLabel = (est: Estudiante) => {
-        const aula = est.aula_asignada;
-        if (!aula) return "Sin aula asignada";
-
-        const salaNombre = aula.sala?.nombre ?? `Sala ${aula.sala_id}`;
-        const comision = aula.comision || "Sin comisión";
-        const turno = aula.turno || "Sin turno";
-        return `${salaNombre} - ${comision} (${turno})`;
-    };
-
-    const renderColegioLabel = (est: Estudiante) => {
-        const maybeEscuelas = (est as any).escuelas;
-        return est.escuela?.nombre || maybeEscuelas?.nombre || "Sin colegio";
-    };
 
     const getEstadoColor = (estado: string | null | undefined) => {
         if (estado === "A") return "#2e7d32";
@@ -189,106 +166,32 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
     };
 
     return (
-        <Box sx={{ position: "relative", pb: 10 }}>
-            {/* Buscador y Botón Filtrar */}
-            <Box sx={{ display: "flex", gap: 2, mb: 4, alignItems: "center" }}>
-                <TextField
-                    fullWidth
-                    variant="outlined"
-                    placeholder="Buscar estudiante..."
-                    value={filtroTexto}
-                    onChange={(e) => setFiltroTexto(e.target.value)}
-                    InputProps={{
-                        startAdornment: (<InputAdornment position="start"><SearchIcon color="action" /></InputAdornment>),
-                        sx: { borderRadius: 3, bgcolor: "#fff" }
-                    }}
-                />
-                <Button
-                    variant={escuelaFiltro !== "todas" || salaFiltro !== "todas" ? "contained" : "outlined"}
-                    startIcon={<FilterListIcon />}
-                    onClick={() => setOpenFilterDialog(true)}
-                    sx={{ borderRadius: 3, height: "56px", px: 3, textTransform: "none", fontWeight: 600 }}
-                >
-                    Filtrar
-                </Button>
-            </Box>
-
-            {/* Diálogo de Filtros Dinámico */}
-            <Dialog open={openFilterDialog} onClose={() => setOpenFilterDialog(false)} fullWidth maxWidth="xs">
-                <DialogTitle sx={{ fontWeight: 700 }}>Opciones de Filtro</DialogTitle>
-                <DialogContent>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
-
-                        {/* FILTRO DE ESCUELAS: Solo se muestra si tiene permisos  */}
-                        {puedeVerEscuelas && (
-                            <FormControl fullWidth variant="filled">
-                                <InputLabel>Institución / Escuela</InputLabel>
-                                <Select value={escuelaFiltro} onChange={(e) => setEscuelaFiltro(e.target.value)}>
-                                    <MenuItem value="todas">Todas las instituciones</MenuItem>
-                                    {listaEscuelas.map((esc) => (
-                                        <MenuItem key={esc.id} value={esc.id}>{esc.nombre}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        )}
-
-                        {/* FILTRO DE SALAS: Siempre visible */}
-                        <FormControl fullWidth variant="filled">
-                            <InputLabel>Sala / Comisión</InputLabel>
-                            <Select value={salaFiltro} onChange={(e) => setSalaFiltro(e.target.value)}>
-                                <MenuItem value="todas">Todas las salas</MenuItem>
-                                {listaSalas.map((s) => (
-                                    <MenuItem key={s.id} value={String(s.id)}>{s.nombre}</MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Box>
-                </DialogContent>
-                <DialogActions sx={{ p: 3 }}>
-                    <Button onClick={resetFiltros}>Limpiar</Button>
-                    <Button variant="contained" onClick={() => setOpenFilterDialog(false)} sx={{ bgcolor: '#000' }}>
-                        Ver resultados
-                    </Button>
-                </DialogActions>
-            </Dialog>
+        <Box sx={{ position: "relative" }}>
 
             {/* Listado Agrupado */}
             {salasOrdenadas.map((salaNombre) => (
                 <Box key={salaNombre} sx={{ mb: 4 }}>
-                    <Typography variant="subtitle2" sx={{ color: "#666", mb: 1, fontWeight: 700, textTransform: "uppercase" }}>
+                    {/* <Typography variant="subtitle2" sx={{ color: "#666", mb: 1, fontWeight: 700, textTransform: "uppercase" }}>
                         {salaNombre}
-                    </Typography>
+                    </Typography> */}
                     <Paper elevation={0} sx={{ border: "1px solid #eee", borderRadius: 3, overflow: "hidden" }}>
                         <List disablePadding>
                             {agrupados[salaNombre].map((est, index) => (
+                                // Modificación de la fila del ListItem:
                                 <ListItem
                                     key={est.id}
                                     divider={index < agrupados[salaNombre].length - 1}
                                     secondaryAction={
-                                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                                            {/* Semáforo de colores basado en evaluaciones_resumen  */}
                                             <Tooltip title={`Inicial: ${getEstadoLabel(est.evaluaciones_resumen?.inicial)}`}>
-                                                <Box
-                                                    sx={{
-                                                        width: 14,
-                                                        height: 14,
-                                                        borderRadius: "50%",
-                                                        border: "1.5px solid #bdbdbd",
-                                                        bgcolor: getEstadoColor(est.evaluaciones_resumen?.inicial),
-                                                    }}
-                                                />
+                                                <Box sx={{ width: 14, height: 14, borderRadius: "50%", bgcolor: getEstadoColor(est.evaluaciones_resumen?.inicial), border: "1px solid #ccc" }} />
                                             </Tooltip>
                                             <Tooltip title={`Cierre: ${getEstadoLabel(est.evaluaciones_resumen?.cierre)}`}>
-                                                <Box
-                                                    sx={{
-                                                        width: 14,
-                                                        height: 14,
-                                                        borderRadius: "50%",
-                                                        border: "1.5px solid #bdbdbd",
-                                                        bgcolor: getEstadoColor(est.evaluaciones_resumen?.cierre),
-                                                    }}
-                                                />
+                                                <Box sx={{ width: 14, height: 14, borderRadius: "50%", bgcolor: getEstadoColor(est.evaluaciones_resumen?.cierre), border: "1px solid #ccc" }} />
                                             </Tooltip>
-                                            <IconButton edge="end" onClick={(e) => handleMenuOpen(e, est)}>
+
+                                            <IconButton onClick={(e) => handleMenuOpen(e, est)}>
                                                 <MoreVertIcon />
                                             </IconButton>
                                         </Box>
@@ -296,18 +199,11 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
                                 >
                                     <ListItemText
                                         primary={
-                                            <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap", pr: 14 }}>
-                                                <Typography sx={{ fontWeight: 600 }}>
-                                                    {est.personas.primer_apellido}, {est.personas.nombre}
-                                                </Typography>
-                                                <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                                                    {renderColegioLabel(est)}
-                                                </Typography>
-                                                <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                                                    {renderAulaLabel(est)}
-                                                </Typography>
-                                            </Box>
+                                            <Typography sx={{ fontWeight: 600 }}>
+                                                {est.personas.primer_apellido}, {est.personas.nombre}
+                                            </Typography>
                                         }
+                                        secondary={est.personas.dni ? `DNI: ${est.personas.dni}` : "Sin DNI"}
                                     />
                                 </ListItem>
                             ))}

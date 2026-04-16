@@ -24,6 +24,13 @@ export interface EstudianteFormData {
     aula_id?: string
 }
 
+export interface EvaluacionAño {
+    sala_id: number
+    sala_nombre: string | null
+    inicial: string | null
+    cierre: string | null
+}
+
 // Tipo para el estudiante devuelto por la API (en la lista)
 export interface Estudiante {
     id: string
@@ -45,6 +52,7 @@ export interface Estudiante {
     escuela: {
         escuela_id: string
         nombre: string | null
+        zona_nombre?: string | null
     }
     aula_asignada?: {
         id: string
@@ -57,6 +65,7 @@ export interface Estudiante {
             grado: number | null
         } | null
     } | null
+    evaluaciones_historial?: EvaluacionAño[]
     evaluaciones_resumen?: {
         inicial: string | null
         cierre: string | null

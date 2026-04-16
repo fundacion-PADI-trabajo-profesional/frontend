@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Box, Container, Typography, Button, CircularProgress, Alert, Paper, List, ListItem, ListItemText, Stack, Tooltip, FormControl, InputLabel, Select, MenuItem } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import { useNavigate } from "react-router-dom"
-import EstudiantesList from "../components/EstudiantesList"
+import EstudiantesCompacto from "../components/EstudiantesCompacto"
 import EstudianteForm from "../components/EstudianteForm"
 import { getEstudiantes, type Estudiante, type EstudianteCreado } from "../api/estudiantes"
 import { getDocenteAulasConEstudiantes, type DocenteAulaConEstudiantes } from "../api/aulas"
@@ -68,49 +68,7 @@ export default function Estudiantes() {
         }
     }
 
-    const agruparEstudiantes = (lista: Estudiante[]) => {
-        const grupos: any = {};
-
-        // Mapa de ordenamiento: Cuanto menor el número, más arriba aparece
-        const ordenSalas: Record<string, number> = {
-            "Sala: Sin asignar": 0,
-            "Sala de 3": 1,
-            "Sala de 4": 2,
-            "Sala de 5": 3
-        };
-
-        lista.forEach((est) => {
-            const escuela = est.escuela?.nombre || "Sin Escuela";
-            // Normalizamos el nombre para que coincida con nuestro mapa de orden
-            const sala = est.aula_asignada?.sala?.nombre || "Sala: Sin asignar";
-            const comision = `${est.aula_asignada?.comision || 'Única'} (${est.aula_asignada?.turno || 'N/A'})`;
-
-            if (!grupos[escuela]) grupos[escuela] = {};
-            if (!grupos[escuela][sala]) grupos[escuela][sala] = {};
-            if (!grupos[escuela][sala][comision]) grupos[escuela][sala][comision] = [];
-            grupos[escuela][sala][comision].push(est);
-        });
-
-        // Ordenar las salas dentro de cada escuela antes de retornar
-        const gruposOrdenados: any = {};
-        Object.keys(grupos).forEach(esc => {
-            const salasKeys = Object.keys(grupos[esc]).sort((a, b) => {
-                const pesoA = ordenSalas[a] ?? 99; // 99 para nombres que no coincidan
-                const pesoB = ordenSalas[b] ?? 99;
-                return pesoA - pesoB;
-            });
-
-            gruposOrdenados[esc] = {};
-            salasKeys.forEach(key => {
-                gruposOrdenados[esc][key] = grupos[esc][key];
-            });
-        });
-
-        return gruposOrdenados;
-    };
-
-
-    // 2. Filtrado extendido (incluyendo los nuevos dropdowns)
+    // Filtrado extendido
     const estudiantesFiltrados = estudiantes.filter((est) => {
         const cumpleTexto = `${est.personas.nombre} ${est.personas.primer_apellido} ${est.personas.dni}`
             .toLowerCase()
@@ -200,7 +158,7 @@ export default function Estudiantes() {
             {/* Header: Solo se muestra en List y Success */}
             {view !== 'form' && (
                 <Box sx={{ py: { xs: 3, md: 4 }, borderBottom: "1px solid #e0e0e0", bgcolor: '#f5f5f5' }}>
-                    <Container maxWidth="lg">
+                    <Container maxWidth="xl">
                         <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
                             <Button
                                 startIcon={<ArrowBackIcon />}
@@ -218,7 +176,7 @@ export default function Estudiantes() {
             )}
 
             {/* Contenido Principal */}
-            <Container maxWidth="lg" sx={{ mt: view === 'form' ? 0 : 4, pb: 6 }}>
+            <Container maxWidth="xl" sx={{ mt: view === 'form' ? 0 : 4, pb: 6 }}>
                 {view === 'list' && (
                     <>
                         {loading ? (
@@ -432,52 +390,13 @@ export default function Estudiantes() {
                                     </Stack>
                                 </Paper>
 
-                                {Object.entries(agruparEstudiantes(estudiantesFiltrados)).map(([escuela, salas]: [string, any]) => (
-                                    <Box key={escuela} sx={{ mb: 4 }}> {/* Reducido el margen entre escuelas */}
-
-                                        {/* NIVEL 1: ESCUELA (Aparece una sola vez por bloque) */}
-                                        <Box sx={{
-                                            bgcolor: '#eaeffd', // Color azul suave de fondo
-                                            p: 1.5,
-                                            borderRadius: 2,
-                                            mb: 2,
-                                            borderLeft: '5px solid #5c7cfa'
-                                        }}>
-                                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#2c3e50' }}>
-                                                Escuela
-                                            </Typography>
-                                            <Typography variant="h5" sx={{ fontWeight: 700, color: '#2c3e50' }}>
-                                                {escuela}
-                                            </Typography>
-                                        </Box>
-
-                                        {Object.entries(salas).map(([sala, comisiones]: [string, any]) => (
-                                            <Box key={sala} sx={{ ml: { md: 2 }, mb: 2 }}> {/* Margen lateral y vertical reducido */}
-
-                                                {/* NIVEL 2: SALA (Con color similar a Evaluaciones) */}
-                                                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', color: "#555", fontWeight: 600 }}>
-                                                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#A3BE54', mr: 1 }} />
-                                                    {sala}
-                                                </Typography>
-
-                                                {Object.entries(comisiones).map(([comision, listaEst]: [string, any]) => (
-                                                    <Box key={comision} sx={{ mb: 1, mt: 0.5 }}> {/* Espaciado mínimo entre comisiones */}
-                                                        <Typography variant="subtitle1" sx={{ mb: 1, fontStyle: 'italic', color: "#777" }}>
-                                                            Comisión: {comision}
-                                                        </Typography>
-
-                                                        <EstudiantesList
-                                                            estudiantes={listaEst}
-                                                            onAddEstudiante={() => setView("form")}
-                                                            onEditEstudiante={handleEdit}
-                                                            onBulkAdd={() => setView("bulk")}
-                                                        />
-                                                    </Box>
-                                                ))}
-                                            </Box>
-                                        ))}
-                                    </Box>
-                                ))}
+                                <EstudiantesCompacto
+                                    estudiantes={estudiantesFiltrados}
+                                    onAddEstudiante={() => setView("form")}
+                                    onEditEstudiante={handleEdit}
+                                    onBulkAdd={() => setView("bulk")}
+                                    userRole={userRole}
+                                />
                             </Box>
                         )}
                     </>

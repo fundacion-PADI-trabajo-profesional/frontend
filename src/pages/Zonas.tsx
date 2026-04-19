@@ -1,162 +1,219 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import {
-    Box, Container, Table, TableBody, TableCell, TableContainer,
-    TableHead, TableRow, Paper, IconButton, Dialog, DialogTitle,
-    DialogContent, CircularProgress, Alert, Chip
+    Box,
+    Button,
+    Chip,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Typography,
 } from "@mui/material";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import EditIcon from "@mui/icons-material/Edit";
-import PageHeader from "../components/PageHeader";
+import CloseIcon from "@mui/icons-material/Close";
+import { createZona, desvincularEncargado, type Zona } from "../api/zonas";
+import AsignarEncargadoModal from "../components/AsignarEncargadoModal"; 
+import BotonNuevo from "../components/BotonNuevo";
 import ZonaForm from "../components/ZonaForm";
-import { getZonas, createZona, type Zona, updateZona } from "../api/zonas";
 
-export default function Zonas() {
-    const [zonas, setZonas] = useState<Zona[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const [modalOpen, setModalOpen] = useState(false);
-    const [saving, setSaving] = useState(false);
-    const navigate = useNavigate();
-    const [editingZona, setEditingZona] = useState<Zona | null>(null);
+interface ZonasViewProps {
+    zonas: Zona[];
+    onVerEscuelas: (zona: Zona) => void;
+    onUpdate: () => Promise<void>;
+    setError: (error: string | null) => void;
+}
 
-    const handleEditClick = (zona: Zona) => {
-        setEditingZona(zona);
-        setModalOpen(true);
+export default function ZonasView({ zonas, onVerEscuelas, onUpdate, setError }: ZonasViewProps) {
+    // Estado para crear zona
+    const [zonaDialogOpen, setZonaDialogOpen] = useState(false);
+    const [savingZona, setSavingZona] = useState(false);
+   
+    // Estado para tu modal de encargados
+    const [encargadoModalOpen, setEncargadoModalOpen] = useState(false);
+    const [selectedZonaForEncargado, setSelectedZonaForEncargado] = useState<Zona | null>(null);
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+    const [encargadoToRemove, setEncargadoToRemove] = useState<{ id: string; nombre: string } | null>(null);
+
+    const openCreateZonaDialog = () => {
+        setZonaDialogOpen(true);
     };
 
-    const loadData = async () => {
-        setLoading(true);
-        setError("");
+    const handleCreateZona = async (data: { nombre: string }) => {
+        setSavingZona(true);
+        setError(null);
         try {
-            const data = await getZonas();
-            setZonas(data);
-        } catch (err: any) {
-            setError(err.message);
+            await createZona(data.nombre.trim());
+            setZonaDialogOpen(false);
+            await onUpdate();
+        } catch (e: any) {
+            // Lanzamos el error para que lo ataje el catch de ZonaForm y lo muestre en el TextField
+            throw e; 
         } finally {
-            setLoading(false);
+            setSavingZona(false);
         }
     };
 
-    useEffect(() => {
-        loadData();
-    }, []);
+    const openEncargadoModal = (zona: Zona) => {
+        setSelectedZonaForEncargado(zona);
+        setEncargadoModalOpen(true);
+    };
 
-    const handleSave = async (data: { nombre: string }) => {
-        setSaving(true);
+    const handleRemoveClick = (encargadoZonaId: string, nombre: string) => {
+        setEncargadoToRemove({ id: encargadoZonaId, nombre });
+        setConfirmDeleteOpen(true);
+    };
+
+    const confirmRemoveEncargado = async () => {
+        if (!encargadoToRemove) return;
+        setError(null);
         try {
-            if (editingZona) {
-                await updateZona(editingZona.id, data.nombre);
-            } else {
-                await createZona(data.nombre);
-            }
-            setModalOpen(false);
-            setEditingZona(null); // Limpiar estado
-            await loadData();
-        } catch (err) {
-            throw err;
+            await desvincularEncargado(encargadoToRemove.id);
+            await onUpdate();
+        } catch (e: any) {
+            setError(e.message || "Error al quitar encargado");
         } finally {
-            setSaving(false);
+            setConfirmDeleteOpen(false);
+            setEncargadoToRemove(null);
         }
     };
 
     return (
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-            <PageHeader
-                title="Zonas"
-                subtitle="Gestión de regiones geográficas y sus instituciones"
-                onAdd={() => setModalOpen(true)}
-                addLabel="Nueva Zona"
-            />
-
-            {error && <Alert severity="error" sx={{ mb: 3, mt: 2 }}>{error}</Alert>}
-
-            <TableContainer component={Paper} sx={{ mt: 3, borderRadius: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+        <>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+                <BotonNuevo 
+                    texto="Nueva zona" 
+                    onClick={openCreateZonaDialog} 
+                />
+            </Box>
+            <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
                 <Table>
                     <TableHead sx={{ bgcolor: "#f8f9fa" }}>
                         <TableRow>
-                            <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Nombre de la Zona</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Escuelas</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Encargados</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Acciones</TableCell>
+                            <TableCell sx={{ fontWeight: "bold" }}>Zona</TableCell>
+                            <TableCell sx={{ fontWeight: "bold" }}>Encargados</TableCell>
+                            <TableCell sx={{ fontWeight: "bold" }} align="center">Escuelas</TableCell>
+                            <TableCell sx={{ fontWeight: "bold" }} align="center">Acciones</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {loading ? (
+                        {zonas.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={4} align="center" sx={{ py: 5 }}>
-                                    <CircularProgress sx={{ color: "#A3BE54" }} />
-                                </TableCell>
-                            </TableRow>
-                        ) : zonas.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={4} align="center" sx={{ py: 3, color: "#777" }}>
-                                    No hay zonas registradas. Comienza creando una.
+                                    No hay zonas registradas.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            zonas.map((zona) => (
-                                <TableRow key={zona.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                                    <TableCell align="center" sx={{ fontWeight: 500 }}>{zona.nombre}</TableCell>
-                                    <TableCell align="center">
-                                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                                            <Chip
-                                                label={`${zona._count?.escuelas || 0} escuelas`}
+                            zonas.map((zona) => {
+                                const encargados = zona.encargados || [];
+                                return (
+                                    <TableRow key={zona.id} hover>
+                                        <TableCell>{zona.nombre}</TableCell>
+                                        <TableCell>
+                                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                                                {encargados.length > 0 ? (
+                                                    encargados.map((enc) => (
+                                                        <Chip
+                                                            key={enc.id}
+                                                            label={`${enc.usuario.nombre} ${enc.usuario.apellido}`}
+                                                            onDelete={() =>
+                                                                handleRemoveClick(
+                                                                    enc.id,
+                                                                    `${enc.usuario.nombre} ${enc.usuario.apellido}`
+                                                                )
+                                                            }
+                                                            deleteIcon={<CloseIcon />}
+                                                            size="small"
+                                                            sx={{
+                                                                bgcolor: "rgba(103, 58, 183, 0.1)",
+                                                                color: "#673AB7",
+                                                                fontWeight: 500,
+                                                                "& .MuiChip-deleteIcon": { color: "#673AB7" },
+                                                            }}
+                                                        />
+                                                    ))
+                                                ) : (
+                                                    <Typography variant="body2" sx={{ color: "#999" }}>
+                                                        Sin asignar
+                                                    </Typography>
+                                                )}
+                                            </Box>
+                                        </TableCell>
+                                        <TableCell align="center">{zona._count?.escuelas || 0}</TableCell>
+                                        <TableCell align="center">
+                                            <Button
+                                                size="small"
+                                                sx={{ textTransform: "none", mr: 1 }}
+                                                onClick={() => openEncargadoModal(zona)}
+                                            >
+                                                Asignar encargado
+                                            </Button>
+                                            <Button
                                                 size="small"
                                                 variant="outlined"
-                                                sx={{ color: "#2196F3", borderColor: "#2196F3" }}
-                                            />
-                                        </Box>
-                                    </TableCell>
-                                    <TableCell align="center">
-                                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                                            <Chip
-                                                label={`${zona._count?.encargados || 0} encargados`}
-                                                size="small"
-                                                variant="outlined"
-                                                sx={{ color: "#673AB7", borderColor: "#673AB7" }}
-                                            />
-                                        </Box>
-                                    </TableCell>
-                                    <TableCell align="center">
-                                        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
-                                            <IconButton
-                                                size="small"
-                                                sx={{ color: "#666" }}
-                                                onClick={() => handleEditClick(zona)}
+                                                sx={{ textTransform: "none" }}
+                                                onClick={() => onVerEscuelas(zona)}
                                             >
-                                                <EditIcon fontSize="small" />
-                                            </IconButton>
-                                            <IconButton
-                                                size="small"
-                                                color="primary"
-                                                onClick={() => navigate(`/zonas/${zona.id}`)}
-                                                title="Ver detalle de zona"
-                                            >
-                                                <VisibilityIcon />
-                                            </IconButton>
-                                        </Box>
-                                    </TableCell>
-                                </TableRow>
-                            ))
+                                                Ver escuelas
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })
                         )}
                     </TableBody>
                 </Table>
             </TableContainer>
 
-            <Dialog open={modalOpen} onClose={() => { setModalOpen(false); setEditingZona(null); }}>
-                <DialogTitle sx={{ fontWeight: "bold" }}>
-                    {editingZona ? "Editar Nombre de Zona" : "Crear Nueva Zona"}
-                </DialogTitle>
+            {/* Modal para Crear Zona */}
+            <Dialog open={zonaDialogOpen} onClose={() => setZonaDialogOpen(false)} fullWidth maxWidth="sm">
+                <DialogTitle sx={{ fontWeight: "bold" }}>Nueva zona</DialogTitle>
                 <DialogContent>
-                    <ZonaForm
-                        onSubmit={handleSave}
-                        onCancel={() => { setModalOpen(false); setEditingZona(null); }}
-                        loading={saving}
-                        initialValue={editingZona?.nombre}
+                    <ZonaForm 
+                        onSubmit={handleCreateZona} 
+                        onCancel={() => setZonaDialogOpen(false)} 
+                        loading={savingZona} 
                     />
                 </DialogContent>
             </Dialog>
-        </Container>
+
+            {/* Tu Modal para Asignar Encargado */}
+            {selectedZonaForEncargado && (
+                <AsignarEncargadoModal
+                    open={encargadoModalOpen}
+                    onClose={() => setEncargadoModalOpen(false)}
+                    zonaId={selectedZonaForEncargado.id}
+                    onSuccess={onUpdate}
+                />
+            )}
+
+            {/* Modal de Confirmación para Quitar Encargado */}
+            <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)} maxWidth="xs" fullWidth>
+                <DialogTitle sx={{ fontWeight: "bold" }}>Quitar encargado</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        ¿Estás seguro que querés quitar a <strong>{encargadoToRemove?.nombre}</strong> de esta zona?
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={() => setConfirmDeleteOpen(false)} color="inherit">
+                        Cancelar
+                    </Button>
+                    <Button 
+                        onClick={confirmRemoveEncargado} 
+                        variant="contained" 
+                        color="error"
+                        sx={{ textTransform: "none", fontWeight: "bold" }}
+                    >
+                        Quitar
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </>
     );
 }

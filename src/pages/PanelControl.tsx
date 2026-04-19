@@ -3,7 +3,6 @@ import {
     Alert,
     Box,
     Button,
-    Chip,
     CircularProgress,
     Container,
     Dialog,
@@ -23,7 +22,6 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddIcon from "@mui/icons-material/Add";
-import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { type Escuela, getEscuelas } from "../api/escuelas";
 import { type Aula, type AulaDocente, getAulas, getAulaEstudiantes, getAulaDocentes, asignarDocenteAula, desasignarDocenteAula, asignarEstudianteAula, desasignarEstudianteAula, createAula, deleteAula } from "../api/aulas";
@@ -31,14 +29,10 @@ import { type Estudiante, getEstudiantes, getSalas, type Sala } from "../api/est
 import { getDocentes, type Docente } from "../api/docentes";
 import { asignarEscuelaADirectivo, getDirectivos, type Directivo } from "../api/directivos";
 import {
-    asignarEncargadoAZona,
-    createZona,
-    desvincularEncargado,
-    getEncargadosZonaOptions,
     getZonas,
-    type EncargadoZonaOption,
     type Zona,
 } from "../api/zonas";
+import Zonas from "./Zonas";
 type ViewMode = "zonas" | "escuelas" | "aulas" | "estudiantes";
 
 export default function PanelControl() {
@@ -54,7 +48,6 @@ export default function PanelControl() {
     const [escuelas, setEscuelas] = useState<Escuela[]>([]);
     const [aulas, setAulas] = useState<Aula[]>([]);
     const [directivos, setDirectivos] = useState<Directivo[]>([]);
-    const [encargadosOptions, setEncargadosOptions] = useState<EncargadoZonaOption[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -70,16 +63,6 @@ export default function PanelControl() {
     const [directorEscuelaTarget, setDirectorEscuelaTarget] = useState<Escuela | null>(null);
     const [directorId, setDirectorId] = useState("");
     const [savingDirector, setSavingDirector] = useState(false);
-
-    const [zonaDialogOpen, setZonaDialogOpen] = useState(false);
-    const [zonaNombre, setZonaNombre] = useState("");
-    const [savingZona, setSavingZona] = useState(false);
-    const [zonaError, setZonaError] = useState("");
-
-    const [encargadoDialogOpen, setEncargadoDialogOpen] = useState(false);
-    const [selectedZonaForEncargado, setSelectedZonaForEncargado] = useState<Zona | null>(null);
-    const [encargadoId, setEncargadoId] = useState("");
-    const [savingEncargado, setSavingEncargado] = useState(false);
 
     const [docentes, setDocentes] = useState<Docente[]>([]);
     const [docenteDialogAula, setDocenteDialogAula] = useState<Aula | null>(null);
@@ -116,18 +99,16 @@ export default function PanelControl() {
             setDocentes(docentesData);
 
             if (isEquipoPadi) {
-                const [zonasData, escuelasData, aulasData, directivosData, encargadosData] = await Promise.all([
+                const [zonasData, escuelasData, aulasData, directivosData] = await Promise.all([
                     getZonas(),
                     getEscuelas(),
                     getAulas(),
                     getDirectivos(),
-                    getEncargadosZonaOptions(),
                 ]);
                 setZonas(zonasData);
                 setEscuelas(escuelasData);
                 setAulas(aulasData);
                 setDirectivos(directivosData);
-                setEncargadosOptions(encargadosData);
                 setView("zonas");
             } else {
                 const [escuelasData, aulasData, directivosData] = await Promise.all([
@@ -293,159 +274,6 @@ export default function PanelControl() {
 
     const estudiantesDisponiblesParaAula = todosLosEstudiantes.filter(
         (e) => !aulaEstudiantes.some((ae) => ae.id === e.id)
-    );
-
-    const openCreateZonaDialog = () => {
-        setZonaNombre("");
-        setZonaError("");
-        setZonaDialogOpen(true);
-    };
-
-    const handleCreateZona = async () => {
-        if (!zonaNombre.trim()) {
-            setZonaError("El nombre es obligatorio");
-            return;
-        }
-        setSavingZona(true);
-        setError(null);
-        try {
-            await createZona(zonaNombre.trim());
-            setZonaDialogOpen(false);
-            await loadData();
-        } catch (e: any) {
-            setZonaError(e.message || "Error al crear zona");
-        } finally {
-            setSavingZona(false);
-        }
-    };
-
-    const openEncargadoDialog = (zona: Zona) => {
-        setSelectedZonaForEncargado(zona);
-        setEncargadoId("");
-        setEncargadoDialogOpen(true);
-    };
-
-    const handleAssignEncargado = async () => {
-        if (!selectedZonaForEncargado || !encargadoId) return;
-        setSavingEncargado(true);
-        setError(null);
-        try {
-            await asignarEncargadoAZona(selectedZonaForEncargado.id, encargadoId);
-            setEncargadoDialogOpen(false);
-            setSelectedZonaForEncargado(null);
-            setEncargadoId("");
-            await loadData();
-        } catch (e: any) {
-            setError(e.message || "Error al asignar encargado");
-        } finally {
-            setSavingEncargado(false);
-        }
-    };
-
-    const handleRemoveEncargadoFromZona = async (encargadoZonaId: string, nombre: string) => {
-        if (!window.confirm(`¿Quitar a ${nombre} de esta zona?`)) {
-            return;
-        }
-        setError(null);
-        try {
-            await desvincularEncargado(encargadoZonaId);
-            await loadData();
-        } catch (e: any) {
-            setError(e.message || "Error al quitar encargado");
-        }
-    };
-
-    const renderZonas = () => (
-        <>
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-                <Button
-                    startIcon={<AddIcon />}
-                    variant="contained"
-                    sx={{ textTransform: "none" }}
-                    onClick={openCreateZonaDialog}
-                >
-                    Nueva zona
-                </Button>
-            </Box>
-            <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
-                <Table>
-                    <TableHead sx={{ bgcolor: "#f8f9fa" }}>
-                        <TableRow>
-                            <TableCell sx={{ fontWeight: "bold" }}>Zona</TableCell>
-                            <TableCell sx={{ fontWeight: "bold" }}>Encargados</TableCell>
-                            <TableCell sx={{ fontWeight: "bold" }} align="center">Escuelas</TableCell>
-                            <TableCell sx={{ fontWeight: "bold" }} align="center">Acciones</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {zonas.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={4} align="center" sx={{ py: 5 }}>
-                                    No hay zonas registradas.
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            zonas.map((zona) => {
-                                const encargados = zona.encargados || [];
-                                return (
-                                    <TableRow key={zona.id} hover>
-                                        <TableCell>{zona.nombre}</TableCell>
-                                        <TableCell>
-                                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                                                {encargados.length > 0 ? (
-                                                    encargados.map((enc) => (
-                                                        <Chip
-                                                            key={enc.id}
-                                                            label={`${enc.usuario.nombre} ${enc.usuario.apellido}`}
-                                                            onDelete={() =>
-                                                                handleRemoveEncargadoFromZona(
-                                                                    enc.id,
-                                                                    `${enc.usuario.nombre} ${enc.usuario.apellido}`,
-                                                                )
-                                                            }
-                                                            deleteIcon={<CloseIcon />}
-                                                            size="small"
-                                                            sx={{
-                                                                bgcolor: "rgba(103, 58, 183, 0.1)",
-                                                                color: "#673AB7",
-                                                                fontWeight: 500,
-                                                                "& .MuiChip-deleteIcon": { color: "#673AB7" },
-                                                            }}
-                                                        />
-                                                    ))
-                                                ) : (
-                                                    <Typography variant="body2" sx={{ color: "#999" }}>
-                                                        Sin asignar
-                                                    </Typography>
-                                                )}
-                                            </Box>
-                                        </TableCell>
-                                        <TableCell align="center">{zona._count?.escuelas || 0}</TableCell>
-                                        <TableCell align="center">
-                                            <Button
-                                                size="small"
-                                                sx={{ textTransform: "none", mr: 1 }}
-                                                onClick={() => openEncargadoDialog(zona)}
-                                            >
-                                                Asignar encargado
-                                            </Button>
-                                            <Button
-                                                size="small"
-                                                variant="outlined"
-                                                sx={{ textTransform: "none" }}
-                                                onClick={() => openZonaEscuelas(zona)}
-                                            >
-                                                Ver escuelas
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            })
-                        )}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-        </>
     );
 
     const renderEscuelas = () => (
@@ -962,7 +790,14 @@ export default function PanelControl() {
                 ) : (
                     <>
                         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-                        {!error && view === "zonas" && renderZonas()}
+                        {!error && view === "zonas" && (
+                            <Zonas
+                                zonas={zonas} 
+                                onVerEscuelas={openZonaEscuelas} 
+                                onUpdate={loadData} 
+                                setError={setError} 
+                            />
+                        )}
                         {!error && view === "escuelas" && renderEscuelas()}
                         {!error && view === "aulas" && renderAulas()}
                         {!error && view === "estudiantes" && renderEstudiantes()}
@@ -1005,70 +840,7 @@ export default function PanelControl() {
                 </DialogActions>
             </Dialog>
 
-            <Dialog open={zonaDialogOpen} onClose={() => setZonaDialogOpen(false)} fullWidth maxWidth="sm">
-                <DialogTitle>Nueva zona</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        fullWidth
-                        label="Nombre de la zona"
-                        value={zonaNombre}
-                        onChange={(e) => {
-                            setZonaNombre(e.target.value);
-                            setZonaError("");
-                        }}
-                        error={!!zonaError}
-                        helperText={zonaError}
-                        sx={{ mt: 1 }}
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setZonaDialogOpen(false)}>Cancelar</Button>
-                    <Button
-                        variant="contained"
-                        onClick={handleCreateZona}
-                        disabled={savingZona}
-                    >
-                        Guardar
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
-            <Dialog open={encargadoDialogOpen} onClose={() => setEncargadoDialogOpen(false)} fullWidth maxWidth="sm">
-                <DialogTitle>Asignar encargado a zona</DialogTitle>
-                <DialogContent>
-                    <Typography sx={{ mb: 2 }}>
-                        Zona: <strong>{selectedZonaForEncargado?.nombre}</strong>
-                    </Typography>
-                    <TextField
-                        select
-                        fullWidth
-                        label="Encargado"
-                        value={encargadoId}
-                        onChange={(e) => setEncargadoId(e.target.value)}
-                    >
-                        {encargadosOptions.map((enc) => (
-                            <MenuItem key={enc.id} value={enc.id}>
-                                {enc.usuario.apellido}, {enc.usuario.nombre}
-                                {enc.zona ? ` (${enc.zona.nombre})` : " (Sin asignar)"}
-                            </MenuItem>
-                        ))}
-                        {encargadosOptions.length === 0 && (
-                            <MenuItem disabled>No hay encargados disponibles</MenuItem>
-                        )}
-                    </TextField>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setEncargadoDialogOpen(false)}>Cancelar</Button>
-                    <Button
-                        variant="contained"
-                        onClick={handleAssignEncargado}
-                        disabled={!encargadoId || savingEncargado}
-                    >
-                        Guardar
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
+            
             {/* Docentes del aula */}
             {docenteDialogAula && (
                 <Box

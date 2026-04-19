@@ -130,31 +130,43 @@ export default function EscuelaDetalle({ escuela, onEdit }: any) {
                         <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Directivos</Typography>
                         <Box sx={columnBoxStyle}>
                             <List disablePadding>
-                                {escuela.directivos?.map((dir: any) => (
-                                    <ListItem key={dir.id} divider>
-                                        <ListItemText
-                                            primary={<Typography sx={{ fontWeight: 600 }}>{dir.nombre} {dir.apellido}</Typography>}
-                                            secondary="Director"
-                                        />
-                                    </ListItem>
-                                ))}
+                                {escuela.directivos?.length > 0 ? (
+                                    escuela.directivos.map((dir: any) => (
+                                        <ListItem key={dir.id} divider>
+                                            <ListItemText
+                                                primary={<Typography sx={{ fontWeight: 600 }}>{dir.nombre} {dir.apellido}</Typography>}
+                                                secondary="Director"
+                                            />
+                                        </ListItem>
+                                    ))
+                                ) : (
+                                    <Typography sx={{ p: 3, textAlign: 'center', color: 'text.secondary', fontStyle: 'italic' }}>
+                                        No hay directivos asignados
+                                    </Typography>
+                                )}
                             </List>
                         </Box>
                     </Grid>
 
-                    {/* COLUMNA 2: PROFESORES */}
+                    {/* COLUMNA 2: DOCENTES */}
                     <Grid item xs={12} md={4}>
-                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Profesores</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Docentes</Typography>
                         <Box sx={columnBoxStyle}>
                             <List disablePadding>
-                                {escuela.profesores?.map((prof: any) => (
-                                    <ListItem key={prof.id} divider>
-                                        <ListItemText
-                                            primary={<Typography sx={{ fontWeight: 600 }}>{prof.personas?.nombre} {prof.personas?.primer_apellido}</Typography>}
-                                            secondary="Docente"
-                                        />
-                                    </ListItem>
-                                ))}
+                                {escuela.profesores?.length > 0 ? (
+                                    escuela.profesores.map((prof: any) => (
+                                        <ListItem key={prof.id} divider>
+                                            <ListItemText
+                                                primary={<Typography sx={{ fontWeight: 600 }}>{prof.personas?.nombre} {prof.personas?.primer_apellido}</Typography>}
+                                                secondary="Docente"
+                                            />
+                                        </ListItem>
+                                    ))
+                                ) : (
+                                    <Typography sx={{ p: 3, textAlign: 'center', color: 'text.secondary', fontStyle: 'italic' }}>
+                                        No hay docentes asignados
+                                    </Typography>
+                                )}
                             </List>
                         </Box>
                     </Grid>
@@ -175,14 +187,20 @@ export default function EscuelaDetalle({ escuela, onEdit }: any) {
                         <Box sx={columnBoxStyle}>
                             {view === "salas" && (
                                 <List disablePadding>
-                                    {salasUnicas.map((sala) => (
-                                        <ListItem key={sala?.id} disablePadding divider>
-                                            <ListItemButton onClick={() => handleSalaClick(sala!.id)} sx={{ py: 1.5 }}>
-                                                <ListItemText primary={<Typography sx={{ fontWeight: 500 }}>{sala?.nombre || `Sala de ${sala?.grado}`}</Typography>} />
-                                                <ChevronRightIcon color="action" fontSize="small" />
-                                            </ListItemButton>
-                                        </ListItem>
-                                    ))}
+                                    {salasUnicas?.length > 0 ? (
+                                        salasUnicas.map((sala) => (
+                                            <ListItem key={sala?.id} disablePadding divider>
+                                                <ListItemButton onClick={() => handleSalaClick(sala!.id)} sx={{ py: 1.5 }}>
+                                                    <ListItemText primary={<Typography sx={{ fontWeight: 500 }}>{sala?.nombre || `Sala de ${sala?.grado}`}</Typography>} />
+                                                    <ChevronRightIcon color="action" fontSize="small" />
+                                                </ListItemButton>
+                                            </ListItem>
+                                        ))
+                                    ) : (
+                                        <Typography sx={{ p: 3, textAlign: 'center', color: 'text.secondary', fontStyle: 'italic' }}>
+                                            No hay salas asignadas
+                                        </Typography>
+                                    )}
                                 </List>
                             )}
 

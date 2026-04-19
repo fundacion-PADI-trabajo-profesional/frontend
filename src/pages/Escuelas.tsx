@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Box, Container, Typography, Button, CircularProgress, Alert, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField } from "@mui/material";
+import { Box, Container, Typography, Button, CircularProgress, Alert, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField, InputAdornment } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-
+import SearchIcon from '@mui/icons-material/Search';
 import EscuelasList from "../components/EscuelasList";
 import EscuelaForm from "../components/EscuelaForm";
 import PageHeader from "../components/PageHeader";
@@ -10,6 +10,7 @@ import { desasignarDirectivo, getEscuelas, Escuela } from "../api/escuelas";
 import EditarEscuela from "../components/EditarEscuela";
 import EscuelaDetalle from "../components/EscuelaDetalle";
 import { asignarEscuelaADirectivo, getDirectivos, type Directivo } from "../api/directivos";
+import { BuscadorPadi } from "../components/SearchBar";
 
 type ViewState = "list" | "form" | "success" | "edit" | "details";
 
@@ -28,6 +29,7 @@ export default function Escuelas() {
     const [directorEscuelaTarget, setDirectorEscuelaTarget] = useState<Escuela | null>(null);
     const [directorId, setDirectorId] = useState("");
     const [savingDirector, setSavingDirector] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
 
     // Cargar escuelas
     useEffect(() => {
@@ -44,6 +46,7 @@ export default function Escuelas() {
     useEffect(() => {
         if (view === "list") {
             loadEscuelas();
+            setSearchTerm("");
         }
     }, [view, refreshKey, currentRole]);
 
@@ -123,6 +126,10 @@ export default function Escuelas() {
         setView("details");
     };
 
+    const escuelasFiltradas = escuelas.filter((escuela) =>
+        escuela.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     const renderContent = () => {
         switch (view) {
             case "list":
@@ -135,6 +142,22 @@ export default function Escuelas() {
                             addLabel="Nueva Escuela"
                         />
 
+                        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-start' }}>
+                            <BuscadorPadi
+                                variant="outlined"
+                                placeholder="Buscar escuela por nombre..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <SearchIcon sx={{ color: '#9e9e9e' }} />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+                        </Box>
+
                         {loading ? (
                             <Box sx={{ display: "flex", justifyContent: "center", p: 8 }}>
                                 <CircularProgress />
@@ -143,14 +166,20 @@ export default function Escuelas() {
                             <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
                         ) : (
                             <Box sx={{ mt: 3 }}>
-                                <EscuelasList
-                                    escuelas={escuelas}
-                                    onEdit={handleEdit}
-                                    onView={handleViewDetails}
-                                    isEquipoPadi={currentRole === "equipo_padi"}
-                                    onAssignDirector={openAssignDirectorDialog}
-                                    onRemoveDirector={handleRemoveDirector}
-                                />
+                                {escuelasFiltradas.length > 0 ? (
+                                    <EscuelasList
+                                        escuelas={escuelasFiltradas}
+                                        onEdit={handleEdit}
+                                        onView={handleViewDetails}
+                                        isEquipoPadi={currentRole === "equipo_padi"}
+                                        onAssignDirector={openAssignDirectorDialog}
+                                        onRemoveDirector={handleRemoveDirector}
+                                    />
+                                ) : (
+                                    <Alert severity="info">
+                                        No se encontraron escuelas que coincidan con la búsqueda.
+                                    </Alert>
+                                )}
                             </Box>
                         )}
                     </>

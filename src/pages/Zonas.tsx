@@ -22,19 +22,19 @@ import AsignarEncargadoModal from "../components/AsignarEncargadoModal";
 import BotonNuevo from "../components/BotonNuevo";
 import ZonaForm from "../components/ZonaForm";
 
-interface ZonasViewProps {
+interface ZonasProps {
     zonas: Zona[];
     onVerEscuelas: (zona: Zona) => void;
     onUpdate: () => Promise<void>;
     setError: (error: string | null) => void;
 }
 
-export default function ZonasView({ zonas, onVerEscuelas, onUpdate, setError }: ZonasViewProps) {
+export default function Zonas({ zonas, onVerEscuelas, onUpdate, setError }: ZonasProps) {
     // Estado para crear zona
     const [zonaDialogOpen, setZonaDialogOpen] = useState(false);
     const [savingZona, setSavingZona] = useState(false);
    
-    // Estado para tu modal de encargados
+    // Estado para el modal de encargados
     const [encargadoModalOpen, setEncargadoModalOpen] = useState(false);
     const [selectedZonaForEncargado, setSelectedZonaForEncargado] = useState<Zona | null>(null);
     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);

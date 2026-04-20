@@ -237,7 +237,7 @@ export default function EstudiantesCompacto({ estudiantes, onAddEstudiante, onEd
         <Paper key={esc.id} elevation={0} sx={{
             border: "1px solid #e0e0e0", borderRadius: 2, overflow: "hidden",
             height: "100%", display: "flex", flexDirection: "column",
-            borderTop: "3px solid #5c7cfa",
+            borderTop: "3px solid #eaeffd",
         }}>
             {/* Header escuela */}
             <Box sx={{ bgcolor: "#eaeffd", px: 2, py: 0.9, borderBottom: "1px solid #d0d8f8", display: "flex", alignItems: "center", gap: 1 }}>

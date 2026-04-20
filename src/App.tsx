@@ -9,12 +9,9 @@ import Estudiantes from "./pages/Estudiantes"
 import HistorialEstudiante from "./pages/HistorialEstudiante"
 import EvaluacionesDocente from "./pages/EvaluacionesDocente"
 import DocentesPage from "./pages/Docentes"
-import EncargadosZona from "./pages/EncargadosZona";
 import "./App.css" //
 import Escuelas from "./pages/Escuelas"
 import AulasPage from "./pages/Aulas"
-import Zonas from "./pages/Zonas"
-import ZonaDetalle from "./pages/ZonaDetalle"
 import PanelControl from "./pages/PanelControl"
 import ActualizarContrasena from "./pages/ActualizarContrasena"
 import SolicitarRecuperoPassword from "./pages/SolicitarRecuperoPassword"
@@ -85,11 +82,8 @@ function App() {
         <Route path="/panel-control" element={currentUser ? <PanelControl /> : <Navigate to="/login" replace />} />
 
         {/* Rutas de Gestión (Ahora protegidas) */}
-        <Route path="/zonas" element={currentUser ? <Zonas /> : <Navigate to="/login" replace />} />
-        <Route path="/zonas/:id" element={currentUser ? <ZonaDetalle /> : <Navigate to="/login" replace />} />
         <Route path="/escuelas" element={currentUser ? <Escuelas /> : <Navigate to="/login" replace />} />
-        <Route path="/encargados-zonas" element={currentUser ? <EncargadosZona /> : <Navigate to="/login" replace />} />
-
+        
         {/* Ruta exclusiva equipo_padi */}
         <Route
           path="/usuarios"

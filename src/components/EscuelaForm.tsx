@@ -7,9 +7,10 @@ import { getCurrentEncargado } from "../api/encargados-zona";
 interface Props {
     onCancel: () => void;
     onSuccess: () => void;
+    defaultZonaId?: string;
 }
 
-export default function EscuelaForm({ onCancel, onSuccess }: Props) {
+export default function EscuelaForm({ onCancel, onSuccess, defaultZonaId }: Props) {
     const [loading, setLoading] = useState(false);
     const [zonas, setZonas] = useState<Zona[]>([]);
     const [loadingZonas, setLoadingZonas] = useState(true);
@@ -19,7 +20,7 @@ export default function EscuelaForm({ onCancel, onSuccess }: Props) {
         nombre: "",
         direccion: "",
         telefono: "",
-        zona_id: ""
+        zona_id: defaultZonaId || ""
     });
 
     useEffect(() => {
@@ -28,6 +29,10 @@ export default function EscuelaForm({ onCancel, onSuccess }: Props) {
             if (storedUser) {
                 const parsedUser = JSON.parse(storedUser);
                 setUserRole(parsedUser.rol);
+
+                if (defaultZonaId) {
+                    setFormData(prev => ({ ...prev, zona_id: defaultZonaId }));
+                }
 
                 if (parsedUser.rol === "encargado_zona") {
                     // Para encargados de zona, obtener su zona asignada
@@ -64,7 +69,7 @@ export default function EscuelaForm({ onCancel, onSuccess }: Props) {
             }
         };
         loadInitialData();
-    }, []);
+    },[defaultZonaId]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });

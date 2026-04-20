@@ -21,10 +21,9 @@ import {
     Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import AddIcon from "@mui/icons-material/Add";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { type Escuela, getEscuelas } from "../api/escuelas";
-import { type Aula, type AulaDocente, getAulas, getAulaEstudiantes, getAulaDocentes, asignarDocenteAula, desasignarDocenteAula, asignarEstudianteAula, desasignarEstudianteAula, createAula, deleteAula } from "../api/aulas";
+import { type Aula, type AulaDocente, getAulaEstudiantes, getAulaDocentes, asignarDocenteAula, desasignarDocenteAula, asignarEstudianteAula, desasignarEstudianteAula } from "../api/aulas";
 import { type Estudiante, getEstudiantes, getSalas, type Sala } from "../api/estudiantes";
 import { getDocentes, type Docente } from "../api/docentes";
 import { asignarEscuelaADirectivo, getDirectivos, type Directivo } from "../api/directivos";
@@ -33,6 +32,9 @@ import {
     type Zona,
 } from "../api/zonas";
 import Zonas from "./Zonas";
+import PageHeader from "../components/PageHeader";
+import EscuelasView from "../components/EscuelasView";
+import AulasView from "./AulasView";
 type ViewMode = "zonas" | "escuelas" | "aulas" | "estudiantes";
 
 export default function PanelControl() {
@@ -46,7 +48,7 @@ export default function PanelControl() {
     const [pendingRestore, setPendingRestore] = useState(!!(initialAulaId || initialEscuelaId));
     const [zonas, setZonas] = useState<Zona[]>([]);
     const [escuelas, setEscuelas] = useState<Escuela[]>([]);
-    const [aulas, setAulas] = useState<Aula[]>([]);
+    const [aulas] = useState<Aula[]>([]);
     const [directivos, setDirectivos] = useState<Directivo[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -69,12 +71,7 @@ export default function PanelControl() {
     const [aulaDocentes, setAulaDocentes] = useState<AulaDocente[]>([]);
     const [selectedDocenteIdForAula, setSelectedDocenteIdForAula] = useState("");
 
-    const [salas, setSalas] = useState<Sala[]>([]);
-    const [showAulaForm, setShowAulaForm] = useState(false);
-    const [newAulaSalaId, setNewAulaSalaId] = useState<number | "">("");
-    const [newAulaComision, setNewAulaComision] = useState("");
-    const [newAulaTurno, setNewAulaTurno] = useState("");
-    const [savingAula, setSavingAula] = useState(false);
+    const [, setSalas] = useState<Sala[]>([]);
 
     const currentRole = useMemo(() => {
         const stored = localStorage.getItem("padiUser");
@@ -99,27 +96,15 @@ export default function PanelControl() {
             setDocentes(docentesData);
 
             if (isEquipoPadi) {
-                const [zonasData, escuelasData, aulasData, directivosData] = await Promise.all([
-                    getZonas(),
-                    getEscuelas(),
-                    getAulas(),
-                    getDirectivos(),
-                ]);
+                const zonasData = await getZonas();
                 setZonas(zonasData);
-                setEscuelas(escuelasData);
-                setAulas(aulasData);
-                setDirectivos(directivosData);
-                setView("zonas");
             } else {
-                const [escuelasData, aulasData, directivosData] = await Promise.all([
+                const [escuelasData, directivosData] = await Promise.all([
                     getEscuelas(),
-                    getAulas(),
                     getDirectivos(),
                 ]);
                 setEscuelas(escuelasData);
-                setAulas(aulasData);
                 setDirectivos(directivosData);
-                setView("escuelas");
             }
         } catch (e: any) {
             setError(e.message || "Error al cargar panel de control");
@@ -133,7 +118,11 @@ export default function PanelControl() {
             navigate("/home");
             return;
         }
-        loadData();
+        
+        loadData().then(() => {
+            if (isEquipoPadi) setView("zonas");
+            else setView("escuelas");
+        });
     }, [isEquipoPadi, isEncargadoZona, navigate]);
 
     useEffect(() => {
@@ -176,26 +165,6 @@ export default function PanelControl() {
         }
         return map;
     }, [aulas]);
-
-    const escuelasVisibles = useMemo(() => {
-        if (selectedZona?.id) {
-            return escuelas.filter((esc) => esc.zona?.id === selectedZona.id);
-        }
-        return escuelas;
-    }, [escuelas, selectedZona]);
-
-    const escuelaDirectorName = (escuela: Escuela) => {
-        if (!escuela.directivos?.length) return "Sin director asignado";
-        const d = escuela.directivos[0];
-        return `${d.nombre} ${d.apellido}`;
-    };
-
-    const openDirectorDialog = (escuela: Escuela) => {
-        setDirectorEscuelaTarget(escuela);
-        const assigned = directivos.find((d) => d.escuela?.id === escuela.id);
-        setDirectorId(assigned?.id || "");
-        setDirectorDialogOpen(true);
-    };
 
     const handleAssignDirector = async () => {
         if (!directorEscuelaTarget || !directorId) return;
@@ -276,90 +245,6 @@ export default function PanelControl() {
         (e) => !aulaEstudiantes.some((ae) => ae.id === e.id)
     );
 
-    const renderEscuelas = () => (
-        <>
-            {isEquipoPadi && (
-                <Button
-                    startIcon={<ArrowBackIcon />}
-                    onClick={() => {
-                        setSelectedZona(null);
-                        setSelectedEscuela(null);
-                        setSelectedAula(null);
-                        setAulaEstudiantes([]);
-                        setView("zonas");
-                    }}
-                    sx={{ mb: 2, textTransform: "none" }}
-                >
-                    Volver a zonas
-                </Button>
-            )}
-
-            {selectedZona && (
-                <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
-                    {selectedZona.nombre}
-                </Typography>
-            )}
-
-            <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
-                <Table>
-                    <TableHead sx={{ bgcolor: "#f8f9fa" }}>
-                        <TableRow>
-                            <TableCell sx={{ fontWeight: "bold" }}>Escuela</TableCell>
-                            <TableCell sx={{ fontWeight: "bold" }}>Director</TableCell>
-                            <TableCell sx={{ fontWeight: "bold" }} align="center">Aulas</TableCell>
-                            <TableCell sx={{ fontWeight: "bold" }} align="center">Acciones</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {escuelasVisibles.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={4} align="center" sx={{ py: 5 }}>
-                                    No hay escuelas para mostrar.
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            escuelasVisibles.map((escuela) => (
-                                <TableRow key={escuela.id} hover>
-                                    <TableCell>{escuela.nombre}</TableCell>
-                                    <TableCell>{escuelaDirectorName(escuela)}</TableCell>
-                                    <TableCell align="center">{(aulasByEscuela.get(escuela.id) || []).length}</TableCell>
-                                    <TableCell align="center">
-                                        <Button
-                                            size="small"
-                                            sx={{ textTransform: "none", mr: 1 }}
-                                            onClick={() => openDirectorDialog(escuela)}
-                                        >
-                                            Asignar director
-                                        </Button>
-                                        <Button
-                                            size="small"
-                                            variant="outlined"
-                                            sx={{ textTransform: "none" }}
-                                            onClick={() => openEscuelaAulas(escuela)}
-                                        >
-                                            Ver aulas
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-        </>
-    );
-
-    const openDocentesDialog = async (aula: Aula) => {
-        try {
-            const data = await getAulaDocentes(aula.id);
-            setDocenteDialogAula(aula);
-            setAulaDocentes(data);
-            setSelectedDocenteIdForAula("");
-        } catch (e: any) {
-            setError(e.message || "Error al cargar docentes del aula");
-        }
-    };
-
     const handleAsignarDocenteAula = async () => {
         if (!docenteDialogAula || !selectedDocenteIdForAula) return;
         try {
@@ -388,212 +273,8 @@ export default function PanelControl() {
         (d) => !aulaDocentes.some((ad) => ad.profesor_id === d.id)
     );
 
-    const handleCreateAula = async () => {
-        if (!selectedEscuela || !newAulaSalaId || !newAulaComision.trim() || !newAulaTurno.trim()) {
-            setError("Todos los campos son obligatorios.");
-            return;
-        }
-        setSavingAula(true);
-        setError(null);
-        try {
-            await createAula({
-                sala_id: Number(newAulaSalaId),
-                comision: newAulaComision.trim(),
-                turno: newAulaTurno.trim(),
-                escuela_id: selectedEscuela.id,
-            });
-            setShowAulaForm(false);
-            setNewAulaSalaId("");
-            setNewAulaComision("");
-            setNewAulaTurno("");
-            await loadData();
-        } catch (e: any) {
-            setError(e.message || "Error al crear el aula");
-        } finally {
-            setSavingAula(false);
-        }
-    };
-
-    const renderAulas = () => {
-        const escuelaAulas = selectedEscuela ? aulasByEscuela.get(selectedEscuela.id) || [] : [];
-        return (
-            <>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                    <Button
-                        startIcon={<ArrowBackIcon />}
-                        onClick={() => { setView("escuelas"); setShowAulaForm(false); }}
-                        sx={{ textTransform: "none" }}
-                    >
-                        Volver a escuelas
-                    </Button>
-                    {!showAulaForm && (
-                        <Button
-                            startIcon={<AddIcon />}
-                            variant="contained"
-                            sx={{
-                                bgcolor: "#5fb878",
-                                color: "white",
-                                textTransform: "none",
-                                fontWeight: 600,
-                                borderRadius: 2,
-                                "&:hover": { bgcolor: "#4a9960" },
-                            }}
-                            onClick={() => setShowAulaForm(true)}
-                        >
-                            Nueva aula
-                        </Button>
-                    )}
-                </Box>
-                <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
-                    {selectedEscuela?.nombre}
-                </Typography>
-
-                {showAulaForm && (
-                    <Paper sx={{ p: 3, mb: 3, border: "1px solid #eee", borderRadius: 2 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                            Crear nueva aula
-                        </Typography>
-                        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
-                            <TextField
-                                select
-                                label="Sala / Grado"
-                                value={newAulaSalaId}
-                                onChange={(e) => setNewAulaSalaId(Number(e.target.value))}
-                                sx={{ minWidth: 180 }}
-                                size="small"
-                            >
-                                {salas.map((s) => (
-                                    <MenuItem key={s.id} value={s.id}>
-                                        {s.nombre} {s.grado ? `(${s.grado})` : ""}
-                                    </MenuItem>
-                                ))}
-                            </TextField>
-                            <TextField
-                                label="Comisión"
-                                value={newAulaComision}
-                                onChange={(e) => setNewAulaComision(e.target.value)}
-                                size="small"
-                            />
-                            <TextField
-                                label="Turno"
-                                placeholder="mañana / tarde"
-                                value={newAulaTurno}
-                                onChange={(e) => setNewAulaTurno(e.target.value)}
-                                size="small"
-                            />
-                            <Button
-                                variant="contained"
-                                onClick={handleCreateAula}
-                                disabled={savingAula}
-                                sx={{ bgcolor: "#000", "&:hover": { bgcolor: "#333" }, textTransform: "none", fontWeight: 600 }}
-                            >
-                                Guardar
-                            </Button>
-                            <Button
-                                variant="outlined"
-                                onClick={() => { setShowAulaForm(false); setNewAulaSalaId(""); setNewAulaComision(""); setNewAulaTurno(""); }}
-                                sx={{ textTransform: "none", borderColor: "#000", color: "#000" }}
-                            >
-                                Cancelar
-                            </Button>
-                        </Box>
-                    </Paper>
-                )}
-
-                <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
-                    <Table>
-                        <TableHead sx={{ bgcolor: "#f8f9fa" }}>
-                            <TableRow>
-                                <TableCell sx={{ fontWeight: "bold" }}>Sala</TableCell>
-                                <TableCell sx={{ fontWeight: "bold" }}>Comisión</TableCell>
-                                <TableCell sx={{ fontWeight: "bold" }}>Turno</TableCell>
-                                <TableCell sx={{ fontWeight: "bold" }}>Docentes</TableCell>
-                                <TableCell sx={{ fontWeight: "bold" }} align="center">Acción</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {escuelaAulas.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
-                                        Esta escuela no tiene aulas cargadas.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                escuelaAulas.map((aula) => (
-                                    <TableRow key={aula.id} hover>
-                                        <TableCell>{aula.sala?.nombre || `Sala ${aula.sala_id}`}</TableCell>
-                                        <TableCell>{aula.comision}</TableCell>
-                                        <TableCell>{aula.turno}</TableCell>
-                                        <TableCell>
-                                            {aula.profesores_aulas && aula.profesores_aulas.length > 0
-                                                ? aula.profesores_aulas.map((pa) => {
-                                                    const nombre = pa.profesor?.personas?.nombre || "";
-                                                    const apellido = pa.profesor?.personas?.primer_apellido || "";
-                                                    return `${apellido}, ${nombre}`.trim();
-                                                  }).join(" | ")
-                                                : <Typography variant="body2" sx={{ color: "#999" }}>Sin asignar</Typography>
-                                            }
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            <Button
-                                                size="small"
-                                                variant="outlined"
-                                                sx={{ textTransform: "none", mr: 1 }}
-                                                onClick={() => openAulaEstudiantes(aula)}
-                                            >
-                                                Ver estudiantes
-                                            </Button>
-                                            <Button
-                                                size="small"
-                                                variant="outlined"
-                                                sx={{
-                                                    textTransform: "none",
-                                                    mr: 1,
-                                                    borderColor: "#2e7d32",
-                                                    color: "#2e7d32",
-                                                    "&:hover": {
-                                                        bgcolor: "rgba(46, 125, 50, 0.04)",
-                                                        borderColor: "#2e7d32",
-                                                    },
-                                                }}
-                                                onClick={() => openDocentesDialog(aula)}
-                                            >
-                                                Docentes
-                                            </Button>
-                                            <Button
-                                                size="small"
-                                                variant="outlined"
-                                                sx={{
-                                                    textTransform: "none",
-                                                    borderColor: "#d32f2f",
-                                                    color: "#d32f2f",
-                                                    "&:hover": {
-                                                        bgcolor: "rgba(211, 47, 47, 0.04)",
-                                                        borderColor: "#d32f2f",
-                                                    },
-                                                }}
-                                                onClick={async () => {
-                                                    if (!window.confirm(`¿Seguro que querés eliminar el aula "${aula.comision}" (${aula.turno})?`)) return;
-                                                    try {
-                                                        await deleteAula(aula.id);
-                                                        await loadData();
-                                                    } catch (e: any) {
-                                                        setError(e.message || "Error al eliminar el aula");
-                                                    }
-                                                }}
-                                            >
-                                                Eliminar
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            </>
-        );
-    };
+ 
+   
 
     const buildPanelBackTo = () => {
         const parts = ["/panel-control"];
@@ -762,25 +443,12 @@ export default function PanelControl() {
 
     return (
         <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
-            <Box sx={{ bgcolor: "#f5f5f5", py: 4, borderBottom: "1px solid #e0e0e0" }}>
-                <Container maxWidth="lg">
-                    <Button
-                        startIcon={<ArrowBackIcon />}
-                        onClick={() => navigate("/home")}
-                        sx={{ color: "#5c7cfa", textTransform: "none", mb: 2 }}
-                    >
-                        Volver a inicio
-                    </Button>
-                    <Box>
-                        <Typography variant="h3" component="h1" sx={{ fontWeight: 700 }}>
-                            Panel de control
-                        </Typography>
-                        <Typography variant="body1" sx={{ color: "#666" }}>
-                            {panelSubtitle}
-                        </Typography>
-                    </Box>
-                </Container>
-            </Box>
+            <PageHeader 
+                title="Panel de control"
+                subtitle={panelSubtitle}
+                backTo="/home"
+                backLabel="Volver a inicio"
+            />
 
             <Container maxWidth="lg" sx={{ py: 4 }}>
                 {loading || pendingRestore ? (
@@ -798,8 +466,24 @@ export default function PanelControl() {
                                 setError={setError} 
                             />
                         )}
-                        {!error && view === "escuelas" && renderEscuelas()}
-                        {!error && view === "aulas" && renderAulas()}
+                        {!error && view === "escuelas" && (
+                            <EscuelasView
+                                zonaIdParam={selectedZona?.id}
+                                isEquipoPadi={isEquipoPadi}
+                                onVolver={() => {
+                                    setSelectedZona(null);
+                                    setView("zonas");
+                                }}
+                                onVerAulas={openEscuelaAulas}
+                            />
+                        )}
+                        {!error && view === "aulas" && selectedEscuela && (
+                            <AulasView
+                                escuelaId={selectedEscuela.id}
+                                isEquipoPadi={isEquipoPadi}
+                                onVerEstudiantes={openAulaEstudiantes}
+                            />
+                        )}
                         {!error && view === "estudiantes" && renderEstudiantes()}
                     </>
                 )}

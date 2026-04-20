@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-import { Box, Button, Typography, Dialog, DialogContent, CircularProgress, TextField, MenuItem, DialogActions, DialogTitle } from "@mui/material";
+import { useState, useEffect, useMemo } from "react";
+import { Box, Button, Typography, Dialog, DialogContent, CircularProgress, TextField, MenuItem, DialogActions, DialogTitle, InputAdornment } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import SearchIcon from "@mui/icons-material/Search";
 import EscuelasList from "./EscuelasList";
 import EscuelaForm from "./EscuelaForm";
 import BotonNuevo from "./BotonNuevo";
@@ -8,22 +9,25 @@ import { getEscuelas, type Escuela } from "../api/escuelas";
 import { getDirectivos, type Directivo, asignarEscuelaADirectivo } from "../api/directivos";
 import { getZonas } from "../api/zonas";
 import { getAulas, type Aula } from "../api/aulas"; 
+import { BuscadorPadi } from "./SearchBar";
 
 interface Props {
     zonaIdParam?: string | null;
     isEquipoPadi: boolean;
     onVolver: () => void;
     onVerAulas: (escuela: Escuela) => void;
+    showBack?: boolean; 
+    showTitle?: boolean;
 }
 
-export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVerAulas }: Props) {
+export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVerAulas, showBack, showTitle }: Props) {
     const [escuelas, setEscuelas] = useState<Escuela[]>([]);
     const [, setAulas] = useState<Aula[]>([]); 
     const [directivos, setDirectivos] = useState<Directivo[]>([]);
     const [zonaNombre, setZonaNombre] = useState("");
     const [loading, setLoading] = useState(true);
     const [, setError] = useState<string | null>(null);
-
+    const [busqueda, setBusqueda] = useState("");
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [directorDialogOpen, setDirectorDialogOpen] = useState(false);
     const [directorEscuelaTarget, setDirectorEscuelaTarget] = useState<Escuela | null>(null);
@@ -61,6 +65,13 @@ export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVe
 
     useEffect(() => { fetchData(); }, [zonaIdParam]);
 
+    const escuelasFiltradas = useMemo(() => {
+        return escuelas.filter(escuela => 
+            escuela.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+            escuela.direccion?.toLowerCase().includes(busqueda.toLowerCase())
+        );
+    }, [escuelas, busqueda]);
+
     const handleAssignDirector = async () => {
         if (!directorEscuelaTarget || !directorId) return;
         setSavingDirector(true);
@@ -77,17 +88,37 @@ export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVe
     return (
         <Box>
             <Box sx={{ mb: 3 }}>
-                <Button startIcon={<ArrowBackIcon />} onClick={onVolver} sx={{ textTransform: "none", mb: 1, color: "#5c7cfa" }}>
-                    Volver
-                </Button>
+                {showBack && (
+                    <Button startIcon={<ArrowBackIcon />} onClick={onVolver} sx={{ textTransform: "none", mb: 1, color: "#5c7cfa" }}>
+                        Volver
+                    </Button>
+                )}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="h5" sx={{ fontWeight: 700 }}>{zonaNombre}</Typography>
+                    {showTitle ? (
+                        <Typography variant="h5" sx={{ fontWeight: 700 }}>{zonaNombre}</Typography>
+                    ) : (
+                        <Box /> 
+                    )}
+
+                    <BuscadorPadi 
+                        placeholder="Buscar escuela por nombre o dirección..."
+                        value={busqueda}
+                        onChange={(e) => setBusqueda(e.target.value)}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon sx={{ color: '#adb5bd' }} />
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+                    
                     <BotonNuevo texto="Nueva escuela" onClick={() => setCreateModalOpen(true)} />
                 </Box>
             </Box>
 
             <EscuelasList
-                escuelas={escuelas}
+                escuelas={escuelasFiltradas}
                 isEquipoPadi={isEquipoPadi}
                 onView={onVerAulas}
                 onAssignDirector={(esc) => {

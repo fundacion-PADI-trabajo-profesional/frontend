@@ -18,7 +18,8 @@ import SearchIcon from "@mui/icons-material/Search";
  */
 export default function Estudiantes() {
     const [searchTerm, setSearchTerm] = useState("");
-    const [view, setView] = useState<"list" | "form" | "success" | "bulk" | "successBulk">("list")
+    const [view, setView] = useState<"list" | "form" | "success" | "successBulk">("list")
+    const [modalMasivoOpen, setModalMasivoOpen] = useState(false);
     const [cantidadCreados, setCantidadCreados] = useState(0); // Estado para el conteo
     const [estudiantes, setEstudiantes] = useState<Estudiante[]>([])
     const [loading, setLoading] = useState(true)
@@ -394,7 +395,7 @@ export default function Estudiantes() {
                                     estudiantes={estudiantesFiltrados}
                                     onAddEstudiante={() => setView("form")}
                                     onEditEstudiante={handleEdit}
-                                    onBulkAdd={() => setView("bulk")}
+                                    onBulkAdd={() => setModalMasivoOpen(true)}
                                     userRole={userRole}
                                 />
                             </Box>
@@ -444,17 +445,6 @@ export default function Estudiantes() {
                         </Box>
                     </Box>
                 )}
-                {view === 'bulk' && (
-                    <BulkUploadForm
-                        onCancel={handleBackToList}
-                        onSuccess={(data) => {
-                            setView('successBulk');
-                            setRefreshKey(k => k + 1);
-                            setCantidadCreados(data.length);
-
-                        }}
-                    />
-                )}
                 {view === 'successBulk' && (
                     <Paper sx={{ p: 5, textAlign: 'center', borderRadius: 3 }}>
                         <CheckCircleOutlineIcon sx={{ fontSize: 80, color: 'success.main', mb: 3 }} />
@@ -474,6 +464,18 @@ export default function Estudiantes() {
                         </Button>
                     </Paper>
                 )}
+
+                <BulkUploadForm
+                    open={modalMasivoOpen}
+                    onCancel={() => setModalMasivoOpen(false)}
+                    onSuccess={(data) => {
+                        setModalMasivoOpen(false); 
+                        setCantidadCreados(data.length); 
+                        setView('successBulk');
+                        setRefreshKey(k => k + 1); 
+                    }}
+                />
+
             </Container>
         </Box>
     )

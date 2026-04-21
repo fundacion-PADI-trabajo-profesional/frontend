@@ -24,7 +24,7 @@ interface Props {
     onVolver: () => void; 
 }
 
-export default function AulasView({ escuelaId, salaSeleccionada, isEquipoPadi, onVerEstudiantes, onVolver }: Props) {
+export default function AulasView({ escuelaId, salaSeleccionada, onVerEstudiantes, onVolver }: Props) {
     const [aulas, setAulas] = useState<Aula[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);

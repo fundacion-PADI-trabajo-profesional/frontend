@@ -308,4 +308,24 @@ describe("bulkCreateEstudiantes", () => {
       expect.objectContaining({ usuario_id: USER.id, rol: USER.rol })
     );
   });
+
+  it("incluye escuela_id del usuario en el payload", async () => {
+    setUserInStorage({ id: "u-1", rol: "director", escuela_id: "esc-42" });
+    apiMock.post.mockResolvedValue({ data: { success: true } });
+
+    await bulkCreateEstudiantes({ estudiantes: [{ dni: "1" }] });
+
+    expect(apiMock.post).toHaveBeenCalledWith(
+      "/estudiantes/bulk",
+      expect.objectContaining({ escuela_id: "esc-42" }),
+    );
+  });
+
+  it("propaga el error cuando api.post lanza", async () => {
+    apiMock.post.mockRejectedValue(new Error("Servidor caído"));
+
+    await expect(
+      bulkCreateEstudiantes({ estudiantes: [{ dni: "1" }] })
+    ).rejects.toThrow("Servidor caído");
+  });
 });

@@ -59,8 +59,7 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                 { header: "Fecha Nacimiento",   key: "fecha_nac",      width: 18 },
                 { header: "Genero",             key: "genero",         width: 10 },
                 { header: "SalaID",             key: "sala",           width: 10 },
-                { header: "EscuelaID",          key: "escuela_id",     width: 38 },
-                { header: "Nombre del Colegio", key: "escuela_nombre", width: 28 },
+                { header: "Nombre del Colegio", key: "escuela_nombre", width: 30 },
             ];
 
             // Estilo del encabezado
@@ -71,14 +70,9 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
             });
             ws.getRow(1).height = 20;
 
-            // 2. Validaciones y fórmulas para las filas
+            // 2. Validaciones para las filas
             const LAST_ROW = 1000;
             for (let row = 2; row <= LAST_ROW; row++) {
-                ws.getCell(`G${row}`).value = {
-                    formula: `IFERROR(VLOOKUP(H${row},Datos_soporte!$A:$B,2,FALSE),"")`,
-                };
-                ws.getCell(`G${row}`).font = { color: { argb: "FF9CA3AF" }, italic: true };
-
                 ws.getCell(`E${row}`).dataValidation = {
                     type: "list",
                     allowBlank: true,
@@ -97,7 +91,7 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                     error: "Ingresá 3, 4 o 5",
                 };
 
-                ws.getCell(`H${row}`).dataValidation = {
+                ws.getCell(`G${row}`).dataValidation = {
                     type: "list",
                     allowBlank: true,
                     formulae: [`Datos_soporte!$A$2:$A$${escuelas.length + 1}`],
@@ -151,12 +145,15 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
         reader.onload = async (evt) => {
             try {
                 const bstr = evt.target?.result;
-                const wb = XLSX.read(bstr, { type: 'binary', cellDates: true }); 
+                const wb = XLSX.read(bstr, { type: 'binary', cellDates: true });
                 const ws = wb.Sheets[wb.SheetNames[0]];
                 const data = XLSX.utils.sheet_to_json(ws, { raw: false, defval: null });
 
                 // FILTRO: Solo nos quedamos con las filas que tengan al menos DNI, Nombre o Apellido.
                 const validRows = data.filter((row: any) => row["DNI"] || row["Nombre"] || row["Apellido"]);
+
+                const escuelas = await getEscuelas();
+                const escuelaMap = new Map(escuelas.map((e: any) => [e.nombre, e.id]));
 
                 const estudiantes = validRows.map((row: any) => {
                     let fecha = row["Fecha Nacimiento"];
@@ -173,7 +170,7 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                                 const month = parseInt(parts[1], 10) - 1; // JS cuenta los meses de 0 a 11
                                 const year = parseInt(parts[2], 10);
                                 const fullYear = year < 100 ? 2000 + year : year; // Por si ponen "24" en vez de "2024"
-                                
+
                                 const parsed = new Date(fullYear, month, day);
                                 if (!isNaN(parsed.getTime())) finalDate = parsed.toISOString();
                             } else {
@@ -184,15 +181,17 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                         }
                     }
 
+                    const escuelaNombre = row["Nombre del Colegio"] ? String(row["Nombre del Colegio"]).trim() : null;
+
                     return {
                         dni: row["DNI"] ? String(row["DNI"]).trim() : null,
                         nombre: row["Nombre"] ? String(row["Nombre"]).trim() : null,
                         apellido: row["Apellido"] ? String(row["Apellido"]).trim() : null,
-                        fecha_nacimiento: finalDate, 
+                        fecha_nacimiento: finalDate,
                         genero_id: row["Genero"] ? String(row["Genero"]).trim() : null,
                         sala_id: row["SalaID"] ? Number(row["SalaID"]) : null,
-                        escuela_id: row["EscuelaID"],
-                        escuela_nombre: row["Nombre del Colegio"]
+                        escuela_id: escuelaNombre ? (escuelaMap.get(escuelaNombre) ?? null) : null,
+                        escuela_nombre: escuelaNombre,
                     };
                 });
 
@@ -213,7 +212,7 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
         setExcelError(null);
 
         if (excelRows.some(e => !e.escuela_id)) {
-            setExcelError("Hay alumnos sin EscuelaID válido. Elegí el colegio del menú desplegable en el Excel.");
+            setExcelError("Hay alumnos sin colegio válido. Elegí el colegio del menú desplegable en el Excel.");
             setBulkLoading(false);
             return;
         }

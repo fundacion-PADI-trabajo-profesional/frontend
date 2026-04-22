@@ -15,6 +15,7 @@ import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import { bulkCreateEstudiantes } from '../api/estudiantes';
 import { getEscuelas } from '../api/escuelas';
+import { getAulas, type Aula } from '../api/aulas';
 
 interface BulkUploadProps {
     open: boolean;
@@ -46,20 +47,44 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
         try {
             setBulkLoading(true);
             setExcelError(null);
-        
-            const escuelas = await getEscuelas();    
+
+            const [escuelas, todasLasAulas] = await Promise.all([
+                getEscuelas(),
+                getAulas(),
+            ]);
+
+            // Aulas agrupadas por escuela_id (para ordenar por escuela)
+            const aulasPorEscuela = new Map<string, Aula[]>();
+            for (const aula of todasLasAulas) {
+                const eid = String(aula.escuela_id);
+                if (!aulasPorEscuela.has(eid)) aulasPorEscuela.set(eid, []);
+                aulasPorEscuela.get(eid)!.push(aula);
+            }
+
+            // Lista combinada: nombre de escuela (sin aula) + "Escuela - Comisión - Turno"
+            // Agrupada por escuela para que el dropdown sea fácil de navegar
+            const combinedEntries: string[] = [];
+            for (const escuela of escuelas) {
+                combinedEntries.push(escuela.nombre);
+                const aulas = (aulasPorEscuela.get(String(escuela.id)) || [])
+                    .sort((a, b) => `${a.comision}${a.turno}`.localeCompare(`${b.comision}${b.turno}`));
+                for (const aula of aulas) {
+                    combinedEntries.push(`${escuela.nombre} - ${aula.comision} - ${aula.turno}`);
+                }
+            }
+
             const wb = new ExcelJS.Workbook();
             const ws = wb.addWorksheet("Carga de Estudiantes");
 
-            // 1. Columnas
+            // 1. Columnas — una sola columna G para colegio y/o aula
             ws.columns = [
-                { header: "DNI",                key: "dni",            width: 14 },
-                { header: "Nombre",             key: "nombre",         width: 18 },
-                { header: "Apellido",           key: "apellido",       width: 18 },
-                { header: "Fecha Nacimiento",   key: "fecha_nac",      width: 18 },
-                { header: "Genero",             key: "genero",         width: 10 },
-                { header: "SalaID",             key: "sala",           width: 10 },
-                { header: "Nombre del Colegio", key: "escuela_nombre", width: 30 },
+                { header: "DNI",              key: "dni",          width: 14 },
+                { header: "Nombre",           key: "nombre",       width: 18 },
+                { header: "Apellido",         key: "apellido",     width: 18 },
+                { header: "Fecha Nacimiento", key: "fecha_nac",    width: 18 },
+                { header: "Genero",           key: "genero",       width: 10 },
+                { header: "SalaID",           key: "sala",         width: 10 },
+                { header: "Colegio / Aula",   key: "colegio_aula", width: 45 },
             ];
 
             // Estilo del encabezado
@@ -70,7 +95,7 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
             });
             ws.getRow(1).height = 20;
 
-            // 2. Validaciones para las filas
+            // 2. Validaciones por fila
             const LAST_ROW = 1000;
             for (let row = 2; row <= LAST_ROW; row++) {
                 ws.getCell(`E${row}`).dataValidation = {
@@ -94,10 +119,10 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                 ws.getCell(`G${row}`).dataValidation = {
                     type: "list",
                     allowBlank: true,
-                    formulae: [`Datos_soporte!$A$2:$A$${escuelas.length + 1}`],
+                    formulae: [`Datos_soporte!$A$2:$A$${combinedEntries.length + 1}`],
                     showErrorMessage: true,
-                    errorTitle: "Escuela no encontrada",
-                    error: "Elegí una escuela del menú desplegable",
+                    errorTitle: "Opción inválida",
+                    error: "Elegí una opción del menú desplegable",
                 };
 
                 ws.getCell(`D${row}`).numFmt = "dd/mm/yyyy";
@@ -105,18 +130,14 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
 
             ws.views = [{ state: "frozen", ySplit: 1 }];
 
-            // 3. Hoja Oculta (Datos_soporte)
+            // 3. Hoja oculta: Datos_soporte con la lista combinada
             const wsSupport = wb.addWorksheet("Datos_soporte", { state: 'hidden' });
-            wsSupport.columns = [
-                { header: "Nombre", key: "nombre", width: 30 },
-                { header: "ID",     key: "id",     width: 38 },
-            ];
-            escuelas.forEach((e) => wsSupport.addRow({ nombre: e.nombre, id: e.id }));
+            wsSupport.columns = [{ header: "Colegio / Aula", key: "label", width: 50 }];
+            combinedEntries.forEach((entry) => wsSupport.addRow({ label: entry }));
 
             // 4. Descargar archivo
             const buffer = await wb.xlsx.writeBuffer();
             const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-            
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
@@ -149,39 +170,62 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                 const ws = wb.Sheets[wb.SheetNames[0]];
                 const data = XLSX.utils.sheet_to_json(ws, { raw: false, defval: null });
 
-                // FILTRO: Solo nos quedamos con las filas que tengan al menos DNI, Nombre o Apellido.
                 const validRows = data.filter((row: any) => row["DNI"] || row["Nombre"] || row["Apellido"]);
 
-                const escuelas = await getEscuelas();
-                const escuelaMap = new Map(escuelas.map((e: any) => [e.nombre, e.id]));
+                const [escuelas, todasLasAulas] = await Promise.all([
+                    getEscuelas(),
+                    getAulas(),
+                ]);
+
+                // schoolOnlyMap: escuela nombre → escuela_id
+                const schoolOnlyMap = new Map(escuelas.map((e: any) => [e.nombre, String(e.id)]));
+
+                // schoolAulaMap: "Escuela - Comision - Turno" → { escuela_id, aula_id }
+                const schoolAulaMap = new Map<string, { escuela_id: string; aula_id: string }>();
+                for (const aula of todasLasAulas) {
+                    const escuela = escuelas.find((e: any) => String(e.id) === String(aula.escuela_id));
+                    if (escuela) {
+                        const label = `${escuela.nombre} - ${aula.comision} - ${aula.turno}`;
+                        schoolAulaMap.set(label, { escuela_id: String(aula.escuela_id), aula_id: aula.id });
+                    }
+                }
 
                 const estudiantes = validRows.map((row: any) => {
                     let fecha = row["Fecha Nacimiento"];
                     let finalDate = null;
 
-                    // Parseo para DD/MM/AAAA o DD-MM-AAAA
                     if (fecha) {
                         if (fecha instanceof Date && !isNaN(fecha.getTime())) {
                             finalDate = fecha.toISOString();
                         } else if (typeof fecha === 'string') {
-                            const parts = fecha.split(/[\/\-]/); // Separa por "/" o "-"
+                            const parts = fecha.split(/[\/\-]/);
                             if (parts.length === 3) {
                                 const day = parseInt(parts[0], 10);
-                                const month = parseInt(parts[1], 10) - 1; // JS cuenta los meses de 0 a 11
+                                const month = parseInt(parts[1], 10) - 1;
                                 const year = parseInt(parts[2], 10);
-                                const fullYear = year < 100 ? 2000 + year : year; // Por si ponen "24" en vez de "2024"
-
+                                const fullYear = year < 100 ? 2000 + year : year;
                                 const parsed = new Date(fullYear, month, day);
                                 if (!isNaN(parsed.getTime())) finalDate = parsed.toISOString();
                             } else {
-                                // Fallback por si lo escriben al revés (AAAA-MM-DD)
                                 const parsed = new Date(fecha);
                                 if (!isNaN(parsed.getTime())) finalDate = parsed.toISOString();
                             }
                         }
                     }
 
-                    const escuelaNombre = row["Nombre del Colegio"] ? String(row["Nombre del Colegio"]).trim() : null;
+                    const colegioAula = row["Colegio / Aula"] ? String(row["Colegio / Aula"]).trim() : null;
+                    let escuela_id: string | null = null;
+                    let aula_id: string | null = null;
+
+                    if (colegioAula) {
+                        const aulaMatch = schoolAulaMap.get(colegioAula);
+                        if (aulaMatch) {
+                            escuela_id = aulaMatch.escuela_id;
+                            aula_id = aulaMatch.aula_id;
+                        } else {
+                            escuela_id = schoolOnlyMap.get(colegioAula) ?? null;
+                        }
+                    }
 
                     return {
                         dni: row["DNI"] ? String(row["DNI"]).trim() : null,
@@ -190,8 +234,9 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                         fecha_nacimiento: finalDate,
                         genero_id: row["Genero"] ? String(row["Genero"]).trim() : null,
                         sala_id: row["SalaID"] ? Number(row["SalaID"]) : null,
-                        escuela_id: escuelaNombre ? (escuelaMap.get(escuelaNombre) ?? null) : null,
-                        escuela_nombre: escuelaNombre,
+                        escuela_id,
+                        colegio_aula_label: colegioAula,
+                        aula_id,
                     };
                 });
 
@@ -212,7 +257,7 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
         setExcelError(null);
 
         if (excelRows.some(e => !e.escuela_id)) {
-            setExcelError("Hay alumnos sin colegio válido. Elegí el colegio del menú desplegable en el Excel.");
+            setExcelError("Hay alumnos sin colegio válido. Elegí una opción en la columna 'Colegio / Aula' del Excel.");
             setBulkLoading(false);
             return;
         }
@@ -261,7 +306,7 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                 {!successMessage && (
                     <>
                         <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
-                            Descargá la plantilla, completá los datos eligiendo el colegio del menú desplegable, y subí el archivo <strong>.xlsx</strong>.
+                            Descargá la plantilla, completá los datos eligiendo el colegio o aula en la columna <strong>Colegio / Aula</strong>, y subí el archivo <strong>.xlsx</strong>.
                             <br /><br />
                             <strong>Importante:</strong> El formato de la Fecha de Nacimiento debe ser <strong>DD/MM/AAAA</strong> (ej: 25/05/2018).
                         </Alert>
@@ -336,7 +381,7 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                                     <TableRow>
                                         <TableCell sx={{ fontWeight: 700 }}>DNI</TableCell>
                                         <TableCell sx={{ fontWeight: 700 }}>Nombre</TableCell>
-                                        <TableCell sx={{ fontWeight: 700 }}>Colegio</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Colegio / Aula</TableCell>
                                         <TableCell sx={{ fontWeight: 700 }}>Sala</TableCell>
                                         <TableCell sx={{ fontWeight: 700 }}>Fecha Nac.</TableCell>
                                     </TableRow>
@@ -352,16 +397,21 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                                                     {(!row.nombre || !row.apellido) && <span style={{ color: "#c62828" }}> (Incompleto)</span>}
                                                 </TableCell>
                                                 <TableCell>
-                                                    {row.escuela_nombre ? (
-                                                        <Chip label={row.escuela_nombre} size="small" variant="outlined" />
+                                                    {row.colegio_aula_label ? (
+                                                        <Chip
+                                                            label={row.colegio_aula_label}
+                                                            size="small"
+                                                            color={row.escuela_id ? "default" : "warning"}
+                                                            variant="outlined"
+                                                        />
                                                     ) : (
                                                         <span style={{ color: "#c62828" }}>Falta Colegio</span>
                                                     )}
                                                 </TableCell>
                                                 <TableCell>{row.sala_id || "—"}</TableCell>
                                                 <TableCell>
-                                                    {row.fecha_nacimiento 
-                                                        ? new Date(row.fecha_nacimiento).toLocaleDateString("es-AR") 
+                                                    {row.fecha_nacimiento
+                                                        ? new Date(row.fecha_nacimiento).toLocaleDateString("es-AR")
                                                         : <span style={{ color: "#c62828" }}>Inválida o Vacía</span>}
                                                 </TableCell>
                                             </TableRow>

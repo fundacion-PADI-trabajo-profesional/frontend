@@ -1,9 +1,8 @@
 import {
     Table, TableBody, TableCell, TableContainer, TableHead,
-    TableRow, Paper, IconButton, Tooltip, Box, Button, Typography
+    TableRow, Paper, IconButton, Box, Button, Typography
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 import { type Escuela } from "../api/escuelas";
 
 interface Props {
@@ -71,15 +70,14 @@ export default function EscuelasList({
                                             </Button>
                                         )}
                                         
-                                        <Tooltip title="Ver aulas">
-                                            <IconButton 
-                                                size="small" 
-                                                onClick={() => onView(escuela)}
-                                                sx={{ color: "#5c7cfa" }}
-                                            >
-                                                <VisibilityIcon fontSize="small" />
-                                            </IconButton>
-                                        </Tooltip>
+                                        <Button
+                                            size="small"
+                                            variant="outlined"
+                                            sx={{ textTransform: "none" }}
+                                            onClick={() => onView(escuela)}
+                                        >
+                                            Ver aulas
+                                        </Button>
 
                                         {onEdit && (
                                             <IconButton size="small" onClick={() => onEdit(escuela)}>

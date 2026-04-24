@@ -38,7 +38,7 @@ export default function AdminDashboard({ rol }: Props) {
                     <Grid item xs={12} sm={6} md={4}>
                         <DashboardCard
                             title="Escuelas"
-                            description="Alta y gestión de instituciones educativas."
+                            description="Alta y gestión de instituciones educativas y comisiones."
                             icon="🏫"
                             color="#FF9800"
                             onClick={() => navigate("/escuelas")}

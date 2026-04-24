@@ -18,6 +18,7 @@ export default function AulasPage() {
   
   const [selectedSala, setSelectedSala] = useState<Sala | null>(null); 
   const [selectedAula, setSelectedAula] = useState<Aula | null>(null);
+  const [escuelaNombre, setEscuelaNombre] = useState<string>("");
 
   useEffect(() => {
     const stored = localStorage.getItem("padiUser");
@@ -35,8 +36,11 @@ export default function AulasPage() {
     }
 
     const paramEscuelaId = searchParams.get("escuelaId");
+    const paramEscuelaNombre = searchParams.get("escuelaNombre");
+
     setEscuelaId(paramEscuelaId || user.escuela_id || "");
-    
+    setEscuelaNombre(paramEscuelaNombre || user.escuela_nombre || "");
+
     setIsInitializing(false); 
   }, [navigate, searchParams]);
 
@@ -65,6 +69,7 @@ export default function AulasPage() {
         !selectedSala ? (
           <SalasView
             escuelaId={escuelaId}
+            escuelaNombre={escuelaNombre}
             onVolver={() => navigate("/home")} 
             onVerAulas={(sala) => setSelectedSala(sala)} 
           />

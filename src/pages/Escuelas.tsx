@@ -24,7 +24,7 @@ export default function EscuelasPage() {
                     zonaIdParam={zonaId}
                     isEquipoPadi={isEquipoPadi}
                     onVolver={() => navigate(-1)} 
-                    onVerAulas={(escuela) => navigate(`/aulas?escuelaId=${escuela.id}`)}
+                    onVerAulas={(escuela) => navigate(`/aulas?escuelaId=${escuela.id}&escuelaNombre=${escuela.nombre}`)}
                     showBack={false}  
                     showTitle={!!zonaId}
                 />

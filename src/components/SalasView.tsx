@@ -44,7 +44,7 @@ export default function SalasView({ escuelaId, escuelaNombre, onVolver, onVerAul
                     Volver a escuelas
                 </Button>
                 <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {escuelaNombre || "Escuela Seleccionada"}
+                    {escuelaNombre}
                 </Typography>
                 <Typography variant="body1" sx={{ color: "#666", mt: 1 }}>
                     Seleccioná un nivel/sala para ver sus comisiones.

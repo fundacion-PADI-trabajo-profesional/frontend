@@ -11,6 +11,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DownloadIcon from '@mui/icons-material/Download';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import { bulkCreateEstudiantes } from '../api/estudiantes';
@@ -28,13 +29,16 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
     const [excelRows, setExcelRows] = useState<any[]>([]);
     const [excelError, setExcelError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    
+    const [step, setStep] = useState<'upload' | 'preview'>('upload');
+    const [stats, setStats] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const resetState = () => {
         setExcelRows([]);
         setExcelError(null);
         setSuccessMessage(null);
+        setStep('upload');
+        setStats(null);
     };
 
     const handleClose = () => {
@@ -241,6 +245,7 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                 });
 
                 setExcelRows(estudiantes);
+                setStep('upload');
                 if (fileInputRef.current) fileInputRef.current.value = '';
 
             } catch (err: any) {
@@ -251,26 +256,51 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
         reader.readAsBinaryString(file);
     };
 
-    // ─── ENVÍO DE DATOS AL BACKEND ──────────────────────────────────────────
-    const handleBulkSubmit = async () => {
+    // ─── PASO 1: ANALIZAR (DRY RUN) ──────────────────────────────────────────
+    const handleAnalyze = async () => {
         setBulkLoading(true);
         setExcelError(null);
 
-        if (excelRows.some(e => !e.escuela_id)) {
-            setExcelError("Hay alumnos sin colegio válido. Elegí una opción en la columna 'Colegio / Aula' del Excel.");
-            setBulkLoading(false);
-            return;
-        }
-
-        if (excelRows.some(e => !e.fecha_nacimiento)) {
-            setExcelError("Hay fechas de nacimiento inválidas. Revisá el formato en el Excel.");
+        if (excelRows.some(e => !e.escuela_id) || excelRows.some(e => !e.fecha_nacimiento)) {
+            setExcelError("Hay alumnos sin colegio válido o con fechas inválidas.");
             setBulkLoading(false);
             return;
         }
 
         try {
-            const response = await bulkCreateEstudiantes({ estudiantes: excelRows });
-            setSuccessMessage(`Se crearon exitosamente ${response.data?.length || excelRows.length} estudiantes.`);
+            const response = await bulkCreateEstudiantes({ estudiantes: excelRows, dryRun: true });
+            const data = response.data;
+            setStats(data);
+
+            // Mapeamos los estados a las filas para mostrarlos en la tabla
+            const enrichedRows = excelRows.map(est => {
+                const retroceso = data.retrocesos.find((r: any) => r.dni === est.dni);
+                const promovido = data.promovidos.find((r: any) => r.dni === est.dni);
+                const repitente = data.repitentes.find((r: any) => r.dni === est.dni);
+
+                if (retroceso) return { ...est, estado: 'retroceso', old_sala_id: retroceso.old_sala_id };
+                if (promovido) return { ...est, estado: 'promovido', old_sala_id: promovido.old_sala_id };
+                if (repitente) return { ...est, estado: 'repite' };
+                return { ...est, estado: 'nuevo' };
+            });
+
+            setExcelRows(enrichedRows);
+            setStep('preview');
+        } catch (err: any) {
+            setExcelError(err.response?.data?.message || "Error al analizar los datos");
+        } finally {
+            setBulkLoading(false);
+        }
+    };
+
+    // ─── PASO 2: GUARDAR DEFINITIVO ──────────────────────────────────────────
+    const handleConfirmSubmit = async () => {
+        setBulkLoading(true);
+        setExcelError(null);
+
+        try {
+            const response = await bulkCreateEstudiantes({ estudiantes: excelRows, dryRun: false });
+            setSuccessMessage(`Operación exitosa.`);
             
             setTimeout(() => {
                 onSuccess(response.data);
@@ -278,21 +308,14 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
             }, 1500);
 
         } catch (err: any) {
-            const serverMsg = err.response?.data?.message || err.message || "Error interno al crear estudiantes";
-            setExcelError(serverMsg);
+            setExcelError(err.response?.data?.message || "Error interno al guardar estudiantes");
         } finally {
             setBulkLoading(false);
         }
     };
 
     return (
-        <Dialog
-            open={open}
-            onClose={handleClose}
-            maxWidth="md"
-            fullWidth
-            PaperProps={{ sx: { borderRadius: 3 } }}
-        >
+        <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
             <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 700 }}>
                 <GroupAddIcon sx={{ color: "#65944F" }} />
                 Carga masiva de Estudiantes
@@ -303,7 +326,7 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
             <Divider />
             
             <DialogContent sx={{ pt: 3 }}>
-                {!successMessage && (
+                {!successMessage && step === 'upload' && (
                     <>
                         <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
                             Descargá la plantilla, completá los datos eligiendo el colegio o aula en la columna <strong>Colegio / Aula</strong>, y subí el archivo <strong>.xlsx</strong>.
@@ -311,71 +334,38 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                             <strong>Importante:</strong> El formato de la Fecha de Nacimiento debe ser <strong>DD/MM/AAAA</strong> (ej: 25/05/2018).
                         </Alert>
 
-                        <Box
-                            onClick={() => !bulkLoading && fileInputRef.current?.click()}
-                            sx={{
-                                border: "2px dashed #65944F",
-                                borderRadius: 3,
-                                p: 4,
-                                textAlign: "center",
-                                cursor: bulkLoading ? "not-allowed" : "pointer",
-                                bgcolor: "#f9fdf6",
-                                transition: "0.2s",
-                                "&:hover": { bgcolor: bulkLoading ? "#f9fdf6" : "#f0faec" },
-                                mb: 2,
-                            }}
-                        >
-                                    <CloudUploadIcon sx={{ fontSize: 48, color: "#65944F", opacity: 0.7 }} />
-                            <Typography variant="body1" color="#555" mt={1}>
-                                Hacé clic para seleccionar el archivo Excel
-                            </Typography>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept=".xlsx,.xls"
-                                style={{ display: "none" }}
-                                onChange={handleFileChange}
-                            />
+                        <Box onClick={() => !bulkLoading && fileInputRef.current?.click()} sx={{ border: "2px dashed #65944F", borderRadius: 3, p: 4, textAlign: "center", cursor: bulkLoading ? "not-allowed" : "pointer", bgcolor: "#f9fdf6", transition: "0.2s", "&:hover": { bgcolor: bulkLoading ? "#f9fdf6" : "#f0faec" }, mb: 2 }}>
+                            <CloudUploadIcon sx={{ fontSize: 48, color: "#65944F", opacity: 0.7 }} />
+                            <Typography variant="body1" color="#555" mt={1}>Hacé clic para seleccionar el archivo Excel</Typography>
+                            <input ref={fileInputRef} type="file" accept=".xlsx,.xls" style={{ display: "none" }} onChange={handleFileChange} />
                         </Box>
 
-                        <Button
-                            size="small"
-                            startIcon={bulkLoading ? <CircularProgress size={16} color="inherit" /> : <DownloadIcon />}
-                            onClick={handleDownloadTemplate}
-                            sx={{ textTransform: "none", color: "#65944F", mb: 2 }}
-                            disabled={bulkLoading}
-                        >
-                            {bulkLoading ? "Generando plantilla..." : "DESCARGAR PLANTILLA ESTUDIANTES "}
+                        <Button size="small" startIcon={bulkLoading ? <CircularProgress size={16} color="inherit" /> : <DownloadIcon />} onClick={handleDownloadTemplate} sx={{ textTransform: "none", color: "#65944F", mb: 2 }} disabled={bulkLoading}>
+                            {bulkLoading ? "Generando plantilla..." : "DESCARGAR PLANTILLA ESTUDIANTES"}
                         </Button>
                     </>
                 )}
 
-                {excelError && (
-                    <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
-                        {excelError}
-                    </Alert>
-                )}
+                {excelError && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{excelError}</Alert>}
+                {successMessage && <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }} icon={<CheckCircleIcon fontSize="inherit" />}><strong>¡Éxito!</strong> {successMessage}</Alert>}
 
-                {successMessage && (
-                    <Alert 
-                        severity="success" 
-                        sx={{ mb: 2, borderRadius: 2 }}
-                        icon={<CheckCircleIcon fontSize="inherit" />}
-                    >
-                        <strong>¡Éxito!</strong> {successMessage}
+                {step === 'preview' && stats && !successMessage && (
+                    <Alert severity={stats.retrocesos.length > 0 ? "warning" : "info"} icon={stats.retrocesos.length > 0 ? <WarningAmberIcon /> : undefined} sx={{ mb: 3, borderRadius: 2 }}>
+                        <strong>Análisis Alumnos:</strong> Se detectaron {stats.nuevos.length} ingresos nuevos, {stats.promovidos.length} pases de año y {stats.repitentes.length} que repiten sala.
+                        {stats.retrocesos.length > 0 && (
+                            <Box sx={{ mt: 1, color: '#d32f2f', fontWeight: 'bold' }}>
+                                ¡Atención! Hay {stats.retrocesos.length} alumno(s) que figuran retrocediendo de sala. ¿Estás seguro de que esto es correcto?
+                            </Box>
+                        )}
                     </Alert>
                 )}
 
                 {excelRows.length > 0 && !successMessage && (
                     <>
                         <Typography variant="subtitle2" fontWeight={700} mb={1} color="#333">
-                            Vista previa — {excelRows.length} estudiante(s) detectado(s)
+                            Vista previa — {excelRows.length} estudiante(s)
                         </Typography>
-                        <TableContainer
-                            component={Paper}
-                            elevation={0}
-                            sx={{ maxHeight: 280, border: "1px solid #e0e0e0", borderRadius: 2, mb: 2 }}
-                        >
+                        <TableContainer component={Paper} elevation={0} sx={{ maxHeight: 280, border: "1px solid #e0e0e0", borderRadius: 2, mb: 2 }}>
                             <Table size="small" stickyHeader>
                                 <TableHead>
                                     <TableRow>
@@ -383,7 +373,7 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                                         <TableCell sx={{ fontWeight: 700 }}>Nombre</TableCell>
                                         <TableCell sx={{ fontWeight: 700 }}>Colegio / Aula</TableCell>
                                         <TableCell sx={{ fontWeight: 700 }}>Sala</TableCell>
-                                        <TableCell sx={{ fontWeight: 700 }}>Fecha Nac.</TableCell>
+                                        {step === 'preview' && <TableCell sx={{ fontWeight: 700 }}>Estado</TableCell>}
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -392,28 +382,17 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                                         return (
                                             <TableRow key={i} sx={{ bgcolor: isInvalid ? "#fff3f3" : "inherit" }}>
                                                 <TableCell>{row.dni || <span style={{ color: "#c62828" }}>Falta</span>}</TableCell>
-                                                <TableCell>
-                                                    {row.nombre} {row.apellido}
-                                                    {(!row.nombre || !row.apellido) && <span style={{ color: "#c62828" }}> (Incompleto)</span>}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {row.colegio_aula_label ? (
-                                                        <Chip
-                                                            label={row.colegio_aula_label}
-                                                            size="small"
-                                                            color={row.escuela_id ? "default" : "warning"}
-                                                            variant="outlined"
-                                                        />
-                                                    ) : (
-                                                        <span style={{ color: "#c62828" }}>Falta Colegio</span>
-                                                    )}
-                                                </TableCell>
+                                                <TableCell>{row.nombre} {row.apellido}</TableCell>
+                                                <TableCell>{row.colegio_aula_label}</TableCell>
                                                 <TableCell>{row.sala_id || "—"}</TableCell>
-                                                <TableCell>
-                                                    {row.fecha_nacimiento
-                                                        ? new Date(row.fecha_nacimiento).toLocaleDateString("es-AR")
-                                                        : <span style={{ color: "#c62828" }}>Inválida o Vacía</span>}
-                                                </TableCell>
+                                                {step === 'preview' && (
+                                                    <TableCell>
+                                                        {row.estado === 'nuevo' && <Chip label="Nuevo ingreso" size="small" color="success" />}
+                                                        {row.estado === 'promovido' && <Chip label={`Pasó (De ${row.old_sala_id} a ${row.sala_id})`} size="small" color="primary" variant="outlined" />}
+                                                        {row.estado === 'repite' && <Chip label="Mantiene sala" size="small" color="default" />}
+                                                        {row.estado === 'retroceso' && <Chip label={`Retrocede (De ${row.old_sala_id} a ${row.sala_id})`} size="small" color="error" />}
+                                                    </TableCell>
+                                                )}
                                             </TableRow>
                                         );
                                     })}
@@ -428,22 +407,33 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                 <Button onClick={handleClose} sx={{ textTransform: "none", color: "#666" }} disabled={bulkLoading}>
                     Cancelar
                 </Button>
-                {!successMessage && (
+                
+                {!successMessage && step === 'upload' && (
                     <Button
                         variant="contained"
-                        onClick={handleBulkSubmit}
+                        onClick={handleAnalyze}
                         disabled={bulkLoading || excelRows.length === 0 || !!excelError}
-                        startIcon={
-                            bulkLoading ? <CircularProgress size={16} color="inherit" /> : <UploadFileIcon />
-                        }
-                        sx={{
-                            bgcolor: "#65944F",
-                            textTransform: "none",
-                            borderRadius: 2,
-                            "&:hover": { bgcolor: "#558040" },
+                        startIcon={bulkLoading ? <CircularProgress size={16} color="inherit" /> : <UploadFileIcon />}
+                        sx={{ bgcolor: "#65944F", textTransform: "none", borderRadius: 2, "&:hover": { bgcolor: "#558040" } }}
+                    >
+                        {bulkLoading ? "Analizando..." : "Analizar Datos"}
+                    </Button>
+                )}
+
+                {!successMessage && step === 'preview' && (
+                    <Button
+                        variant="contained"
+                        onClick={handleConfirmSubmit}
+                        disabled={bulkLoading || !!excelError}
+                        startIcon={bulkLoading ? <CircularProgress size={16} color="inherit" /> : <CheckCircleIcon />}
+                        sx={{ 
+                            bgcolor: stats?.retrocesos?.length > 0 ? "#d32f2f" : "#65944F", 
+                            textTransform: "none", 
+                            borderRadius: 2, 
+                            "&:hover": { bgcolor: stats?.retrocesos?.length > 0 ? "#b71c1c" : "#558040" } 
                         }}
                     >
-                        {bulkLoading ? "Procesando..." : `Importar ${excelRows.length} estudiante(s)`}
+                        {bulkLoading ? "Guardando..." : "Confirmar Importación"}
                     </Button>
                 )}
             </DialogActions>

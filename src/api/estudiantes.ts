@@ -263,7 +263,7 @@ export async function getAulasPorEscuela(escuelaId: string): Promise<any[]> {
     return result.success ? result.data : [];
 }
 
-export async function bulkCreateEstudiantes(data: { estudiantes: any[] }) {
+export async function bulkCreateEstudiantes(data: { estudiantes: any[], dryRun?: boolean }) {
     const user = JSON.parse(localStorage.getItem("padiUser") || "{}");
 
     const payload = {

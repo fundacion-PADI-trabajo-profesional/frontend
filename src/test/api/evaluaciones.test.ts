@@ -117,6 +117,7 @@ describe("crearEvaluacionInstancia", () => {
     const payload = {
       dni: "11111111",
       profesor_id: "prof-1",
+      sala_id: 2,
       tipo_id: "inicial",
       fecha_creacion: "2024-01-01",
     };
@@ -144,6 +145,7 @@ describe("crearEvaluacionInstancia", () => {
       crearEvaluacionInstancia({
         dni: "x",
         profesor_id: "p",
+        sala_id: 2,
         tipo_id: "inicial",
         fecha_creacion: "2024-01-01",
       })
@@ -234,7 +236,7 @@ describe("crearEvaluacionInstancia con userInfo", () => {
     );
 
     await crearEvaluacionInstancia(
-      { dni: "1", profesor_id: "p-1", tipo_id: "inicial", fecha_creacion: "2024-01-01" },
+      { dni: "1", profesor_id: "p-1", sala_id: 2, tipo_id: "inicial", fecha_creacion: "2024-01-01" },
       { userId: "u-1", userRole: "director" }
     );
 

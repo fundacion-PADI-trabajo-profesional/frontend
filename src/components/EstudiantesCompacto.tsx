@@ -143,10 +143,19 @@ export default function EstudiantesCompacto({ estudiantes, onAddEstudiante, onEd
     const handleEvaluar = () => {
         if (selectedStudent) {
             const nombre = encodeURIComponent(`${selectedStudent.personas.nombre} ${selectedStudent.personas.primer_apellido}`)
-            navigate(`/evaluaciones?estudianteId=${selectedStudent.id}&nombre=${nombre}&salaId=${selectedStudent.sala_id}&backTo=${encodeURIComponent("/estudiantes")}&backLabel=${encodeURIComponent("Volver a estudiantes")}`)
+            const aulaId = selectedStudent.aula_id || selectedStudent.aula_asignada?.id || selectedStudent.aula_asignada?.comision;
+            let ruta = `/evaluaciones?estudianteId=${selectedStudent.id}&nombre=${nombre}&salaId=${selectedStudent.sala_id}`;
+            
+            if (aulaId) {
+                ruta += `&aulaId=${aulaId}`;
+            }
+
+            ruta += `&backTo=${encodeURIComponent("/estudiantes")}&backLabel=${encodeURIComponent("Volver a estudiantes")}`;
+            navigate(ruta);
         }
         handleMenuClose()
     }
+
     const handleVerMas = () => {
         if (selectedStudent) {
             const nombre = `${selectedStudent.personas.nombre} ${selectedStudent.personas.primer_apellido}`

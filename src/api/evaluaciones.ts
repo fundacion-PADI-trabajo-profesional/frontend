@@ -79,6 +79,7 @@ export interface EvaluacionInstancia {
 export interface CreateEvaluacionPayload {
   dni: string
   profesor_id: string
+  sala_id: number
   aula_id?: string
   tipo_id: string
   fecha_creacion: string
@@ -133,7 +134,7 @@ function mapToCamelCase(data: any): EvaluacionInstancia {
     aulaId: data.aula_id ?? undefined,
     aulaLabel: data.aulas ? `${data.aulas.comision ?? ""} (${data.aulas.turno ?? ""})`.trim() : undefined,
     escuelaNombre: data.estudiantes?.escuela?.nombre ?? "",
-    salaNombre: data.estudiantes?.salas?.nombre || `Sala de ${data.sala_id}`,
+    salaNombre: data.salas?.nombre || `Sala de ${data.sala_id}`,
     tipoId: data.tipo_id,
     estadoId: data.estado_id,
     puntaje: data.puntaje,

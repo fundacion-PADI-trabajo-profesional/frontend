@@ -61,8 +61,6 @@ export default function EvaluacionForm({ onSuccess,  evaluacionAEditar, profile,
   const [searchParams] = useSearchParams();
   const prefillSalaId = searchParams.get("salaId"); // Capturamos la sala
   const prefillAulaId = searchParams.get("aulaId");
-  const prefillAulaLabel = searchParams.get("aulaLabel");
-  const prefillEscuelaNombre = searchParams.get("escuelaNombre");
 
   const navigate = useNavigate();
 
@@ -219,6 +217,7 @@ export default function EvaluacionForm({ onSuccess,  evaluacionAEditar, profile,
         const payloadBackend = {
           dni: selectedEstudiante.personas.dni, // Usamos DNI, no ID
           profesor_id: profile.id,              // snake_case: profesor_id
+          sala_id: Number.parseInt(formData.salaId),
           aula_id: formData.aulaId || undefined,
           tipo_id: formData.tipoId,             // snake_case: tipo_id
           fecha_creacion: formData.fechaCreacion,
@@ -271,17 +270,17 @@ export default function EvaluacionForm({ onSuccess,  evaluacionAEditar, profile,
 
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
-            {formData.aulaId && (
+            {selectedEstudiante && (
               <Grid item xs={12}>
                 <Paper variant="outlined" sx={{ p: 2, bgcolor: "#fafafa" }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
                     Contexto del estudiante a evaluar
                   </Typography>
                   <Typography variant="body2" sx={{ color: "#555" }}>
-                    Aula: {prefillAulaLabel || formData.aulaId}
+                    Aula: {selectedEstudiante.aula_asignada ? `${selectedEstudiante.aula_asignada.comision} (${selectedEstudiante.aula_asignada.turno})` : "Sin comisión asignada"}
                   </Typography>
                   <Typography variant="body2" sx={{ color: "#555" }}>
-                    Escuela: {prefillEscuelaNombre || "-"}
+                    Escuela: {selectedEstudiante.escuela?.nombre || "Sin escuela asignada"}
                   </Typography>
                 </Paper>
               </Grid>
@@ -312,6 +311,7 @@ export default function EvaluacionForm({ onSuccess,  evaluacionAEditar, profile,
                     ...prev,
                     estudianteId: newValue ? newValue.id : "",
                     salaId: newValue ? String(newValue.sala_id) : "",
+                    aulaId: newValue?.aula_asignada?.id || newValue?.aula_id || "", 
                   }));
                 }}
                 // Cómo se ve el campo de texto

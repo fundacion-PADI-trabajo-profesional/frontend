@@ -27,7 +27,7 @@ dist-ssr
 *storybook.log
 .env
 .env.local
-.env.test
+# .env.test se commitea intencionalmente — solo contiene la URL base de tests (no sensible)
 
 coverage/
 .gitnexus

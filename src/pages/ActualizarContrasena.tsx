@@ -16,7 +16,7 @@ export default function ActualizarContrasena() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Atrapamos los tokens de la URL apenas carga la página
+  // tokens de la URL
   useEffect(() => {
     const hash = window.location.hash;
     if (hash) {

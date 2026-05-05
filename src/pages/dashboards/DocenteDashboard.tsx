@@ -1,14 +1,28 @@
 import { Grid, Typography, Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import DashboardCard from "../../components/DashboardCard";
+import { useEffect, useState } from "react";
 
 export default function DocenteDashboard() {
     const navigate = useNavigate();
+    const [nombreDocente, setNombreDocente] = useState("Docente");
+
+    useEffect(() => {
+        const userRaw = localStorage.getItem("padiUser");
+        const profileRaw = localStorage.getItem("padiProfile");
+
+        const user = userRaw ? JSON.parse(userRaw) : null;
+        const profile = profileRaw ? JSON.parse(profileRaw) : null;
+
+        const nombre = profile?.nombre ?? user?.nombre ?? "Docente";
+        
+        setNombreDocente(nombre);
+    }, []);
 
     return (
         <Box>
             <Typography variant="h4" sx={{ mb: 1, fontWeight: 700, color: "#2c3e50" }}>
-                Hola, Docente 👋
+                Hola, {nombreDocente} 👋
             </Typography>
             <Typography variant="body1" sx={{ mb: 4, color: "#666" }}>
                 Panel de estudiantes y evaluaciones.

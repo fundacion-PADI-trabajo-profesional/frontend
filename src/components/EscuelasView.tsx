@@ -146,7 +146,7 @@ export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVe
             />
 
             {/* Modales de Crear y Asignar Director */}
-            <Dialog open={createModalOpen} onClose={() => setCreateModalOpen(false)} fullWidth maxWidth="md">
+            <Dialog open={createModalOpen} onClose={() => setCreateModalOpen(false)} fullWidth maxWidth="sm">
                 <DialogContent sx={{ p: 0 }}>
                     {createModalOpen && (
                         <EscuelaForm 

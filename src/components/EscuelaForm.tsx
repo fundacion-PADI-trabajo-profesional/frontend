@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { Box, TextField, Button, Grid, Paper, Typography, MenuItem, CircularProgress, Alert } from "@mui/material";
+import { Box, TextField, Button, Grid, Typography, MenuItem, CircularProgress, Alert, Divider, IconButton } from "@mui/material";
+import CloseIcon from '@mui/icons-material/Close';
+import SchoolIcon from '@mui/icons-material/School';
 import { createEscuela } from "../api/escuelas";
 import { getZonas, Zona } from "../api/zonas";
 import { getCurrentEncargado } from "../api/encargados-zona";
@@ -91,11 +93,19 @@ export default function EscuelaForm({ onCancel, onSuccess, defaultZonaId }: Prop
     };
 
     return (
-        <Paper elevation={3} sx={{ p: 4, width: '100%', maxWidth: 600, borderRadius: 3 }}>
-            <Typography variant="h5" sx={{ mb: 3, fontWeight: 700 }}>
-                Registrar Nueva Escuela
-            </Typography>
+        <Box sx={{ width: '100%' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 3, py: 2 }}>
+                <SchoolIcon sx={{ color: '#65944F' }} />
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                    Registrar Nueva Escuela
+                </Typography>
+                <IconButton onClick={onCancel} sx={{ ml: 'auto' }} disabled={loading}>
+                    <CloseIcon />
+                </IconButton>
+            </Box>
+            <Divider />
 
+            <Box sx={{ p: 3 }}>
             {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
             <form onSubmit={handleSubmit}>
@@ -157,19 +167,26 @@ export default function EscuelaForm({ onCancel, onSuccess, defaultZonaId }: Prop
                 </Grid>
 
                 <Box sx={{ display: 'flex', gap: 2, mt: 4, justifyContent: 'flex-end' }}>
-                    <Button onClick={onCancel} disabled={loading} sx={{ color: '#666' }}>
+                    <Button onClick={onCancel} disabled={loading} sx={{ textTransform: 'none', color: '#666' }}>
                         Cancelar
                     </Button>
                     <Button
                         type="submit"
                         variant="contained"
                         disabled={loading}
-                        sx={{ bgcolor: '#000', '&:hover': { bgcolor: '#333' } }}
+                        startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+                        sx={{
+                            bgcolor: '#65944F',
+                            textTransform: 'none',
+                            borderRadius: 2,
+                            '&:hover': { bgcolor: '#558040' },
+                        }}
                     >
-                        {loading ? <CircularProgress size={24} color="inherit" /> : "Guardar Escuela"}
+                        {loading ? 'Guardando...' : 'Guardar Escuela'}
                     </Button>
                 </Box>
             </form>
-        </Paper>
+            </Box>
+        </Box>
     );
 }

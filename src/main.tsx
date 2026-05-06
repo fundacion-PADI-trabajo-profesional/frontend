@@ -4,11 +4,11 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./App.css";
 
-import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { ThemeProvider, createTheme, responsiveFontSizes } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 
 // Tema básico para MUI (puedes extenderlo o reemplazar por tu `theme.ts`)
-const theme = createTheme({
+let theme = createTheme({
   palette: {
     mode: "light",
     primary: { main: "#5c7cfa" },
@@ -18,6 +18,8 @@ const theme = createTheme({
     fontFamily: "'Montserrat', sans-serif",
   },
 });
+
+theme = responsiveFontSizes(theme);
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

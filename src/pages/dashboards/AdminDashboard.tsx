@@ -78,6 +78,18 @@ export default function AdminDashboard({ rol }: Props) {
                     />
                 </Grid>
 
+                {isEncargado && (
+                    <Grid item xs={12} sm={6} md={4}>
+                        <DashboardCard
+                            title="Evaluaciones PADI"
+                            description="Ver y gestionar todas las evaluaciones del sistema."
+                            icon="📋"
+                            color="#A3BE54"
+                            onClick={() => navigate("/evaluaciones")}
+                        />
+                    </Grid>
+                )}
+
                 {isEquipoPadi && (
                     <Grid item xs={12} sm={6} md={4}>
                         <DashboardCard

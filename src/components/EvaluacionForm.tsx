@@ -181,10 +181,7 @@ export default function EvaluacionForm({ onSuccess,  evaluacionAEditar, profile,
     setSuccess(false)
 
     try {
-      // Validate form
-      //if (!formData.estudianteId || !formData.salaId) {
-      //  throw new Error("Por favor completa todos los campos requeridos")
-      //}
+      
       if (!formData.estudianteId || !formData.salaId || !profile?.id) {
         throw new Error("Por favor completa todos los campos requeridos (faltan datos del estudiante, sala o profesor)")
       }
@@ -353,7 +350,7 @@ export default function EvaluacionForm({ onSuccess,  evaluacionAEditar, profile,
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Sala"
+                label="Prueba de Sala"
                 name="salaId"
                 type="number"
                 value={formData.salaId}

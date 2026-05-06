@@ -209,35 +209,10 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box>
             ) : (
-                <Box sx={{ height: '100%', bgcolor: '#f5f5f5', p: 2 }}>
+                <Box sx={{ minHeight: '100%', bgcolor: '#f5f5f5', p: 2 }}>
 
                     {/* VISTA 1: INTRO / DISCLAIMER */}
                     {step === "INTRO" && (
-                        // <Card sx={{ maxWidth: 600, mx: 'auto', mt: 4, borderRadius: 4, p: 2 }}>
-                        //     <CardContent>
-                        //         <Typography variant="h5" gutterBottom sx={{ fontWeight: 700 }}>
-                        //             Antes de comenzar
-                        //         </Typography>
-                        //         <Typography variant="body1" color="text.secondary" paragraph>
-                        //             Vas a evaluar el área de <strong>{areaNombre}</strong>. Esta sección se cerrará automáticamente al finalizar la última pregunta, actualizando el puntaje y el estado.
-                        //         </Typography>
-
-                        //         <Button
-                        //             variant="contained"
-                        //             fullWidth
-                        //             size="large"
-                        //             onClick={() => setStep("QUESTIONS")}
-                        //             sx={{
-                        //                 bgcolor: '#111827',
-                        //                 color: '#fff',
-                        //                 py: 1.5,
-                        //                 '&:hover': { bgcolor: '#374151' }
-                        //             }}
-                        //         >
-                        //             Iniciar Evaluación ({preguntas.length} Preguntas)
-                        //         </Button>
-                        //     </CardContent>
-                        // </Card>
                         <Card sx={{ maxWidth: 600, mx: 'auto', mt: 4, borderRadius: 4, p: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
                             <Typography variant="h5" gutterBottom sx={{ fontWeight: 700, color: '#111827' }}>
                                 Antes de comenzar
@@ -293,7 +268,7 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
 
                     {/* VISTA 2: PREGUNTAS (WIZARD) */}
                     {step === "QUESTIONS" && preguntas.length > 0 && preguntaActual && (
-                        <Box sx={{ maxWidth: 600, mx: 'auto', mt: 2, display: 'flex', flexDirection: 'column', height: '80vh' }}>
+                        <Box sx={{ maxWidth: 600, width: '100%', mx: 'auto', mt: 2, display: 'flex', flexDirection: 'column', minHeight: '80vh' }}>
                             {/* Barra de progreso */}
                             <Box sx={{ mb: 3 }}>
                                 <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>

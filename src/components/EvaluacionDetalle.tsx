@@ -117,7 +117,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
 
     // Handler para abrir el Wizard
     const handleAreaClick = (areaId: string, areaNombre: string, statusId: string, aciertosIndividuales: number, totalQuestions: number) => {
-        // ... (lógica para abrir revisión o wizard)
+
         if (statusId === 'A' || statusId === 'D' || statusId === 'C') {
             // Si está completada/aprobada/desaprobada, abre la vista de revisión
             setRevisionData({
@@ -140,9 +140,6 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
     if (error) return <Box sx={{ p: 4 }}><Typography color="error">{error}</Typography><Button onClick={onBack}>Volver</Button></Box>
     if (!data || !data.estudiante) return <Box sx={{ p: 4 }}><Typography>No se encontraron datos del estudiante.</Typography></Box>
     const evaluacion = data
-    // const areas = evaluacion.areas || []
-
-    // const fechaCreacion = new Date(data.createdAt).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
     const overallStatus = getStatusColor(evaluacion.estadoId);
 
     const fechaObj = evaluacion.createdAt;

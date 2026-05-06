@@ -1,11 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Box, Container, Typography, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, CircularProgress, Alert, Button, Stack, Chip, MenuItem, TextField } from "@mui/material"
+import { Box, Container, Typography, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, CircularProgress, Alert, Button, Stack, Chip, MenuItem, TextField, InputAdornment } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
+import SearchIcon from "@mui/icons-material/Search"
 import { useNavigate } from "react-router-dom"
 import { asignarDocenteAEscuela, desasignarDocenteDeEscuela, getDocentes, type Docente } from "../api/docentes"
 import { getEscuelas, type Escuela } from "../api/escuelas"
+import { BuscadorPadi } from "../components/SearchBar";
+import BotonNuevo from "../components/BotonNuevo"
 
 export default function DocentesPage() {
   const [items, setItems] = useState<Docente[]>([])
@@ -16,8 +19,10 @@ export default function DocentesPage() {
   const [currentRole, setCurrentRole] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const navigate = useNavigate()
+  const [busqueda, setBusqueda] = useState("")
+  const [, setCreateModalOpen] = useState(false)
 
+  const navigate = useNavigate()
   const canManageAsignaciones = currentRole === "equipo_padi" || currentRole === "encargado_zona"
 
   const loadData = async () => {
@@ -98,6 +103,14 @@ export default function DocentesPage() {
     }
   }
 
+  const docentesFiltrados = items.filter((d) => {
+    const termino = busqueda.toLowerCase()
+    return (
+      d.nombre.toLowerCase().includes(termino) ||
+      d.apellido.toLowerCase().includes(termino)
+    )
+  })
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
       <Box sx={{ bgcolor: "#f5f5f5", py: 4, borderBottom: "1px solid #e0e0e0" }}>
@@ -115,6 +128,31 @@ export default function DocentesPage() {
       </Box>
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Box sx={{ 
+          display: 'grid', 
+          gridTemplateColumns: '1fr auto 1fr', 
+          alignItems: 'center', 
+          mb: 3 
+        }}>
+        <Box />
+          <BuscadorPadi 
+            placeholder="Buscar docente por nombre o apellido..."
+            value={busqueda}
+            onChange={(e: any) => setBusqueda(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: '#adb5bd' }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+          
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <BotonNuevo texto="Nuevo docente" onClick={() => setCreateModalOpen(true)} />
+          </Box>
+        </Box>
+        
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
             <CircularProgress />
@@ -123,6 +161,20 @@ export default function DocentesPage() {
           <Alert severity="error">{error}</Alert>
         ) : items.length === 0 ? (
           <Typography sx={{ color: "#666" }}>No hay docentes registrados.</Typography>
+        ) : docentesFiltrados.length === 0 ? ( 
+          <Box sx={{ 
+            textAlign: "center", 
+            py: 6, 
+            px: 2, 
+            borderRadius: 2, 
+          }}>
+            <Typography variant="h6" sx={{ color: "#555", mb: 1 }}>
+              No se encontraron resultados
+            </Typography>
+            <Typography variant="body2" sx={{ color: "#777" }}>
+              La búsqueda "{busqueda}" no arrojó ningún docente.
+            </Typography>
+          </Box>
         ) : (
           <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
             <Table>
@@ -136,7 +188,7 @@ export default function DocentesPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {items.map((d) => (
+                {docentesFiltrados.map((d) => (
                   <TableRow
                     key={d.id}
                     hover

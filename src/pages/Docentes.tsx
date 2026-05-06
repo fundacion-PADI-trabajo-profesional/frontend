@@ -9,6 +9,7 @@ import { asignarDocenteAEscuela, desasignarDocenteDeEscuela, getDocentes, type D
 import { getEscuelas, type Escuela } from "../api/escuelas"
 import { BuscadorPadi } from "../components/SearchBar";
 import BotonNuevo from "../components/BotonNuevo"
+import DocenteForm from "../components/DocenteForm"
 
 export default function DocentesPage() {
   const [items, setItems] = useState<Docente[]>([])
@@ -20,7 +21,7 @@ export default function DocentesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [busqueda, setBusqueda] = useState("")
-  const [, setCreateModalOpen] = useState(false)
+  const [createModalOpen, setCreateModalOpen] = useState(false)
 
   const navigate = useNavigate()
   const canManageAsignaciones = currentRole === "equipo_padi" || currentRole === "encargado_zona"
@@ -149,7 +150,13 @@ export default function DocentesPage() {
           />
           
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <BotonNuevo texto="Nuevo docente" onClick={() => setCreateModalOpen(true)} />
+            <BotonNuevo 
+              texto="Nuevo docente" 
+              onClick={() => {
+                console.log("¡El botón funciona y manda el click!");
+                setCreateModalOpen(true);
+              }} 
+            />
           </Box>
         </Box>
         
@@ -310,6 +317,14 @@ export default function DocentesPage() {
           </Box>
         </Box>
       )}
+
+      <DocenteForm 
+        open={createModalOpen} 
+        onClose={() => setCreateModalOpen(false)} 
+        onSuccess={loadData} 
+      />
+
     </Box>
+
   )
 }

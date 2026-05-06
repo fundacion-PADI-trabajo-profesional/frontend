@@ -37,18 +37,33 @@ export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVe
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [escData, dirData, zonasData, aulasData] = await Promise.all([
+            const [escData, dirData, aulasData] = await Promise.all([
                 getEscuelas(),
-                getDirectivos(),
-                getZonas(),
-                getAulas()
+                getDirectivos().catch((err) => {
+                    console.warn("Aviso: No se pudieron cargar directivos", err);
+                    return [];
+                }),
+                getAulas().catch((err) => {
+                    console.warn("Aviso: No se pudieron cargar aulas", err);
+                    return [];
+                })
             ]);
 
+            let zonasData: any[] = [];
+            if (isEquipoPadi) {
+                zonasData = await getZonas();
+            }
+
             let filtered = escData;
+
             if (zonaIdParam) {
+                // Caso PADI filtrando por zona
                 filtered = escData.filter(e => e.zona?.id === zonaIdParam);
                 const zona = zonasData.find(z => z.id === zonaIdParam);
                 setZonaNombre(zona?.nombre || "Zona desconocida");
+            } else if (!isEquipoPadi && escData.length > 0) {
+                // Caso Encargado: Saca el nombre de la zona desde la primera escuela que le vino
+                setZonaNombre(escData[0].zona?.nombre || "Mi Zona");
             } else {
                 setZonaNombre("Todas las Escuelas");
             }
@@ -57,6 +72,7 @@ export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVe
             setDirectivos(dirData);
             setAulas(aulasData);
         } catch (e) {
+            console.error("Error en fetchData:", e);
             setError("Error al cargar datos");
         } finally {
             setLoading(false);
@@ -132,11 +148,13 @@ export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVe
             {/* Modales de Crear y Asignar Director */}
             <Dialog open={createModalOpen} onClose={() => setCreateModalOpen(false)} fullWidth maxWidth="md">
                 <DialogContent sx={{ p: 0 }}>
-                    <EscuelaForm 
-                        defaultZonaId={zonaIdParam || undefined} 
-                        onCancel={() => setCreateModalOpen(false)} 
-                        onSuccess={() => { setCreateModalOpen(false); fetchData(); }} 
-                    />
+                    {createModalOpen && (
+                        <EscuelaForm 
+                            defaultZonaId={zonaIdParam || undefined} 
+                            onCancel={() => setCreateModalOpen(false)} 
+                            onSuccess={() => { setCreateModalOpen(false); fetchData(); }} 
+                        />
+                    )}
                 </DialogContent>
             </Dialog>
 

@@ -1,14 +1,16 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Box, Typography, IconButton, CircularProgress, Paper, Divider, List, ListItem, ListItemText, ListItemIcon, Chip, Alert, Dialog, Stack } from '@mui/material';
+import { Box, Typography, IconButton, CircularProgress, Paper, Divider, List, ListItem, ListItemText, ListItemIcon, Chip, Alert, Dialog, Stack, Button } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
+import EditIcon from '@mui/icons-material/Edit';
 
 import { getRespuestasParaRevision, type PreguntasResponse } from '../api/evaluaciones';
 
 interface Props {
     open: boolean;
     onClose: () => void;
+    onCorrect?: () => void;
     evaluacionId: string;
     areaId: string;
     areaNombre: string;
@@ -17,7 +19,7 @@ interface Props {
     statusId: string;
 }
 
-export default function EvaluacionRevision({ open, onClose, evaluacionId, areaId, areaNombre, score, total, statusId }: Props) {
+export default function EvaluacionRevision({ open, onClose, onCorrect, evaluacionId, areaId, areaNombre, score, total, statusId }: Props) {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<PreguntasResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -94,6 +96,17 @@ export default function EvaluacionRevision({ open, onClose, evaluacionId, areaId
                 <Typography sx={{ ml: 2, flex: 1, fontWeight: 700 }} variant="h6">
                     Revisión: {areaNombre}
                 </Typography>
+                {onCorrect && (
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<EditIcon />}
+                        onClick={onCorrect}
+                        sx={{ textTransform: 'none', borderColor: '#5c7cfa', color: '#5c7cfa' }}
+                    >
+                        Corregir respuestas
+                    </Button>
+                )}
             </Box>
 
             <Box sx={{ p: 3, maxWidth: 800, mx: 'auto' }}>

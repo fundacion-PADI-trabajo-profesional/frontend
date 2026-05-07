@@ -24,6 +24,7 @@ import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 
 import { getEvaluacionInstanciaById, type EvaluacionInstancia } from "../api/evaluaciones"
 import EvaluacionWizard from "./EvaluacionWizard";
+import EvaluacionRevision from "./EvaluacionRevision";
 
 interface Props {
     evaluacionId: string
@@ -92,6 +93,10 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
     const [wizardOpen, setWizardOpen] = useState(false)
     const [selectedArea, setSelectedArea] = useState<{ id: string, nombre: string } | null>(null)
 
+    // ESTADOS PARA REVISIÓN
+    const [revisionOpen, setRevisionOpen] = useState(false);
+    const [revisionData, setRevisionData] = useState<{ id: string, nombre: string, score: number, total: number, statusId: string } | null>(null);
+
     // Carga inicial y recarga
     const loadEvaluationData = async () => {
         try {
@@ -110,8 +115,29 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
     }, [evaluacionId])
 
 
-    const handleAreaClick = (areaId: string, areaNombre: string) => {
+    const handleAreaClick = (areaId: string, areaNombre: string, statusId: string, aciertosIndividuales: number, totalQuestions: number) => {
+        if (statusId === 'A' || statusId === 'D' || statusId === 'C') {
+            // Área completada: mostrar revisión de respuestas
+            setRevisionData({
+                id: areaId,
+                nombre: areaNombre,
+                score: aciertosIndividuales,
+                total: totalQuestions,
+                statusId: statusId
+            });
+            setRevisionOpen(true);
+            return;
+        }
+        // Área no iniciada o en progreso: abrir wizard
         setSelectedArea({ id: areaId, nombre: areaNombre });
+        setWizardOpen(true);
+    }
+
+    // Abre el wizard para corregir desde la pantalla de revisión
+    const handleCorrectFromRevision = () => {
+        if (!revisionData) return;
+        setRevisionOpen(false);
+        setSelectedArea({ id: revisionData.id, nombre: revisionData.nombre });
         setWizardOpen(true);
     }
     
@@ -271,7 +297,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                                     borderColor: area.estadoId !== 'C' ? 'transparent' : '#eee'
                                 }
                             }}
-                            onClick={() => handleAreaClick(area.id, area.nombre)}
+                            onClick={() => handleAreaClick(area.id, area.nombre, area.estadoId, area.aciertosIndividuales || 0, area.totalPreguntas || 0)}
                         >
 
                             {/* Icon Box */}
@@ -317,18 +343,37 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                 })}
             </Box>
 
-            {/* WIZARD MODAL (Aparece al hacer click en un área) */}
+            {/* WIZARD MODAL */}
             <EvaluacionWizard
                 open={wizardOpen}
                 onClose={() => {
                     setWizardOpen(false);
                     setSelectedArea(null);
-                    loadEvaluationData(); // refresca estados/aciertos
+                    loadEvaluationData();
                 }}
                 evaluacionId={evaluacionId}
                 areaId={selectedArea?.id || ""}
                 areaNombre={selectedArea?.nombre || ""}
             />
+
+            {/* REVISIÓN MODAL */}
+            {revisionData && (
+                <EvaluacionRevision
+                    open={revisionOpen}
+                    onClose={() => {
+                        setRevisionOpen(false);
+                        setRevisionData(null);
+                        loadEvaluationData();
+                    }}
+                    onCorrect={handleCorrectFromRevision}
+                    evaluacionId={evaluacionId}
+                    areaId={revisionData.id}
+                    areaNombre={revisionData.nombre}
+                    score={revisionData.score}
+                    total={revisionData.total}
+                    statusId={revisionData.statusId}
+                />
+            )}
         </Box>
     )
 }

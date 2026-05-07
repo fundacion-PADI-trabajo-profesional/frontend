@@ -451,7 +451,7 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                             disabled={saving}
                                             sx={{ color: '#6b7280', textTransform: 'none', fontSize: '0.875rem' }}
                                         >
-                                            Saltear pregunta →
+                                            Siguiente pregunta →
                                         </Button>
                                     </Box>
                                 </Card>

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { filtrarAulasDisponibles } from "../../utils/docentes-aulas";
+import { filtrarAulasDisponibles, filtrarAulasParaEstudiante } from "../../utils/docentes-aulas";
 import type { Aula } from "../../api/aulas";
 
 const makeAula = (id: string, escuela_id: string): Aula => ({
@@ -72,5 +72,61 @@ describe("filtrarAulasDisponibles", () => {
     const aulas = [makeAula("a-1", "esc-1")];
 
     expect(filtrarAulasDisponibles(aulas, {})).toEqual([]);
+  });
+});
+
+// ─── filtrarAulasParaEstudiante ───────────────────────────────────────────────
+
+describe("filtrarAulasParaEstudiante", () => {
+  it("devuelve solo las aulas del colegio seleccionado", () => {
+    const aulas = [
+      makeAula("a-1", "esc-1"),
+      makeAula("a-2", "esc-2"),
+      makeAula("a-3", "esc-1"),
+    ];
+
+    const result = filtrarAulasParaEstudiante(aulas, "esc-1", "");
+
+    expect(result.map((a) => a.id)).toEqual(["a-1", "a-3"]);
+  });
+
+  it("filtra por colegio Y sala cuando ambos están seleccionados", () => {
+    const aulas = [
+      { ...makeAula("a-1", "esc-1"), sala_id: 3 },
+      { ...makeAula("a-2", "esc-1"), sala_id: 4 },
+      { ...makeAula("a-3", "esc-1"), sala_id: 4 },
+      { ...makeAula("a-4", "esc-2"), sala_id: 4 }, // otro colegio
+    ];
+
+    const result = filtrarAulasParaEstudiante(aulas, "esc-1", "4");
+
+    expect(result.map((a) => a.id)).toEqual(["a-2", "a-3"]);
+  });
+
+  it("no muestra aulas de otros colegios aunque tengan la misma sala", () => {
+    const aulas = [
+      { ...makeAula("a-1", "esc-2"), sala_id: 4 },
+      { ...makeAula("a-2", "esc-3"), sala_id: 4 },
+    ];
+
+    expect(filtrarAulasParaEstudiante(aulas, "esc-1", "4")).toEqual([]);
+  });
+
+  it("sin sala seleccionada devuelve todas las aulas del colegio", () => {
+    const aulas = [
+      { ...makeAula("a-1", "esc-1"), sala_id: 3 },
+      { ...makeAula("a-2", "esc-1"), sala_id: 4 },
+      { ...makeAula("a-3", "esc-1"), sala_id: 5 },
+    ];
+
+    const result = filtrarAulasParaEstudiante(aulas, "esc-1", "");
+
+    expect(result.map((a) => a.id)).toEqual(["a-1", "a-2", "a-3"]);
+  });
+
+  it("devuelve vacío si no hay colegio seleccionado", () => {
+    const aulas = [makeAula("a-1", "esc-1")];
+
+    expect(filtrarAulasParaEstudiante(aulas, "", "")).toEqual([]);
   });
 });

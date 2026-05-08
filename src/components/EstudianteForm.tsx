@@ -28,6 +28,7 @@ import {
 } from "../api/estudiantes"
 import { getEscuelas, type Escuela } from "../api/escuelas"
 import { getAulasPorEscuela, type Aula } from "../api/aulas";
+import { filtrarAulasParaEstudiante } from "../utils/docentes-aulas";
 
 interface EstudianteFormProps {
     onCancel: () => void
@@ -298,26 +299,6 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
                             </FormControl>
                         </Grid>
 
-                        {/* AULA: Siempre disponible para el Director */}
-                        <Grid item xs={12} sm={6}>
-                            <FormControl fullWidth size="small">
-                                <InputLabel>Aula (Opcional)</InputLabel>
-                                <Select
-                                    label="Aula"
-                                    value={formData.aula_id || ""}
-                                    onChange={(e) => handleAulaChange(e.target.value)}
-                                >
-                                    <MenuItem value=""><em>Sin asignar</em></MenuItem>
-                                    {aulasDisponibles.filter(aula => !estudianteAEditar || !formData.sala_id || String(aula.sala_id) === formData.sala_id)
-                                        .map((aula) => (
-                                        <MenuItem key={aula.id} value={aula.id}>
-                                            {aula.sala?.nombre} - {aula.comision} ({aula.turno})
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-
                         {/* LA ESCUELA SOLO SE MUESTRA SI NO ES DIRECTOR (Ej: Admin PADI) */}
                         {!isDirector && (
                             <Grid item xs={12}>
@@ -335,6 +316,29 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
                                 </FormControl>
                             </Grid>
                         )}
+
+                        {/* AULA: requiere colegio seleccionado previamente */}
+                        <Grid item xs={12} sm={6}>
+                            <FormControl fullWidth size="small" disabled={!formData.escuela_id}>
+                                <InputLabel>Aula (Opcional)</InputLabel>
+                                <Select
+                                    label="Aula"
+                                    value={formData.aula_id || ""}
+                                    onChange={(e) => handleAulaChange(e.target.value)}
+                                >
+                                    <MenuItem value=""><em>Sin asignar</em></MenuItem>
+                                    {filtrarAulasParaEstudiante(aulasDisponibles, formData.escuela_id, formData.sala_id)
+                                        .map((aula) => (
+                                            <MenuItem key={aula.id} value={aula.id}>
+                                                {aula.sala?.nombre} - {aula.comision} ({aula.turno})
+                                            </MenuItem>
+                                        ))}
+                                </Select>
+                                {!formData.escuela_id && (
+                                    <FormHelperText>Seleccioná un colegio primero</FormHelperText>
+                                )}
+                            </FormControl>
+                        </Grid>
                     </>
                 ) : (
                     /* VISTA DOCENTE */

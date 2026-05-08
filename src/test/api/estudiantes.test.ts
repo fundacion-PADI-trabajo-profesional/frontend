@@ -12,6 +12,7 @@ import {
   getEstudiantes,
   createEstudiante,
   updateEstudiante,
+  deleteEstudiante,
   getGeneros,
   getSalas,
   asignarEstudianteAula,
@@ -327,5 +328,32 @@ describe("bulkCreateEstudiantes", () => {
     await expect(
       bulkCreateEstudiantes({ estudiantes: [{ dni: "1" }] })
     ).rejects.toThrow("Servidor caído");
+  });
+});
+
+// ─── deleteEstudiante ────────────────────────────────────────────────────────
+describe("deleteEstudiante", () => {
+  it("llama a DELETE /estudiantes/:id", async () => {
+    vi.mocked(fetch).mockResolvedValue(mockFetchResponse({}, true, 200));
+
+    await deleteEstudiante("s-1");
+
+    const [url, options] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit];
+    expect(url).toContain(`${API}/estudiantes/s-1`);
+    expect(options.method).toBe("DELETE");
+  });
+
+  it("lanza el mensaje del servidor cuando la respuesta no es ok", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockFetchResponse({ message: "Estudiante no encontrado" }, false, 404)
+    );
+
+    await expect(deleteEstudiante("s-x")).rejects.toThrow("Estudiante no encontrado");
+  });
+
+  it("lanza error genérico cuando el body no tiene message", async () => {
+    vi.mocked(fetch).mockResolvedValue(mockFetchResponse({}, false, 500));
+
+    await expect(deleteEstudiante("s-x")).rejects.toThrow("Error al eliminar estudiante");
   });
 });

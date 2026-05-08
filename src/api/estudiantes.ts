@@ -263,6 +263,17 @@ export async function getAulasPorEscuela(escuelaId: string): Promise<any[]> {
     return result.success ? result.data : [];
 }
 
+export async function deleteEstudiante(id: string): Promise<void> {
+    const response = await fetch(`${API_URL}/estudiantes/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body?.message || "Error al eliminar estudiante");
+    }
+}
+
 export async function bulkCreateEstudiantes(data: { estudiantes: any[], dryRun?: boolean }) {
     const user = JSON.parse(localStorage.getItem("padiUser") || "{}");
 

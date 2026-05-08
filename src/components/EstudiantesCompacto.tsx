@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react"
 import {
     Box, Typography, IconButton, Menu, MenuItem,
     ListItemIcon, Tooltip, Paper,
+    Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button,
 } from "@mui/material"
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore"
 import ChevronRightIcon from "@mui/icons-material/ChevronRight"
@@ -9,6 +10,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert"
 import AssessmentIcon from "@mui/icons-material/Assessment"
 import EditIcon from "@mui/icons-material/Edit"
 import VisibilityIcon from "@mui/icons-material/Visibility"
+import DeleteIcon from "@mui/icons-material/Delete"
 import SpeedDial from "@mui/material/SpeedDial"
 import SpeedDialIcon from "@mui/material/SpeedDialIcon"
 import SpeedDialAction from "@mui/material/SpeedDialAction"
@@ -23,6 +25,7 @@ interface Props {
     onAddEstudiante: () => void
     onEditEstudiante: (est: Estudiante) => void
     onBulkAdd: () => void
+    onDeleteEstudiante?: (id: string) => Promise<void>
     userRole: string
 }
 
@@ -105,11 +108,12 @@ function EvalDots({ historial, salaId, allSalaIds, salaNombresMap }: {
     )
 }
 
-export default function EstudiantesCompacto({ estudiantes, onAddEstudiante, onEditEstudiante, onBulkAdd, userRole }: Props) {
+export default function EstudiantesCompacto({ estudiantes, onAddEstudiante, onEditEstudiante, onBulkAdd, onDeleteEstudiante, userRole }: Props) {
     const navigate = useNavigate()
     const [expanded, setExpanded] = useState<Set<string>>(new Set())
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
     const [selectedStudent, setSelectedStudent] = useState<Estudiante | null>(null)
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
 
     const grupos = useMemo(() => agrupar(estudiantes), [estudiantes])
     const isSingleEscuela = grupos.length <= 1
@@ -164,6 +168,14 @@ export default function EstudiantesCompacto({ estudiantes, onAddEstudiante, onEd
         handleMenuClose()
     }
     const handleModificar = () => { if (selectedStudent) onEditEstudiante(selectedStudent); handleMenuClose() }
+
+    const handleEliminar = () => setConfirmDeleteOpen(true)
+    const handleConfirmEliminar = async () => {
+        if (!selectedStudent || !onDeleteEstudiante) return;
+        await onDeleteEstudiante(selectedStudent.id);
+        setConfirmDeleteOpen(false);
+        handleMenuClose();
+    }
 
     // Filas de alumnos dentro de una comisión
     const renderStudents = (com: GrupoComision, indent: number) =>
@@ -348,7 +360,27 @@ export default function EstudiantesCompacto({ estudiantes, onAddEstudiante, onEd
                     <ListItemIcon><VisibilityIcon fontSize="small" /></ListItemIcon>
                     Ver historial
                 </MenuItem>
+                {userRole === "equipo_padi" && (
+                    <MenuItem onClick={handleEliminar} sx={{ py: 1, px: 2, color: "error.main" }}>
+                        <ListItemIcon><DeleteIcon fontSize="small" sx={{ color: "error.main" }} /></ListItemIcon>
+                        Eliminar estudiante
+                    </MenuItem>
+                )}
             </Menu>
+
+            <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>
+                <DialogTitle>Eliminar estudiante</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        ¿Estás seguro que querés eliminar a <strong>{selectedStudent?.personas.nombre} {selectedStudent?.personas.primer_apellido}</strong>?
+                        Se eliminarán también todas sus evaluaciones y asignaciones. Esta acción no se puede deshacer.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setConfirmDeleteOpen(false)}>Cancelar</Button>
+                    <Button onClick={handleConfirmEliminar} color="error" variant="contained">Eliminar</Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     )
 }

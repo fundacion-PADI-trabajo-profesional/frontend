@@ -4,7 +4,10 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./App.css";
 
+import { setupFetchInterceptor } from "./api/auth";
 import { ThemeProvider, createTheme, responsiveFontSizes } from "@mui/material/styles";
+
+setupFetchInterceptor();
 import CssBaseline from "@mui/material/CssBaseline";
 
 // Tema básico para MUI (puedes extenderlo o reemplazar por tu `theme.ts`)

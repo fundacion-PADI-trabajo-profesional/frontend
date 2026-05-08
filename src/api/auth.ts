@@ -115,6 +115,42 @@ async function handleResponse(response: Response, retryFn?: () => Promise<Respon
 }
 
 /**
+ * Intercepta todos los `fetch` globales de la app.
+ * Ante un 401, intenta renovar el token una vez y reintenta la request.
+ * Si la renovación falla, fuerza logout. Llamar una sola vez al arranque.
+ */
+export function setupFetchInterceptor() {
+  const originalFetch = window.fetch.bind(window);
+
+  window.fetch = async (input, init) => {
+    const response = await originalFetch(input, init);
+
+    if (response.status === 401) {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      // Evitar loop infinito en el propio endpoint de refresh
+      if (url.includes("/auth/")) return response;
+
+      const newToken = await getRefreshedToken();
+
+      if (newToken) {
+        return originalFetch(input, {
+          ...init,
+          headers: {
+            ...(init?.headers ?? {}),
+            Authorization: `Bearer ${newToken}`,
+          },
+        });
+      }
+
+      forceLogout();
+      throw new Error("Sesión expirada. Por favor, iniciá sesión nuevamente.");
+    }
+
+    return response;
+  };
+}
+
+/**
  * Limpia tokens y redirige al login.
  */
 function forceLogout() {

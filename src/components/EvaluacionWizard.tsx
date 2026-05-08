@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
     Box,
     Typography,
@@ -133,6 +133,72 @@ function SidebarPanel({
                 ))}
             </Box>
         </Paper>
+    );
+}
+
+function MobileCircleRow({
+    preguntas,
+    respuestas,
+    currentIndex,
+    onJump,
+}: {
+    preguntas: PreguntaBase[];
+    respuestas: Record<string, number | null>;
+    currentIndex: number;
+    onJump: (idx: number) => void;
+}) {
+    const currentRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        currentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }, [currentIndex]);
+
+    return (
+        <Box sx={{ position: 'relative', display: { xs: 'block', sm: 'none' }, mb: 2 }}>
+            <Box sx={{
+                display: 'flex',
+                overflowX: 'auto',
+                gap: 0.75,
+                pb: 1,
+                '&::-webkit-scrollbar': { display: 'none' },
+                scrollbarWidth: 'none',
+            }}>
+            {preguntas.map((p, idx) => {
+                const answer = respuestas[p.id];
+                const isCurrent = idx === currentIndex;
+                const isYes = answer === 1;
+                const isNo = answer === 0;
+                const isAnswered = isYes || isNo;
+
+                return (
+                    <Box
+                        key={p.id}
+                        ref={isCurrent ? currentRef : null}
+                        onClick={() => onJump(idx)}
+                        sx={{
+                            width: 32,
+                            height: 32,
+                            flexShrink: 0,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: isAnswered ? '0.8rem' : '0.7rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            border: isCurrent ? '2.5px solid #5c7cfa' : '2px solid transparent',
+                            bgcolor: isYes ? '#dcfce7' : isNo ? '#fee2e2' : '#f3f4f6',
+                            color: isCurrent ? '#5c7cfa' : isYes ? '#16a34a' : isNo ? '#ef4444' : '#9ca3af',
+                            boxShadow: isCurrent ? '0 0 0 2px #c7d2fe' : 'none',
+                        }}
+                    >
+                        {isYes ? '✓' : isNo ? '✗' : idx + 1}
+                    </Box>
+                );
+            })}
+            </Box>
+            <Box sx={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 40, background: 'linear-gradient(to right, transparent, #f5f5f5)', pointerEvents: 'none' }} />
+        </Box>
     );
 }
 
@@ -358,6 +424,14 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                         sx={{ height: 8, borderRadius: 4, bgcolor: '#e5e7eb', '& .MuiLinearProgress-bar': { bgcolor: '#5c7cfa' } }}
                                     />
                                 </Box>
+
+                                {/* Círculos de navegación (solo mobile) */}
+                                <MobileCircleRow
+                                    preguntas={preguntas}
+                                    respuestas={respuestas}
+                                    currentIndex={currentQuestionIndex}
+                                    onJump={handleJumpTo}
+                                />
 
                                 {/* Tarjeta de pregunta */}
                                 <Card sx={{ flex: 1, borderRadius: 4, display: 'flex', flexDirection: 'column', mb: 2 }}>

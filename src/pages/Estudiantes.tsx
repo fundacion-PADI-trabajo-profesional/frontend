@@ -6,7 +6,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import { useNavigate } from "react-router-dom"
 import EstudiantesCompacto from "../components/EstudiantesCompacto"
 import EstudianteForm from "../components/EstudianteForm"
-import { getEstudiantes, type Estudiante, type EstudianteCreado } from "../api/estudiantes"
+import { getEstudiantes, deleteEstudiante, type Estudiante, type EstudianteCreado } from "../api/estudiantes"
 import { getDocenteAulasConEstudiantes, type DocenteAulaConEstudiantes } from "../api/aulas"
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import BulkUploadForm from "../components/BulkUploadForm"
@@ -93,6 +93,11 @@ export default function Estudiantes() {
     ));
 
     // --- Handlers de Navegación ---
+    const handleDeleteEstudiante = async (id: string) => {
+        await deleteEstudiante(id);
+        await loadEstudiantes();
+    };
+
     const handleEdit = (estudiante: Estudiante) => {
         setSelectedForEdit(estudiante);
         setView("form");
@@ -396,6 +401,7 @@ export default function Estudiantes() {
                                     onAddEstudiante={() => setView("form")}
                                     onEditEstudiante={handleEdit}
                                     onBulkAdd={() => setModalMasivoOpen(true)}
+                                    onDeleteEstudiante={handleDeleteEstudiante}
                                     userRole={userRole}
                                 />
                             </Box>

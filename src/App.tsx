@@ -17,6 +17,10 @@ import ActualizarContrasena from "./pages/ActualizarContrasena"
 import SolicitarRecuperoPassword from "./pages/SolicitarRecuperoPassword"
 import CambiarContrasenaTemporal from "./pages/CambiarContrasenaTemporal"
 import GestionUsuariosPage from "./pages/GestionUsuariosPage"
+import EstadisticasPadi from "./pages/EstadisticasPadi"
+import EstadisticasZona from "./pages/EstadisticasZona"
+import EstadisticasEscuela from "./pages/EstadisticasEscuela"
+import EstadisticasDocente from "./pages/EstadisticasDocente"
 
 // Define a type for your user object
 interface User {
@@ -93,6 +97,46 @@ function App() {
               : currentUser.rol !== "equipo_padi"
                 ? <Navigate to="/home" replace />
                 : <GestionUsuariosPage />
+          }
+        />
+
+        {/* Estadísticas por rol */}
+        <Route
+          path="/estadisticas/padi"
+          element={
+            !currentUser
+              ? <Navigate to="/login" replace />
+              : currentUser.rol !== "equipo_padi"
+                ? <Navigate to="/home" replace />
+                : <EstadisticasPadi />
+          }
+        />
+        <Route
+          path="/estadisticas/zona"
+          element={
+            !currentUser
+              ? <Navigate to="/login" replace />
+              : currentUser.rol !== "encargado_zona"
+                ? <Navigate to="/home" replace />
+                : <EstadisticasZona />
+          }
+        />
+        <Route
+          path="/estadisticas/escuela"
+          element={
+            !currentUser
+              ? <Navigate to="/login" replace />
+              : !["director", "encargado_zona", "equipo_padi"].includes(currentUser.rol)
+                ? <Navigate to="/home" replace />
+                : <EstadisticasEscuela />
+          }
+        />
+        <Route
+          path="/estadisticas/docente"
+          element={
+            !currentUser
+              ? <Navigate to="/login" replace />
+              : <EstadisticasDocente />
           }
         />
 

@@ -113,6 +113,30 @@ export default function AdminDashboard({ rol }: Props) {
                         />
                     </Grid>
                 )}
+
+                {isEquipoPadi && (
+                    <Grid item xs={12} sm={6} md={4}>
+                        <DashboardCard
+                            title="Estadísticas"
+                            description="Mapa de calor de rendimiento por zona y área de evaluación."
+                            icon="📊"
+                            color="#A3BE54"
+                            onClick={() => navigate("/estadisticas/padi")}
+                        />
+                    </Grid>
+                )}
+
+                {isEncargado && (
+                    <Grid item xs={12} sm={6} md={4}>
+                        <DashboardCard
+                            title="Estadísticas"
+                            description="Rendimiento por escuela y área de evaluación en tu zona."
+                            icon="📊"
+                            color="#A3BE54"
+                            onClick={() => navigate("/estadisticas/zona")}
+                        />
+                    </Grid>
+                )}
             </Grid>
         </Box>
     );

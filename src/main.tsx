@@ -6,9 +6,12 @@ import "./App.css";
 
 import { setupFetchInterceptor } from "./api/auth";
 import { ThemeProvider, createTheme, responsiveFontSizes } from "@mui/material/styles";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 setupFetchInterceptor();
 import CssBaseline from "@mui/material/CssBaseline";
+
+const queryClient = new QueryClient();
 
 // Tema básico para MUI (puedes extenderlo o reemplazar por tu `theme.ts`)
 let theme = createTheme({
@@ -28,7 +31,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <App />
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
     </ThemeProvider>
   </React.StrictMode>
 );

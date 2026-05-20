@@ -50,6 +50,17 @@ export default function DocenteDashboard() {
                         onClick={() => navigate("/evaluaciones")}
                     />
                 </Grid>
+
+                {/* Estadísticas */}
+                <Grid item xs={12} sm={6} md={4}>
+                    <DashboardCard
+                        title="Estadísticas"
+                        description="Ítems con mayor error y distribución de puntajes de tu aula."
+                        icon="📊"
+                        color="#7E57C2"
+                        onClick={() => navigate("/estadisticas/docente")}
+                    />
+                </Grid>
             </Grid>
         </Box>
     );

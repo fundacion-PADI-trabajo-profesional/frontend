@@ -1,38 +1,28 @@
-import { useState, useEffect } from "react"; // Agregamos useEffect
-import { Box, TextField, Button, Grid, Paper, Typography, MenuItem, CircularProgress, Alert } from "@mui/material";
-import { createEscuela, CreateEscuelaDto } from "../api/escuelas";
+import { useState, useEffect } from "react";
+import { Box, TextField, Button, Grid, Typography, MenuItem, CircularProgress, Alert, Divider, IconButton } from "@mui/material";
+import CloseIcon from '@mui/icons-material/Close';
+import SchoolIcon from '@mui/icons-material/School';
+import { createEscuela } from "../api/escuelas";
 import { getZonas, Zona } from "../api/zonas";
 import { getCurrentEncargado } from "../api/encargados-zona";
 
 interface Props {
     onCancel: () => void;
     onSuccess: () => void;
+    defaultZonaId?: string;
 }
 
-export default function EscuelaForm({ onCancel, onSuccess }: Props) {
+export default function EscuelaForm({ onCancel, onSuccess, defaultZonaId }: Props) {
     const [loading, setLoading] = useState(false);
     const [zonas, setZonas] = useState<Zona[]>([]);
     const [loadingZonas, setLoadingZonas] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [userRole, setUserRole] = useState("");
-
-    //    useEffect(() => {
-    //        const storedUser = localStorage.getItem("padiUser");
-    //        if (storedUser) {
-    //            const parsed = JSON.parse(storedUser);
-    //            console.log("Rol detectado en formulario:", parsed.rol); // Para depurar
-    //            setUserRole(parsed.rol);
-    //        } else {
-    //            // Fallback por si acaso
-    //            setUserRole(localStorage.getItem("userRole") || "");
-    //        }
-    //    }, []);
-
     const [formData, setFormData] = useState({
         nombre: "",
         direccion: "",
         telefono: "",
-        zona_id: ""
+        zona_id: defaultZonaId || ""
     });
 
     useEffect(() => {
@@ -41,6 +31,10 @@ export default function EscuelaForm({ onCancel, onSuccess }: Props) {
             if (storedUser) {
                 const parsedUser = JSON.parse(storedUser);
                 setUserRole(parsedUser.rol);
+
+                if (defaultZonaId) {
+                    setFormData(prev => ({ ...prev, zona_id: defaultZonaId }));
+                }
 
                 if (parsedUser.rol === "encargado_zona") {
                     // Para encargados de zona, obtener su zona asignada
@@ -77,7 +71,7 @@ export default function EscuelaForm({ onCancel, onSuccess }: Props) {
             }
         };
         loadInitialData();
-    }, []);
+    },[defaultZonaId]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -99,11 +93,19 @@ export default function EscuelaForm({ onCancel, onSuccess }: Props) {
     };
 
     return (
-        <Paper elevation={3} sx={{ p: 4, width: '100%', maxWidth: 600, borderRadius: 3 }}>
-            <Typography variant="h5" sx={{ mb: 3, fontWeight: 700 }}>
-                Registrar Nueva Escuela
-            </Typography>
+        <Box sx={{ width: '100%' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 3, py: 2 }}>
+                <SchoolIcon sx={{ color: '#65944F' }} />
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                    Registrar Nueva Escuela
+                </Typography>
+                <IconButton onClick={onCancel} sx={{ ml: 'auto' }} disabled={loading}>
+                    <CloseIcon />
+                </IconButton>
+            </Box>
+            <Divider />
 
+            <Box sx={{ p: 3 }}>
             {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
             <form onSubmit={handleSubmit}>
@@ -165,19 +167,26 @@ export default function EscuelaForm({ onCancel, onSuccess }: Props) {
                 </Grid>
 
                 <Box sx={{ display: 'flex', gap: 2, mt: 4, justifyContent: 'flex-end' }}>
-                    <Button onClick={onCancel} disabled={loading} sx={{ color: '#666' }}>
+                    <Button onClick={onCancel} disabled={loading} sx={{ textTransform: 'none', color: '#666' }}>
                         Cancelar
                     </Button>
                     <Button
                         type="submit"
                         variant="contained"
                         disabled={loading}
-                        sx={{ bgcolor: '#000', '&:hover': { bgcolor: '#333' } }}
+                        startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+                        sx={{
+                            bgcolor: '#65944F',
+                            textTransform: 'none',
+                            borderRadius: 2,
+                            '&:hover': { bgcolor: '#558040' },
+                        }}
                     >
-                        {loading ? <CircularProgress size={24} color="inherit" /> : "Guardar Escuela"}
+                        {loading ? 'Guardando...' : 'Guardar Escuela'}
                     </Button>
                 </Box>
             </form>
-        </Paper>
+            </Box>
+        </Box>
     );
 }

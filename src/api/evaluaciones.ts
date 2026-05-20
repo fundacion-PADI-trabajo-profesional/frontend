@@ -1,5 +1,7 @@
 // Archivo: frontend/src/api/evaluaciones.ts
 
+import { getAuthHeaders } from "./auth"
+
 const API_URL = import.meta.env.VITE_API_URL
 
 const ESTADO_NO_INICIADA = "N"
@@ -77,21 +79,18 @@ export interface EvaluacionInstancia {
 export interface CreateEvaluacionPayload {
   dni: string
   profesor_id: string
+  sala_id: number
   aula_id?: string
   tipo_id: string
   fecha_creacion: string
 }
 
 function mapToCamelCase(data: any): EvaluacionInstancia {
-  const estudianteInfo = data.estudiantes || {};
-  //const personaInfo = estudianteInfo.personas || {};
-
   const nombre = data?.estudiantes?.personas?.nombre ?? "";
   const apellido = data?.estudiantes?.personas?.primer_apellido ?? "";
 
   const nombreCompleto = [apellido, nombre].filter(Boolean).join(", ");
 
-  //const escuelaId = data.estudiantes?.escuela_id;
   const nombreEscuela = data.estudiantes?.escuela?.nombre ?? "";
 
   // Mapeo de áreas: Aseguramos que el estadoId sea exacto del backend
@@ -135,7 +134,7 @@ function mapToCamelCase(data: any): EvaluacionInstancia {
     aulaId: data.aula_id ?? undefined,
     aulaLabel: data.aulas ? `${data.aulas.comision ?? ""} (${data.aulas.turno ?? ""})`.trim() : undefined,
     escuelaNombre: data.estudiantes?.escuela?.nombre ?? "",
-    salaNombre: data.estudiantes?.salas?.nombre || `Sala de ${data.sala_id}`,
+    salaNombre: data.salas?.nombre || `Sala de ${data.sala_id}`,
     tipoId: data.tipo_id,
     estadoId: data.estado_id,
     puntaje: data.puntaje,
@@ -153,10 +152,11 @@ function mapToCamelCase(data: any): EvaluacionInstancia {
  * GET: Obtiene la lista de preguntas y respuestas previas para un área.
  */
 export async function getPreguntasArea(evaluacionId: string, areaId: string): Promise<PreguntasResponse> {
-  const res = await fetch(`${API_URL}/evaluaciones/${evaluacionId}/areas/${areaId}/preguntas`)
+  const res = await fetch(`${API_URL}/evaluaciones/${evaluacionId}/areas/${areaId}/preguntas`, {
+    headers: getAuthHeaders(),
+  })
   if (!res.ok) throw new Error("Error al cargar preguntas")
   const json = await res.json()
-  // El backend ya devuelve el objeto PreguntasResponse listo
   return json.data
 }
 
@@ -170,17 +170,15 @@ export async function enviarRespuestas(
 ): Promise<void> {
   const res = await fetch(`${API_URL}/evaluaciones/${evaluacionId}/respuestas`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ areaId, questions })
   })
 
-  // Leemos la respuesta por si hay un error en el backend
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}))
     const msg = errorData.error?.description || errorData.message || "Error al guardar respuestas."
     throw new Error(msg)
   }
-  // Si la respuesta es 200/OK, no devolvemos nada (void)
 }
 
 // --------------------------------------------------------------------------
@@ -188,7 +186,9 @@ export async function enviarRespuestas(
 // --------------------------------------------------------------------------
 
 export async function getEvaluacionInstanciaById(id: string): Promise<EvaluacionInstancia> {
-  const res = await fetch(`${API_URL}/evaluaciones/${id}`)
+  const res = await fetch(`${API_URL}/evaluaciones/${id}`, {
+    headers: getAuthHeaders(),
+  })
   const json = await res.json().catch(() => null)
 
   if (!res.ok) throw new Error(json?.message || "Error al cargar la evaluación")
@@ -198,7 +198,6 @@ export async function getEvaluacionInstanciaById(id: string): Promise<Evaluacion
 
 /**
  * GET: Obtiene evaluaciones filtradas por rol y escuela si aplica.
- * busca en /evaluaciones?escuela_id=XXX&rol=YYY
  */
 export async function getEvaluacionesInstancias(filters?: {
   escuela_id?: string;
@@ -210,17 +209,17 @@ export async function getEvaluacionesInstancias(filters?: {
   if (filters?.rol) params.append("rol", filters.rol);
   if (filters?.profesorId) params.append("profesorId", filters.profesorId);
 
-  const res = await fetch(`${API_URL}/evaluaciones?${params.toString()}`);
+  const res = await fetch(`${API_URL}/evaluaciones?${params.toString()}`, {
+    headers: getAuthHeaders(),
+  });
   if (!res.ok) throw new Error("Error al cargar las evaluaciones");
 
   const resData = await res.json();
-  // El backend ahora devuelve { success: true, data: [...] }
   return (resData.data || []).map(mapToCamelCase);
 }
 
 /**
- * POST: Crear evaluación. 
- * Ajustado para apuntar a /evaluaciones 
+ * POST: Crear evaluación.
  */
 export async function crearEvaluacionInstancia(
   data: CreateEvaluacionPayload,
@@ -236,7 +235,7 @@ export async function crearEvaluacionInstancia(
 
   const res = await fetch(`${API_URL}/evaluaciones`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
 
@@ -255,7 +254,9 @@ export async function getEvaluacionesInstanciasByEstudiante(
   if (opts?.limit !== undefined) params.set("limit", String(opts.limit))
   if (opts?.offset !== undefined) params.set("offset", String(opts.offset))
 
-  const res = await fetch(`${API_URL}/evaluaciones?${params.toString()}`)
+  const res = await fetch(`${API_URL}/evaluaciones?${params.toString()}`, {
+    headers: getAuthHeaders(),
+  })
   if (!res.ok) throw new Error("Error al cargar el historial")
   const resData = await res.json()
   return (resData.data || []).map(mapToCamelCase)
@@ -270,7 +271,9 @@ export async function getEvaluacionesInstanciasByProfesor(
   if (opts?.limit !== undefined) params.set("limit", String(opts.limit))
   if (opts?.offset !== undefined) params.set("offset", String(opts.offset))
 
-  const res = await fetch(`${API_URL}/evaluaciones?${params.toString()}`)
+  const res = await fetch(`${API_URL}/evaluaciones?${params.toString()}`, {
+    headers: getAuthHeaders(),
+  })
   if (!res.ok) throw new Error("Error al cargar evaluaciones del docente")
   const resData = await res.json()
   return (resData.data || []).map(mapToCamelCase)
@@ -282,7 +285,7 @@ export async function actualizarEvaluacionInstancia(
 ): Promise<EvaluacionInstancia> {
   const res = await fetch(`${API_URL}/evaluaciones/${id}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   })
   const responseData = await res.json().catch(() => ({}))
@@ -307,6 +310,7 @@ export async function eliminarEvaluacionInstancia(
 
   const res = await fetch(url, {
     method: "DELETE",
+    headers: getAuthHeaders(),
   });
 
   if (!res.ok) {
@@ -317,11 +321,11 @@ export async function eliminarEvaluacionInstancia(
 
 /**
  * GET: Obtiene todas las preguntas y respuestas previas para un área (ideal para revisión).
- * Reutilizaremos la estructura de respuesta de getPreguntasArea.
  */
 export async function getRespuestasParaRevision(evaluacionId: string, areaId: string): Promise<PreguntasResponse> {
-  // Usamos el mismo endpoint que carga las preguntas, pero el backend lo usará para revisión.
-  const res = await fetch(`${API_URL}/evaluaciones/${evaluacionId}/areas/${areaId}/preguntas`);
+  const res = await fetch(`${API_URL}/evaluaciones/${evaluacionId}/areas/${areaId}/preguntas`, {
+    headers: getAuthHeaders(),
+  });
   if (!res.ok) throw new Error("Error al cargar respuestas para revisión.");
   const json = await res.json();
   return json.data;

@@ -1,3 +1,5 @@
+import { getAuthHeaders } from "./auth"
+
 const API_URL = import.meta.env.VITE_API_URL
 
 interface ApiResponse<T> {
@@ -27,7 +29,9 @@ const getUserData = () => {
 };
 
 export async function getDirectivos(): Promise<Directivo[]> {
-    const res = await fetch(`${API_URL}/directivos`)
+    const res = await fetch(`${API_URL}/directivos`, {
+        headers: getAuthHeaders(),
+    })
     const body: ApiResponse<Directivo[]> = await res.json()
     if (!res.ok || !body.success) {
         throw new Error(body.error?.description || body.message || "Error al cargar directivos")
@@ -36,7 +40,9 @@ export async function getDirectivos(): Promise<Directivo[]> {
 }
 
 export async function getDirectivosDisponibles(): Promise<Directivo[]> {
-    const res = await fetch(`${API_URL}/directivos/disponibles`)
+    const res = await fetch(`${API_URL}/directivos/disponibles`, {
+        headers: getAuthHeaders(),
+    })
     const body: ApiResponse<Directivo[]> = await res.json()
     if (!res.ok || !body.success) {
         throw new Error(body.error?.description || body.message || "Error al cargar directivos disponibles")
@@ -48,9 +54,7 @@ export async function asignarEscuelaADirectivo(directivoId: string, escuelaId: s
     const { usuario_id, rol } = getUserData();
     const res = await fetch(`${API_URL}/directivos/${directivoId}/asignar-escuela`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ escuela_id: escuelaId, usuario_id, rol }),
     });
     const body: ApiResponse<any> = await res.json();
@@ -59,5 +63,3 @@ export async function asignarEscuelaADirectivo(directivoId: string, escuelaId: s
     }
     return body.data;
 }
-
-

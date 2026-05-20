@@ -4,11 +4,17 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./App.css";
 
-import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { setupFetchInterceptor } from "./api/auth";
+import { ThemeProvider, createTheme, responsiveFontSizes } from "@mui/material/styles";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+setupFetchInterceptor();
 import CssBaseline from "@mui/material/CssBaseline";
 
+const queryClient = new QueryClient();
+
 // Tema básico para MUI (puedes extenderlo o reemplazar por tu `theme.ts`)
-const theme = createTheme({
+let theme = createTheme({
   palette: {
     mode: "light",
     primary: { main: "#5c7cfa" },
@@ -19,11 +25,15 @@ const theme = createTheme({
   },
 });
 
+theme = responsiveFontSizes(theme);
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <App />
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
     </ThemeProvider>
   </React.StrictMode>
 );

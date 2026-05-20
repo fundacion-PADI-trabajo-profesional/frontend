@@ -1,24 +1,26 @@
 "use client"
 
-// src/App.tsx
-
 import { useState, useEffect } from "react"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import Login from "./pages/Login"
-import Register from "./pages/Register"
 import Home from "./pages/Home"
 import Evaluaciones from "./pages/Evaluaciones"
 import Estudiantes from "./pages/Estudiantes"
 import HistorialEstudiante from "./pages/HistorialEstudiante"
 import EvaluacionesDocente from "./pages/EvaluacionesDocente"
 import DocentesPage from "./pages/Docentes"
-import EncargadosZona from "./pages/EncargadosZona";
 import "./App.css" //
 import Escuelas from "./pages/Escuelas"
 import AulasPage from "./pages/Aulas"
-import Zonas from "./pages/Zonas"
-import ZonaDetalle from "./pages/ZonaDetalle"
 import PanelControl from "./pages/PanelControl"
+import ActualizarContrasena from "./pages/ActualizarContrasena"
+import SolicitarRecuperoPassword from "./pages/SolicitarRecuperoPassword"
+import CambiarContrasenaTemporal from "./pages/CambiarContrasenaTemporal"
+import GestionUsuariosPage from "./pages/GestionUsuariosPage"
+import EstadisticasPadi from "./pages/EstadisticasPadi"
+import EstadisticasZona from "./pages/EstadisticasZona"
+import EstadisticasEscuela from "./pages/EstadisticasEscuela"
+import EstadisticasDocente from "./pages/EstadisticasDocente"
 
 // Define a type for your user object
 interface User {
@@ -56,6 +58,10 @@ function App() {
 
   // This function will be passed to Home.tsx
   const handleLogout = () => {
+    localStorage.removeItem("token")
+    localStorage.removeItem("refreshToken")
+    localStorage.removeItem("padiProfile")
+    localStorage.removeItem("userRole")
     setCurrentUser(null)
   }
 
@@ -80,13 +86,68 @@ function App() {
         <Route path="/panel-control" element={currentUser ? <PanelControl /> : <Navigate to="/login" replace />} />
 
         {/* Rutas de Gestión (Ahora protegidas) */}
-        <Route path="/zonas" element={currentUser ? <Zonas /> : <Navigate to="/login" replace />} />
-        <Route path="/zonas/:id" element={currentUser ? <ZonaDetalle /> : <Navigate to="/login" replace />} />
         <Route path="/escuelas" element={currentUser ? <Escuelas /> : <Navigate to="/login" replace />} />
-        <Route path="/encargados-zonas" element={currentUser ? <EncargadosZona /> : <Navigate to="/login" replace />} />
+        
+        {/* Ruta exclusiva equipo_padi */}
+        <Route
+          path="/usuarios"
+          element={
+            !currentUser
+              ? <Navigate to="/login" replace />
+              : currentUser.rol !== "equipo_padi"
+                ? <Navigate to="/home" replace />
+                : <GestionUsuariosPage />
+          }
+        />
 
-        {/* Registro y Fallback */}
-        <Route path="/register" element={currentUser ? <Navigate to="/home" replace /> : <Register />} />
+        {/* Estadísticas por rol */}
+        <Route
+          path="/estadisticas/padi"
+          element={
+            !currentUser
+              ? <Navigate to="/login" replace />
+              : currentUser.rol !== "equipo_padi"
+                ? <Navigate to="/home" replace />
+                : <EstadisticasPadi />
+          }
+        />
+        <Route
+          path="/estadisticas/zona"
+          element={
+            !currentUser
+              ? <Navigate to="/login" replace />
+              : currentUser.rol !== "encargado_zona"
+                ? <Navigate to="/home" replace />
+                : <EstadisticasZona />
+          }
+        />
+        <Route
+          path="/estadisticas/escuela"
+          element={
+            !currentUser
+              ? <Navigate to="/login" replace />
+              : !["director", "encargado_zona", "equipo_padi"].includes(currentUser.rol)
+                ? <Navigate to="/home" replace />
+                : <EstadisticasEscuela />
+          }
+        />
+        <Route
+          path="/estadisticas/docente"
+          element={
+            !currentUser
+              ? <Navigate to="/login" replace />
+              : <EstadisticasDocente />
+          }
+        />
+
+        {/* Cambio de contraseña temporal (primer login) — accesible solo con token activo */}
+        <Route path="/cambiar-contrasena-temporal" element={<CambiarContrasenaTemporal />} />
+
+        {/* Flujo de recuperación de contraseña — rutas públicas */}
+        <Route path="/recuperar-password" element={<SolicitarRecuperoPassword />} />
+        <Route path="/actualizar-password" element={<ActualizarContrasena />} />
+
+        {/* Registro: solo redirige a home si ya está logueado; de lo contrario bloquea */}
         <Route path="*" element={<Navigate to={currentUser ? "/home" : "/login"} replace />} />
       </Routes>
     </BrowserRouter>

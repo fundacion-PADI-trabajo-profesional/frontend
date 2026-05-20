@@ -17,7 +17,7 @@ import {
   getAreasCriticasPadi,
   getAreasCriticasZona,
   getAreasCriticasEscuela,
-  getItemsError,
+  getAprobacionPreguntas,
   getDistribucionPuntajes,
 } from "../../api/estadisticas";
 
@@ -475,8 +475,8 @@ const mockItemsError = {
   aula_id: "aula-1",
   area_id: null,
   items: [
-    { pregunta_id: "P1", consigna: "¿Qué color es el cielo?", area_id: "A1", total: 2, incorrectos: 2, tasa_error: 1.0 },
-    { pregunta_id: "P2", consigna: "¿Cuánto es 2+2?", area_id: "A1", total: 1, incorrectos: 0, tasa_error: 0 },
+    { pregunta_id: "P1", consigna: "¿Qué color es el cielo?", area_id: "A1", total: 2, correctos: 0, tasa_aprobacion: 0.0 },
+    { pregunta_id: "P2", consigna: "¿Cuánto es 2+2?", area_id: "A1", total: 1, correctos: 1, tasa_aprobacion: 1.0 },
   ],
 };
 
@@ -493,20 +493,20 @@ const mockDistribucion = {
   ],
 };
 
-// ─── getItemsError ────────────────────────────────────────────────────────────
-describe("getItemsError", () => {
-  it("llama a GET /estadisticas/docente/items-error con periodo y aula_id", async () => {
+// ─── getAprobacionPreguntas ───────────────────────────────────────────────────
+describe("getAprobacionPreguntas", () => {
+  it("llama a GET /estadisticas/docente/aprobacion-preguntas con periodo y aula_id", async () => {
     vi.mocked(fetch).mockResolvedValue(
       mockFetchResponse({ success: true, data: mockItemsError })
     );
 
-    const result = await getItemsError({ periodo: 2025, aula_id: "aula-1" });
+    const result = await getAprobacionPreguntas({ periodo: 2025, aula_id: "aula-1" });
 
     const url = vi.mocked(fetch).mock.calls[0][0] as string;
-    expect(url).toContain(`${API}/estadisticas/docente/items-error`);
+    expect(url).toContain(`${API}/estadisticas/docente/aprobacion-preguntas`);
     expect(url).toContain("periodo=2025");
     expect(url).toContain("aula_id=aula-1");
-    expect(result.items[0].tasa_error).toBe(1.0);
+    expect(result.items[0].tasa_aprobacion).toBe(0.0);
   });
 
   it("incluye area_id opcional en la URL si se pasa", async () => {
@@ -514,7 +514,7 @@ describe("getItemsError", () => {
       mockFetchResponse({ success: true, data: mockItemsError })
     );
 
-    await getItemsError({ periodo: 2025, aula_id: "aula-1", area_id: "A1" });
+    await getAprobacionPreguntas({ periodo: 2025, aula_id: "aula-1", area_id: "A1" });
 
     const url = vi.mocked(fetch).mock.calls[0][0] as string;
     expect(url).toContain("area_id=A1");
@@ -524,7 +524,7 @@ describe("getItemsError", () => {
     vi.mocked(fetch).mockResolvedValue(
       mockFetchResponse({ success: false, message: "Sin acceso" }, false, 403)
     );
-    await expect(getItemsError({ periodo: 2025, aula_id: "aula-1" })).rejects.toThrow("Sin acceso");
+    await expect(getAprobacionPreguntas({ periodo: 2025, aula_id: "aula-1" })).rejects.toThrow("Sin acceso");
   });
 
   it("usa mensaje por defecto cuando no hay message ni description", async () => {
@@ -532,8 +532,8 @@ describe("getItemsError", () => {
       mockFetchResponse({ success: false }, false, 500)
     );
     await expect(
-      getItemsError({ periodo: 2025, aula_id: "aula-1" })
-    ).rejects.toThrow("Error al cargar ítems con error");
+      getAprobacionPreguntas({ periodo: 2025, aula_id: "aula-1" })
+    ).rejects.toThrow("Error al cargar aprobación por pregunta");
   });
 });
 

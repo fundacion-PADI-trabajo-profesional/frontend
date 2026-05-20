@@ -73,7 +73,7 @@ export default function GraficoAprobacionPreguntas({ data }: Props) {
             <LabelList
               dataKey="aprobacion"
               position="right"
-              formatter={(v: number) => `${v}%`}
+              formatter={(v: unknown) => typeof v === "number" ? `${v}%` : ""}
               style={{ fontSize: 13, fontWeight: 700 }}
             />
           </Bar>

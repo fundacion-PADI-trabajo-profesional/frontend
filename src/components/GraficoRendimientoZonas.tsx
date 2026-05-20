@@ -73,7 +73,7 @@ export default function GraficoRendimientoZonas({ data }: Props) {
               <LabelList
                 dataKey={fila.nombre}
                 position="top"
-                formatter={(v: number | null) => (v != null ? `${v}%` : "")}
+                formatter={(v: unknown) => typeof v === "number" ? `${v}%` : ""}
                 style={{ fontSize: 11, fontWeight: 600 }}
               />
             </Bar>

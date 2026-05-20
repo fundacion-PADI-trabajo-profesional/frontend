@@ -11,7 +11,22 @@ import {
   ReferenceLine,
 } from "recharts";
 import { Box, Typography } from "@mui/material";
-import type { ItemsErrorResponse } from "../api/estadisticas";
+
+interface ItemError {
+  pregunta_id: string;
+  consigna: string | null;
+  area_id: string | null;
+  total: number;
+  incorrectos: number;
+  tasa_error: number;
+}
+
+interface ItemsErrorResponse {
+  periodo: number;
+  aula_id: string;
+  area_id: string | null;
+  items: ItemError[];
+}
 
 interface Props {
   data: ItemsErrorResponse;
@@ -73,7 +88,7 @@ export default function GraficoItemsError({ data }: Props) {
             <LabelList
               dataKey="tasa"
               position="right"
-              formatter={(v: number) => `${v}%`}
+              formatter={(v: unknown) => typeof v === "number" ? `${v}%` : ""}
               style={{ fontSize: 13, fontWeight: 700 }}
             />
           </Bar>

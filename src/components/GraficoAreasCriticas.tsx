@@ -75,7 +75,7 @@ export default function GraficoAreasCriticas({ data }: Props) {
             <LabelList
               dataKey="pct"
               position="right"
-              formatter={(v: number) => `${v}%`}
+              formatter={(v: unknown) => typeof v === "number" ? `${v}%` : ""}
               style={{ fontSize: 13, fontWeight: 700 }}
             />
           </Bar>

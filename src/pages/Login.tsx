@@ -35,6 +35,10 @@ export default function Login({ onLogin }: LoginProps) {
         localStorage.setItem("token", session.access_token);
       }
 
+      if (session && session.refresh_token) {
+        localStorage.setItem("refreshToken", session.refresh_token);
+      }
+
       if (profile && profile.rol) {
         localStorage.setItem("userRole", profile.rol);
       }
@@ -237,6 +241,7 @@ export default function Login({ onLogin }: LoginProps) {
                 }}
               >
                 <Button
+                  onClick={() => navigate("/recuperar-password")}
                   sx={{
                     color: "#444",
                     textTransform: "none",
@@ -284,21 +289,9 @@ export default function Login({ onLogin }: LoginProps) {
             </form>
 
             <Box sx={{ mt: 4, textAlign: 'center' }}>
-              <Typography variant="body2" sx={{ color: "#444", display: "inline", mr: 1, fontWeight: 500 }}>
-                ¿No tenés cuenta?
+              <Typography variant="body2" sx={{ color: "#777", fontSize: "0.8rem" }}>
+                Para acceder al sistema, comunicate con el Equipo PADI.
               </Typography>
-              <Button
-                onClick={() => navigate("/register")}
-                sx={{
-                  color: "#65944F",
-                  fontWeight: 'bold',
-                  textTransform: 'none',
-                  p: 0,
-                  "&:hover": { bgcolor: "transparent", textDecoration: "underline" },
-                }}
-              >
-                Crear cuenta nueva
-              </Button>
             </Box>
 
           </Box>

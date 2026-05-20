@@ -1,12 +1,17 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Box, Container, Typography, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, CircularProgress, Alert, Button, Stack, Chip, MenuItem, TextField } from "@mui/material"
+import { Box, Container, Typography, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, CircularProgress, Alert, Button, Stack, Chip, MenuItem, TextField, InputAdornment } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
+import SearchIcon from "@mui/icons-material/Search"
 import { useNavigate } from "react-router-dom"
 import { asignarDocenteAEscuela, desasignarDocenteDeEscuela, getDocentes, type Docente } from "../api/docentes"
 import { getEscuelas, type Escuela } from "../api/escuelas"
-// import { getEvaluacionesInstanciasByProfesor } from "../api/evaluaciones"
+import { getAulas, asignarDocenteAula, desasignarDocenteAula, type Aula } from "../api/aulas"
+import { filtrarAulasDisponibles } from "../utils/docentes-aulas"
+import { BuscadorPadi } from "../components/SearchBar";
+import BotonNuevo from "../components/BotonNuevo"
+import DocenteForm from "../components/DocenteForm"
 
 export default function DocentesPage() {
   const [items, setItems] = useState<Docente[]>([])
@@ -17,9 +22,16 @@ export default function DocentesPage() {
   const [currentRole, setCurrentRole] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const navigate = useNavigate()
+  const [busqueda, setBusqueda] = useState("")
+  const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [selectedDocenteParaAula, setSelectedDocenteParaAula] = useState<Docente | null>(null)
+  const [selectedAulaId, setSelectedAulaId] = useState("")
+  const [aulasDisponibles, setAulasDisponibles] = useState<Aula[]>([])
+  const [loadingAulas, setLoadingAulas] = useState(false)
 
+  const navigate = useNavigate()
   const canManageAsignaciones = currentRole === "equipo_padi" || currentRole === "encargado_zona"
+  const canManageAulas = currentRole === "equipo_padi" || currentRole === "encargado_zona" || currentRole === "director"
 
   const loadData = async () => {
     setLoading(true)
@@ -85,6 +97,59 @@ export default function DocentesPage() {
     }
   }
 
+  const handleOpenAsignarAula = async (docente: Docente) => {
+    if (!docente.escuelas || docente.escuelas.length === 0) {
+      setError("El docente no tiene colegio asignado. Asignale un colegio primero.")
+      return
+    }
+    setSelectedDocenteParaAula(docente)
+    setSelectedAulaId("")
+    setLoadingAulas(true)
+    try {
+      const todasLasAulas = await getAulas()
+      setAulasDisponibles(filtrarAulasDisponibles(todasLasAulas, docente))
+    } catch (e: any) {
+      setError(e.message || "Error al cargar aulas")
+      setSelectedDocenteParaAula(null)
+    } finally {
+      setLoadingAulas(false)
+    }
+  }
+
+  const handleCloseAsignarAula = () => {
+    setSelectedDocenteParaAula(null)
+    setSelectedAulaId("")
+    setAulasDisponibles([])
+  }
+
+  const handleConfirmAsignarAula = async () => {
+    if (!selectedDocenteParaAula || !selectedAulaId) return
+    try {
+      setSaving(true)
+      await asignarDocenteAula(selectedAulaId, selectedDocenteParaAula.id)
+      await loadData()
+      handleCloseAsignarAula()
+    } catch (e: any) {
+      setError(e.message || "Error al asignar aula")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDesasignarAula = async (docenteId: string, aulaId: string) => {
+    const ok = window.confirm("¿Quitar este docente del aula?")
+    if (!ok) return
+    try {
+      setSaving(true)
+      await desasignarDocenteAula(aulaId, docenteId)
+      await loadData()
+    } catch (e: any) {
+      setError(e.message || "Error al desasignar aula")
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const handleDesasignarColegio = async (docenteId: string, escuelaId: string) => {
     const ok = window.confirm("¿Quitar este docente del colegio? También se cerrarán sus asignaciones a aulas de ese colegio.")
     if (!ok) return
@@ -98,6 +163,14 @@ export default function DocentesPage() {
       setSaving(false)
     }
   }
+
+  const docentesFiltrados = items.filter((d) => {
+    const termino = busqueda.toLowerCase()
+    return (
+      d.nombre.toLowerCase().includes(termino) ||
+      d.apellido.toLowerCase().includes(termino)
+    )
+  })
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
@@ -116,6 +189,37 @@ export default function DocentesPage() {
       </Box>
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Box sx={{ 
+          display: 'grid', 
+          gridTemplateColumns: '1fr auto 1fr', 
+          alignItems: 'center', 
+          mb: 3 
+        }}>
+        <Box />
+          <BuscadorPadi 
+            placeholder="Buscar docente por nombre o apellido..."
+            value={busqueda}
+            onChange={(e: any) => setBusqueda(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: '#adb5bd' }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+          
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <BotonNuevo 
+              texto="Nuevo docente" 
+              onClick={() => {
+                console.log("¡El botón funciona y manda el click!");
+                setCreateModalOpen(true);
+              }} 
+            />
+          </Box>
+        </Box>
+        
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
             <CircularProgress />
@@ -124,6 +228,20 @@ export default function DocentesPage() {
           <Alert severity="error">{error}</Alert>
         ) : items.length === 0 ? (
           <Typography sx={{ color: "#666" }}>No hay docentes registrados.</Typography>
+        ) : docentesFiltrados.length === 0 ? ( 
+          <Box sx={{ 
+            textAlign: "center", 
+            py: 6, 
+            px: 2, 
+            borderRadius: 2, 
+          }}>
+            <Typography variant="h6" sx={{ color: "#555", mb: 1 }}>
+              No se encontraron resultados
+            </Typography>
+            <Typography variant="body2" sx={{ color: "#777" }}>
+              La búsqueda "{busqueda}" no arrojó ningún docente.
+            </Typography>
+          </Box>
         ) : (
           <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
             <Table>
@@ -137,7 +255,7 @@ export default function DocentesPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {items.map((d) => (
+                {docentesFiltrados.map((d) => (
                   <TableRow
                     key={d.id}
                     hover
@@ -172,7 +290,12 @@ export default function DocentesPage() {
                       ) : (
                         <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" justifyContent="center">
                           {d.aulas.map((aula) => (
-                            <Chip key={aula.id} size="small" label={formatAulaLabel(aula)} />
+                            <Chip
+                              key={aula.id}
+                              size="small"
+                              label={formatAulaLabel(aula)}
+                              onDelete={canManageAulas ? () => handleDesasignarAula(d.id, aula.id) : undefined}
+                            />
                           ))}
                         </Stack>
                       )}
@@ -193,6 +316,19 @@ export default function DocentesPage() {
                             }}
                           >
                             Asignar colegio
+                          </Button>
+                        )}
+                        {canManageAulas && (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            disabled={saving}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleOpenAsignarAula(d)
+                            }}
+                          >
+                            Asignar aula
                           </Button>
                         )}
                       </Stack>
@@ -259,8 +395,88 @@ export default function DocentesPage() {
           </Box>
         </Box>
       )}
+
+      {selectedDocenteParaAula && (
+        <Box
+          sx={{
+            position: "fixed",
+            inset: 0,
+            bgcolor: "rgba(0,0,0,0.35)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1300,
+          }}
+        >
+          <Box sx={{ bgcolor: "#fff", p: 3, borderRadius: 2, minWidth: 420, maxWidth: 520 }}>
+            <Typography variant="h6" sx={{ mb: 1 }}>
+              Asignar aula
+            </Typography>
+            <Typography variant="body2" sx={{ color: "#666", mb: 2 }}>
+              {selectedDocenteParaAula.apellido}, {selectedDocenteParaAula.nombre}
+            </Typography>
+
+            {selectedDocenteParaAula.aulas && selectedDocenteParaAula.aulas.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="caption" sx={{ color: "#888", display: "block", mb: 0.5 }}>
+                  Aulas asignadas
+                </Typography>
+                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                  {selectedDocenteParaAula.aulas.map((aula) => (
+                    <Chip key={aula.id} size="small" label={formatAulaLabel(aula)} />
+                  ))}
+                </Stack>
+              </Box>
+            )}
+
+            {loadingAulas ? (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : (
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Aula"
+                value={selectedAulaId}
+                onChange={(e) => setSelectedAulaId(e.target.value)}
+                sx={{ mb: 2 }}
+              >
+                {aulasDisponibles.map((aula) => (
+                  <MenuItem key={aula.id} value={aula.id}>
+                    {`${aula.sala?.grado ?? "?"}° - ${aula.comision} (${aula.turno})`}
+                  </MenuItem>
+                ))}
+                {aulasDisponibles.length === 0 && (
+                  <MenuItem disabled>No hay aulas disponibles</MenuItem>
+                )}
+              </TextField>
+            )}
+
+            <Stack direction="row" spacing={1} justifyContent="flex-end">
+              <Button onClick={handleCloseAsignarAula} disabled={saving}>
+                Cancelar
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleConfirmAsignarAula}
+                disabled={!selectedAulaId || saving || loadingAulas}
+              >
+                Asignar
+              </Button>
+            </Stack>
+          </Box>
+        </Box>
+      )}
+
+      <DocenteForm
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onSuccess={loadData}
+      />
+
     </Box>
+
   )
 }
-
-

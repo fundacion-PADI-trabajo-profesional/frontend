@@ -1,31 +1,39 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Box, Container, Typography, Button, CircularProgress, Alert, Paper, List, ListItem, ListItemText, Stack, Tooltip } from "@mui/material"
+import { Box, Container, Typography, Button, CircularProgress, Alert, Paper, List, ListItem, ListItemText, Stack, Tooltip, FormControl, InputLabel, Select, MenuItem } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import { useNavigate } from "react-router-dom"
-import EstudiantesList from "../components/EstudiantesList"
+import EstudiantesCompacto from "../components/EstudiantesCompacto"
 import EstudianteForm from "../components/EstudianteForm"
-import { getEstudiantes, type Estudiante, type EstudianteCreado } from "../api/estudiantes"
+import { getEstudiantes, deleteEstudiante, type Estudiante, type EstudianteCreado } from "../api/estudiantes"
 import { getDocenteAulasConEstudiantes, type DocenteAulaConEstudiantes } from "../api/aulas"
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import BulkUploadForm from "../components/BulkUploadForm"
+import { TextField, InputAdornment } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 
 /**
  * Página principal de Estudiantes.
  */
 export default function Estudiantes() {
-    const [view, setView] = useState<"list" | "form" | "success" | "bulk" | "successBulk">("list")
+    const [searchTerm, setSearchTerm] = useState("");
+    const [view, setView] = useState<"list" | "form" | "success" | "successBulk">("list")
+    const [modalMasivoOpen, setModalMasivoOpen] = useState(false);
     const [cantidadCreados, setCantidadCreados] = useState(0); // Estado para el conteo
     const [estudiantes, setEstudiantes] = useState<Estudiante[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const [refreshKey, setRefreshKey] = useState(0) 
+    const [refreshKey, setRefreshKey] = useState(0)
     const [estudianteCreado, setEstudianteCreado] = useState<EstudianteCreado | null>(null)
     const [selectedForEdit, setSelectedForEdit] = useState<Estudiante | null>(null);
     const [userRole, setUserRole] = useState("");
     const [aulasDocente, setAulasDocente] = useState<DocenteAulaConEstudiantes[]>([]);
     const [selectedAulaId, setSelectedAulaId] = useState<string | null>(null);
+
+    const [escuelaFiltro, setEscuelaFiltro] = useState<string>("todas");
+    const [salaFiltro, setSalaFiltro] = useState<string>("todas");
+    const [comisionFiltro, setComisionFiltro] = useState<string>("todas");
 
     const navigate = useNavigate()
     // --- Carga de Datos Inicial ---
@@ -61,14 +69,37 @@ export default function Estudiantes() {
         }
     }
 
+    // Filtrado extendido
+    const estudiantesFiltrados = estudiantes.filter((est) => {
+        const cumpleTexto = `${est.personas.nombre} ${est.personas.primer_apellido} ${est.personas.dni}`
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase());
+
+        const cumpleEscuela = escuelaFiltro === "todas" || est.escuela?.escuela_id === escuelaFiltro;
+
+        // Filtro de Sala: puede venir de aula_asignada o de la relación directa [cite: 55, 64]
+        const cumpleSala = salaFiltro === "todas" || String(est.sala_id) === salaFiltro;
+
+        // Filtro de Comisión
+        const cumpleComision = comisionFiltro === "todas" || est.aula_asignada?.comision === comisionFiltro;
+
+        return cumpleTexto && cumpleEscuela && cumpleSala && cumpleComision;
+    });
+
+    // 3. Obtener comisiones únicas para el dropdown (opcional)
+    const comisionesUnicas = Array.from(new Set(estudiantes
+        .map(est => est.aula_asignada?.comision)
+        .filter((c): c is string => Boolean(c))
+    ));
+
     // --- Handlers de Navegación ---
-    const handleEdit = (estudiante: Estudiante) => {
-        setSelectedForEdit(estudiante);
-        setView("form");
+    const handleDeleteEstudiante = async (id: string) => {
+        await deleteEstudiante(id);
+        await loadEstudiantes();
     };
 
-    const handleGoToForm = () => {
-        setSelectedForEdit(null); // Limpiamos por si veníamos de una edición
+    const handleEdit = (estudiante: Estudiante) => {
+        setSelectedForEdit(estudiante);
         setView("form");
     };
 
@@ -133,7 +164,7 @@ export default function Estudiantes() {
             {/* Header: Solo se muestra en List y Success */}
             {view !== 'form' && (
                 <Box sx={{ py: { xs: 3, md: 4 }, borderBottom: "1px solid #e0e0e0", bgcolor: '#f5f5f5' }}>
-                    <Container maxWidth="lg">
+                    <Container maxWidth="xl">
                         <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
                             <Button
                                 startIcon={<ArrowBackIcon />}
@@ -151,7 +182,7 @@ export default function Estudiantes() {
             )}
 
             {/* Contenido Principal */}
-            <Container maxWidth="lg" sx={{ mt: view === 'form' ? 0 : 4, pb: 6 }}>
+            <Container maxWidth="xl" sx={{ mt: view === 'form' ? 0 : 4, pb: 6 }}>
                 {view === 'list' && (
                     <>
                         {loading ? (
@@ -297,35 +328,106 @@ export default function Estudiantes() {
                                 )}
                             </>
                         ) : (
-                            <EstudiantesList 
-                                estudiantes={estudiantes} 
-                                onAddEstudiante={() => setView("form")} 
-                                onEditEstudiante={handleEdit}
-                                onBulkAdd={() => setView("bulk")} // Nueva prop
-                            />
+                            <Box>
+                                {/* BARRA DE BUSQUEDA Y DROPDOWNS */}
+                                <Paper elevation={0} sx={{ p: 2, mb: 4, bgcolor: '#fff', border: '1px solid #eee', borderRadius: 3 }}>
+                                    <Stack spacing={2}>
+                                        <TextField
+                                            fullWidth
+                                            placeholder="Buscar por nombre, apellido o DNI..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            InputProps={{
+                                                startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment>,
+                                                sx: { borderRadius: 2 }
+                                            }}
+                                        />
+
+                                        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                                            {/* DROPDOWN ESCUELA [cite: 52, 53] */}
+                                            <FormControl fullWidth size="small">
+                                                <InputLabel>Escuela</InputLabel>
+                                                <Select
+                                                    value={escuelaFiltro}
+                                                    label="Escuela"
+                                                    onChange={(e) => setEscuelaFiltro(e.target.value)}
+                                                >
+                                                    <MenuItem value="todas">Todas las Escuelas</MenuItem>
+                                                    {/* Aquí mapeas tus escuelas cargadas en el estado listaEscuelas */}
+                                                    {Array.from(new Set(estudiantes.map(e => e.escuela?.nombre))).map(nombre => {
+                                                        const id = estudiantes.find(e => e.escuela?.nombre === nombre)?.escuela?.escuela_id;
+                                                        return <MenuItem key={id} value={id}>{nombre}</MenuItem>
+                                                    })}
+                                                </Select>
+                                            </FormControl>
+
+                                            {/* DROPDOWN SALA [cite: 64] */}
+                                            <FormControl fullWidth size="small">
+                                                <InputLabel>Sala</InputLabel>
+                                                <Select
+                                                    value={salaFiltro}
+                                                    label="Sala"
+                                                    onChange={(e) => setSalaFiltro(e.target.value)}
+                                                >
+                                                    <MenuItem value="todas">Todas las Salas</MenuItem>
+                                                    {/* Mapeo de salas únicas */}
+                                                    {Array.from(new Set(estudiantes.map(e => e.salas?.nombre))).map(nombre => {
+                                                        const id = estudiantes.find(e => e.salas?.nombre === nombre)?.sala_id;
+                                                        return <MenuItem key={id} value={String(id)}>{nombre}</MenuItem>
+                                                    })}
+                                                </Select>
+                                            </FormControl>
+
+                                            {/* DROPDOWN COMISION [cite: 55] */}
+                                            <FormControl fullWidth size="small">
+                                                <InputLabel>Comisión</InputLabel>
+                                                <Select
+                                                    value={comisionFiltro}
+                                                    label="Comisión"
+                                                    onChange={(e) => setComisionFiltro(e.target.value)}
+                                                >
+                                                    <MenuItem value="todas">Todas las Comisiones</MenuItem>
+                                                    {comisionesUnicas.map(c => (
+                                                        <MenuItem key={c} value={c}>{c}</MenuItem>
+                                                    ))}
+                                                </Select>
+                                            </FormControl>
+                                        </Stack>
+                                    </Stack>
+                                </Paper>
+
+                                <EstudiantesCompacto
+                                    estudiantes={estudiantesFiltrados}
+                                    onAddEstudiante={() => setView("form")}
+                                    onEditEstudiante={handleEdit}
+                                    onBulkAdd={() => setModalMasivoOpen(true)}
+                                    onDeleteEstudiante={handleDeleteEstudiante}
+                                    userRole={userRole}
+                                />
+                            </Box>
                         )}
                     </>
                 )}
 
                 {view === 'form' && (
                     <Box sx={{ pt: 4 }}>
-                        <EstudianteForm 
-                            onCancel={handleBackToList} 
-                            onSuccess={handleSuccess} 
+                        <EstudianteForm
+                            onCancel={handleBackToList}
+                            onSuccess={handleSuccess}
                             estudianteAEditar={selectedForEdit}
                             aulaContext={
                                 userRole === "docente" && !selectedForEdit && selectedAulaId
                                     ? (() => {
-                                          const aula = aulasDocente.find((a) => a.id === selectedAulaId);
-                                          if (!aula) return null;
-                                          return {
-                                              aula_id: aula.id,
-                                              sala_id: aula.sala_id,
-                                              escuela_id: aula.escuela_id,
-                                              aulaLabel: `${aula.sala?.grado ?? "?"}° - ${aula.comision} (${aula.turno})`,
-                                              escuelaNombre: aula.escuela?.nombre ?? null,
-                                          };
-                                      })()
+                                        const aula = aulasDocente.find((a) => a.id === selectedAulaId);
+                                        if (!aula) return null;
+                                        return {
+                                            aula_id: aula.id,
+                                            sala_id: aula.sala_id,
+                                            escuela_id: aula.escuela_id,
+                                            aulaLabel: `${aula.sala?.grado ?? "?"}° - ${aula.comision} (${aula.turno})`,
+                                            escuelaNombre: aula.escuela?.nombre ?? null,
+                                        };
+                                    })()
                                     : null
                             }
                         />
@@ -349,36 +451,37 @@ export default function Estudiantes() {
                         </Box>
                     </Box>
                 )}
-                {view === 'bulk' && (
-                    <BulkUploadForm                      
-                        onCancel={handleBackToList}
-                        onSuccess={(data) => {
-                            setView('successBulk');
-                            setRefreshKey(k => k + 1);
-                            setCantidadCreados(data.length);
-                            
-                        }}
-                    />
-                )}
                 {view === 'successBulk' && (
-                <Paper sx={{ p: 5, textAlign: 'center', borderRadius: 3 }}>
-                    <CheckCircleOutlineIcon sx={{ fontSize: 80, color: 'success.main', mb: 3 }} />
-                    <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
-                        ¡Carga Masiva Exitosa!
-                    </Typography>
-                    <Typography variant="body1" color="textSecondary" sx={{ mb: 4 }}>
-                        Se han registrado {cantidadCreados} estudiantes correctamente 
-                        en el sistema.
-                    </Typography>
-                    <Button 
-                        variant="contained" 
-                        onClick={() => setView('list')}
-                        sx={{ bgcolor: '#000', px: 4, py: 1.5, borderRadius: 2 }}
-                    >
-                        Volver a la lista
-                    </Button>
-                </Paper>
+                    <Paper sx={{ p: 5, textAlign: 'center', borderRadius: 3 }}>
+                        <CheckCircleOutlineIcon sx={{ fontSize: 80, color: 'success.main', mb: 3 }} />
+                        <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
+                            ¡Carga Masiva Exitosa!
+                        </Typography>
+                        <Typography variant="body1" color="textSecondary" sx={{ mb: 4 }}>
+                            Se han registrado {cantidadCreados} estudiantes correctamente
+                            en el sistema.
+                        </Typography>
+                        <Button
+                            variant="contained"
+                            onClick={() => setView('list')}
+                            sx={{ bgcolor: '#000', px: 4, py: 1.5, borderRadius: 2 }}
+                        >
+                            Volver a la lista
+                        </Button>
+                    </Paper>
                 )}
+
+                <BulkUploadForm
+                    open={modalMasivoOpen}
+                    onCancel={() => setModalMasivoOpen(false)}
+                    onSuccess={(data) => {
+                        setModalMasivoOpen(false); 
+                        setCantidadCreados(data.length); 
+                        setView('successBulk');
+                        setRefreshKey(k => k + 1); 
+                    }}
+                />
+
             </Container>
         </Box>
     )

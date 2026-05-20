@@ -1,3 +1,5 @@
+import { getAuthHeaders } from "./auth"
+
 const API_URL = import.meta.env.VITE_API_URL
 
 interface ApiResponse<T> {
@@ -49,9 +51,11 @@ export async function getDocentes(): Promise<Docente[]> {
   params.append("rol", user.rol);
   if (user.escuela_id) params.append("escuela_id", user.escuela_id);
 
-  const res = await fetch(`${API_URL}/docentes?${params.toString()}`);
+  const res = await fetch(`${API_URL}/docentes?${params.toString()}`, {
+    headers: getAuthHeaders(),
+  });
   const body: ApiResponse<Docente[]> = await res.json();
-  
+
   if (!res.ok || !body.success) {
     throw new Error(body.message || "Error al cargar docentes");
   }
@@ -69,7 +73,7 @@ export async function asignarDocenteAEscuela(
 
   const res = await fetch(`${API_URL}/docentes/${docenteId}/asignar-escuela`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify({
       escuela_id: escuelaId,
       usuario_id: user.id,
@@ -94,7 +98,7 @@ export async function desasignarDocenteDeEscuela(
 
   const res = await fetch(`${API_URL}/docentes/${docenteId}/desasignar-escuela`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify({
       escuela_id: escuelaId,
       usuario_id: user.id,
@@ -107,5 +111,3 @@ export async function desasignarDocenteDeEscuela(
     throw new Error(body.message || "Error al desasignar docente del colegio");
   }
 }
-
-

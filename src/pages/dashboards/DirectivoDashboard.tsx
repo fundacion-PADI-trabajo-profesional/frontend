@@ -17,16 +17,6 @@ export default function DirectivoDashboard() {
             <Grid container spacing={3}>
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard
-                        title="Gestionar Aulas"
-                        description="Crear y administrar aulas (grado, comisión, turno)."
-                        icon="📂"
-                        color="#9C27B0"
-                        onClick={() => navigate("/aulas")}
-                    />
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                    <DashboardCard
                         title="Gestionar Docentes"
                         description="Habilitar y administrar equipo docente."
                         icon="👩‍🏫"
@@ -52,6 +42,16 @@ export default function DirectivoDashboard() {
                         icon="📋"
                         color="#FF9800"
                         onClick={() => navigate("/evaluaciones")}
+                    />
+                </Grid>
+
+                <Grid item xs={12} sm={6} md={4}>
+                    <DashboardCard
+                        title="Estadísticas"
+                        description="Rendimiento por aula y área de evaluación en tu escuela."
+                        icon="📊"
+                        color="#A3BE54"
+                        onClick={() => navigate("/estadisticas/escuela")}
                     />
                 </Grid>
             </Grid>

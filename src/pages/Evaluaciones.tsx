@@ -21,25 +21,23 @@ export default function Evaluaciones() {
   const [evaluacionSeleccionadaId, setEvaluacionSeleccionadaId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Load profile from localStorage
     const storedProfile = localStorage.getItem("padiProfile")
     if (storedProfile) {
       setProfile(JSON.parse(storedProfile))
     } else {
-      navigate("/home")
+      // Fallback: padiUser ya contiene user+profile combinados (ver Login.tsx)
+      const storedUser = localStorage.getItem("padiUser")
+      if (storedUser) {
+        setProfile(JSON.parse(storedUser))
+      } else {
+        navigate("/home")
+      }
     }
   }, [navigate])
 
   const backTo = searchParams.get("backTo") || "/home"
   const backLabel = searchParams.get("backLabel") || "Volver a inicio"
   const docenteId = searchParams.get("docenteId")
-
-  const handleBackToList = () => {
-    // Limpia los parámetros de la URL y los estados locales
-    setEvaluacionSeleccionadaId(null);
-    setPrefillEstudianteId(null);
-    navigate("/evaluaciones", { replace: true });
-  };
 
   useEffect(() => {
     const evaluarAhora = searchParams.get("evaluarAhora")
@@ -77,24 +75,21 @@ export default function Evaluaciones() {
 
   const handleVolverALista = () => {
     setEvaluacionSeleccionadaId(null);
-    setRefreshKey(prev => prev + 1); // Refrescar por si hubo cambios de estado
+    setRefreshKey(prev => prev + 1);
+    navigate("/evaluaciones", { replace: true });
   };
 
-  const handleSuccessForm = () => {
+  const handleSuccessForm = (evaluacionId: string) => {
     setPrefillEstudianteId(null);
     setRefreshKey(prev => prev + 1);
-    if (backTo !== "/home") {
-      navigate(backTo, { replace: true });
-    } else {
-      navigate("/evaluaciones", { replace: true });
-    }
+    setEvaluacionSeleccionadaId(evaluacionId);
   };
 
   const handleCrearNueva = () => {
     navigate("/evaluaciones?crear=true");
   };
 
-  const showCreateView = prefillEstudianteId !== null || searchParams.get("crear") === "true";
+  const showCreateView = prefillEstudianteId !== null || searchParams.get("crear") === "true" || searchParams.get("estudianteId") !== null || searchParams.get("evaluarAhora") !== null;
 
   // Si hay una evaluación seleccionada, mostramos SU DETALLE ocupando todo el área de contenido
   if (evaluacionSeleccionadaId) {

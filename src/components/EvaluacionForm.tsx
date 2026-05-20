@@ -26,7 +26,7 @@ import { useSearchParams } from "react-router-dom"
 import { useNavigate } from "react-router-dom";
 
 interface EvaluacionFormProps {
-  onSuccess: () => void;
+  onSuccess: (evaluacionId: string) => void;
   onCancel: () => void;
   evaluacionAEditar?: EvaluacionInstancia | null;
   profile: any | null;
@@ -39,7 +39,7 @@ const getCurrentMonth = () => {
   return `${now.getFullYear()}-${month}`;
 };
 
-export default function EvaluacionForm({ onSuccess, onCancel, evaluacionAEditar, profile, prefillEstudianteId }: EvaluacionFormProps) {
+export default function EvaluacionForm({ onSuccess,  evaluacionAEditar, profile, prefillEstudianteId }: EvaluacionFormProps) {
   const [formData, setFormData] = useState({
     estudianteId: "",
     salaId: "",
@@ -61,8 +61,6 @@ export default function EvaluacionForm({ onSuccess, onCancel, evaluacionAEditar,
   const [searchParams] = useSearchParams();
   const prefillSalaId = searchParams.get("salaId"); // Capturamos la sala
   const prefillAulaId = searchParams.get("aulaId");
-  const prefillAulaLabel = searchParams.get("aulaLabel");
-  const prefillEscuelaNombre = searchParams.get("escuelaNombre");
 
   const navigate = useNavigate();
 
@@ -78,12 +76,13 @@ export default function EvaluacionForm({ onSuccess, onCancel, evaluacionAEditar,
   }, [prefillEstudianteId, prefillSalaId, prefillAulaId]);
 
   useEffect(() => {
+    if (!profile) return;
     const loadEstudiantes = async () => {
       try {
         const data = await getEstudiantes();
         setEstudiantes(data);
       } catch (err) {
-        if (profile?.rol === "docente" || profile?.rol === "director") {
+        if (profile.rol === "docente" || profile.rol === "director") {
           try {
             const aulas = await getDocenteAulasConEstudiantes();
             const dedup = new Map<string, Estudiante>();
@@ -182,10 +181,7 @@ export default function EvaluacionForm({ onSuccess, onCancel, evaluacionAEditar,
     setSuccess(false)
 
     try {
-      // Validate form
-      //if (!formData.estudianteId || !formData.salaId) {
-      //  throw new Error("Por favor completa todos los campos requeridos")
-      //}
+      
       if (!formData.estudianteId || !formData.salaId || !profile?.id) {
         throw new Error("Por favor completa todos los campos requeridos (faltan datos del estudiante, sala o profesor)")
       }
@@ -199,9 +195,12 @@ export default function EvaluacionForm({ onSuccess, onCancel, evaluacionAEditar,
         estadoId: formData.estadoId as "N" | "C" | "R",
       }
 
+      let resultId: string;
+
       if (evaluacionAEditar) {
         // --- MODO EDITAR ---
-        await actualizarEvaluacionInstancia(evaluacionAEditar.id, payload);
+        const updated = await actualizarEvaluacionInstancia(evaluacionAEditar.id, payload);
+        resultId = updated.id;
         console.log("[v0] Evaluación actualizada:", payload);
       } else {
         // --- MODO CREAR ---
@@ -215,6 +214,7 @@ export default function EvaluacionForm({ onSuccess, onCancel, evaluacionAEditar,
         const payloadBackend = {
           dni: selectedEstudiante.personas.dni, // Usamos DNI, no ID
           profesor_id: profile.id,              // snake_case: profesor_id
+          sala_id: Number.parseInt(formData.salaId),
           aula_id: formData.aulaId || undefined,
           tipo_id: formData.tipoId,             // snake_case: tipo_id
           fecha_creacion: formData.fechaCreacion,
@@ -225,16 +225,15 @@ export default function EvaluacionForm({ onSuccess, onCancel, evaluacionAEditar,
           userId: profile.id,
           userRole: profile.rol
         };
-        await crearEvaluacionInstancia(payloadBackend, userInfo);
-        console.log("[v0] Evaluación creada:", payloadBackend);
+        const result = await crearEvaluacionInstancia(payloadBackend, userInfo);
+        resultId = result.id;
+        console.log("[v0] Evaluación creada:", result.id, payloadBackend);
       }
 
       setSuccess(true)
 
-
-      // Reload list after success
       setTimeout(() => {
-        onSuccess()
+        onSuccess(resultId)
       }, 1500)
     } catch (err: any) {
       setError(err.message || (evaluacionAEditar ? "Error al actualizar" : "Error al crear"));
@@ -268,17 +267,17 @@ export default function EvaluacionForm({ onSuccess, onCancel, evaluacionAEditar,
 
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
-            {formData.aulaId && (
+            {selectedEstudiante && (
               <Grid item xs={12}>
                 <Paper variant="outlined" sx={{ p: 2, bgcolor: "#fafafa" }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
                     Contexto del estudiante a evaluar
                   </Typography>
                   <Typography variant="body2" sx={{ color: "#555" }}>
-                    Aula: {prefillAulaLabel || formData.aulaId}
+                    Aula: {selectedEstudiante.aula_asignada ? `${selectedEstudiante.aula_asignada.comision} (${selectedEstudiante.aula_asignada.turno})` : "Sin comisión asignada"}
                   </Typography>
                   <Typography variant="body2" sx={{ color: "#555" }}>
-                    Escuela: {prefillEscuelaNombre || "-"}
+                    Escuela: {selectedEstudiante.escuela?.nombre || "Sin escuela asignada"}
                   </Typography>
                 </Paper>
               </Grid>
@@ -301,7 +300,7 @@ export default function EvaluacionForm({ onSuccess, onCancel, evaluacionAEditar,
                 // Para que la búsqueda funcione comparando IDs
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 // QUÉ HACER CUANDO SE SELECCIONA UN ALUMNO
-                onChange={(event, newValue: Estudiante | null) => {
+                onChange={(_event, newValue: Estudiante | null) => {
                   // 1. Actualiza el valor del Autocomplete
                   setSelectedEstudiante(newValue);
                   // 2. Actualiza el formData con el ID para el backend
@@ -309,6 +308,7 @@ export default function EvaluacionForm({ onSuccess, onCancel, evaluacionAEditar,
                     ...prev,
                     estudianteId: newValue ? newValue.id : "",
                     salaId: newValue ? String(newValue.sala_id) : "",
+                    aulaId: newValue?.aula_asignada?.id || newValue?.aula_id || "", 
                   }));
                 }}
                 // Cómo se ve el campo de texto
@@ -350,7 +350,7 @@ export default function EvaluacionForm({ onSuccess, onCancel, evaluacionAEditar,
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Sala"
+                label="Prueba de Sala"
                 name="salaId"
                 type="number"
                 value={formData.salaId}

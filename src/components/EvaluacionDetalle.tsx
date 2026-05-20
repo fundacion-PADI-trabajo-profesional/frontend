@@ -93,7 +93,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
     const [wizardOpen, setWizardOpen] = useState(false)
     const [selectedArea, setSelectedArea] = useState<{ id: string, nombre: string } | null>(null)
 
-    //estados para revision de rtas
+    // ESTADOS PARA REVISIÓN
     const [revisionOpen, setRevisionOpen] = useState(false);
     const [revisionData, setRevisionData] = useState<{ id: string, nombre: string, score: number, total: number, statusId: string } | null>(null);
 
@@ -115,11 +115,9 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
     }, [evaluacionId])
 
 
-    // Handler para abrir el Wizard
     const handleAreaClick = (areaId: string, areaNombre: string, statusId: string, aciertosIndividuales: number, totalQuestions: number) => {
-        // ... (lógica para abrir revisión o wizard)
         if (statusId === 'A' || statusId === 'D' || statusId === 'C') {
-            // Si está completada/aprobada/desaprobada, abre la vista de revisión
+            // Área completada: mostrar revisión de respuestas
             setRevisionData({
                 id: areaId,
                 nombre: areaNombre,
@@ -130,33 +128,23 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
             setRevisionOpen(true);
             return;
         }
-
-        // Si es 'N' o 'E', abre el Wizard
+        // Área no iniciada o en progreso: abrir wizard
         setSelectedArea({ id: areaId, nombre: areaNombre });
         setWizardOpen(true);
     }
 
-    // Handler para cerrar la Revisión
-    const handleRevisionClose = () => {
+    // Abre el wizard para corregir desde la pantalla de revisión
+    const handleCorrectFromRevision = () => {
+        if (!revisionData) return;
         setRevisionOpen(false);
-        setRevisionData(null);
+        setSelectedArea({ id: revisionData.id, nombre: revisionData.nombre });
+        setWizardOpen(true);
     }
-
-    // Handler para cerrar el wizard y refrescar
-    const handleWizardClose = () => {
-        setWizardOpen(false)
-        setSelectedArea(null)
-        // Recargamos los datos para actualizar el estado del área y la evaluación general
-        loadEvaluationData();
-    }
-
+    
     if (loading) return <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
     if (error) return <Box sx={{ p: 4 }}><Typography color="error">{error}</Typography><Button onClick={onBack}>Volver</Button></Box>
     if (!data || !data.estudiante) return <Box sx={{ p: 4 }}><Typography>No se encontraron datos del estudiante.</Typography></Box>
     const evaluacion = data
-    const areas = evaluacion.areas || []
-
-    const fechaCreacion = new Date(data.createdAt).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
     const overallStatus = getStatusColor(evaluacion.estadoId);
 
     const fechaObj = evaluacion.createdAt;
@@ -355,18 +343,19 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                 })}
             </Box>
 
-            {/* WIZARD MODAL (Aparece al hacer click en un área) */}
+            {/* WIZARD MODAL */}
             <EvaluacionWizard
                 open={wizardOpen}
                 onClose={() => {
                     setWizardOpen(false);
                     setSelectedArea(null);
-                    loadEvaluationData(); // refresca estados/aciertos
+                    loadEvaluationData();
                 }}
                 evaluacionId={evaluacionId}
                 areaId={selectedArea?.id || ""}
                 areaNombre={selectedArea?.nombre || ""}
             />
+
             {/* REVISIÓN MODAL */}
             {revisionData && (
                 <EvaluacionRevision
@@ -374,14 +363,15 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                     onClose={() => {
                         setRevisionOpen(false);
                         setRevisionData(null);
-                        loadEvaluationData(); // por si querés refrescar
+                        loadEvaluationData();
                     }}
+                    onCorrect={handleCorrectFromRevision}
                     evaluacionId={evaluacionId}
-                    areaId={revisionData?.id || ""}
-                    areaNombre={revisionData?.nombre || ""}
-                    score={revisionData?.score || 0}
-                    total={revisionData?.total || 0}
-                    statusId={revisionData?.statusId || "N"}
+                    areaId={revisionData.id}
+                    areaNombre={revisionData.nombre}
+                    score={revisionData.score}
+                    total={revisionData.total}
+                    statusId={revisionData.statusId}
                 />
             )}
         </Box>

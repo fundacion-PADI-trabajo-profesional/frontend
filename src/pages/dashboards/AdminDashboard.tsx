@@ -38,7 +38,7 @@ export default function AdminDashboard({ rol }: Props) {
                     <Grid item xs={12} sm={6} md={4}>
                         <DashboardCard
                             title="Escuelas"
-                            description="Alta y gestión de instituciones educativas."
+                            description="Alta y gestión de instituciones educativas y comisiones."
                             icon="🏫"
                             color="#FF9800"
                             onClick={() => navigate("/escuelas")}
@@ -77,6 +77,66 @@ export default function AdminDashboard({ rol }: Props) {
                         onClick={() => navigate("/estudiantes")}
                     />
                 </Grid>
+
+                {isEncargado && (
+                    <Grid item xs={12} sm={6} md={4}>
+                        <DashboardCard
+                            title="Evaluaciones PADI"
+                            description="Ver y gestionar todas las evaluaciones del sistema."
+                            icon="📋"
+                            color="#A3BE54"
+                            onClick={() => navigate("/evaluaciones")}
+                        />
+                    </Grid>
+                )}
+
+                {isEquipoPadi && (
+                    <Grid item xs={12} sm={6} md={4}>
+                        <DashboardCard
+                            title="Evaluaciones PADI"
+                            description="Ver y gestionar todas las evaluaciones del sistema."
+                            icon="📋"
+                            color="#A3BE54"
+                            onClick={() => navigate("/evaluaciones")}
+                        />
+                    </Grid>
+                )}
+
+                {isEquipoPadi && (
+                    <Grid item xs={12} sm={6} md={4}>
+                        <DashboardCard
+                            title="Usuarios"
+                            description="Invitá nuevos usuarios al sistema de forma individual o masiva desde un Excel."
+                            icon="👥"
+                            color="#7B1FA2"
+                            onClick={() => navigate("/usuarios")}
+                        />
+                    </Grid>
+                )}
+
+                {isEquipoPadi && (
+                    <Grid item xs={12} sm={6} md={4}>
+                        <DashboardCard
+                            title="Estadísticas"
+                            description="Mapa de calor de rendimiento por zona y área de evaluación."
+                            icon="📊"
+                            color="#A3BE54"
+                            onClick={() => navigate("/estadisticas/padi")}
+                        />
+                    </Grid>
+                )}
+
+                {isEncargado && (
+                    <Grid item xs={12} sm={6} md={4}>
+                        <DashboardCard
+                            title="Estadísticas"
+                            description="Rendimiento por escuela y área de evaluación en tu zona."
+                            icon="📊"
+                            color="#A3BE54"
+                            onClick={() => navigate("/estadisticas/zona")}
+                        />
+                    </Grid>
+                )}
             </Grid>
         </Box>
     );

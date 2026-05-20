@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Box, TextField, Button, Grid, Alert, Typography, MenuItem, CircularProgress } from "@mui/material";
-import { Encargado, type CreateEncargadoDto } from "../api/encargados-zona";
+import { Encargado} from "../api/encargados-zona";
 import { getZonas, type Zona } from "../api/zonas";
 
 interface Props {

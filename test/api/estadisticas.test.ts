@@ -9,6 +9,10 @@ import {
   getHeatmapZonas,
   getHeatmapEscuelas,
   getHeatmapAulas,
+  getActividadDocentesZona,
+  getActividadDocentesEscuela,
+  getCoberturaPorZona,
+  getComparativaEscuela,
   getEstudiantesEnRiesgoZona,
   getEstudiantesEnRiesgoEscuela,
   getEvolucionPadi,
@@ -19,6 +23,8 @@ import {
   getAreasCriticasEscuela,
   getAprobacionPreguntas,
   getDistribucionPuntajes,
+  getProgresionEstudianteDocente,
+  getProgresionEstudianteEscuela,
 } from "../../src/api/estadisticas";
 
 const API = "http://localhost:3000";
@@ -178,6 +184,98 @@ describe("getHeatmapAulas", () => {
   });
 });
 
+// ─── getActividadDocentesEscuela / getCoberturaPorZona / getComparativaEscuela ───
+describe("estadisticas con parametros opcionales", () => {
+  it("llama a actividad de docentes de zona con periodo", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockFetchResponse({ success: true, data: { periodo: 2025, total: 2, filas: [] } })
+    );
+
+    const result = await getActividadDocentesZona({ periodo: 2025 });
+
+    const url = vi.mocked(fetch).mock.calls[0][0] as string;
+    expect(url).toContain(`${API}/estadisticas/zona/actividad-docentes`);
+    expect(url).toContain("periodo=2025");
+    expect(result.total).toBe(2);
+  });
+
+  it("lanza error por defecto en actividad de docentes de zona cuando falla sin message ni description", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockFetchResponse({ success: false }, false, 500)
+    );
+
+    await expect(getActividadDocentesZona({ periodo: 2025 })).rejects.toThrow(
+      "Error al cargar actividad de docentes"
+    );
+  });
+
+  it("llama a actividad de docentes de escuela con escuela_id cuando se pasa", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockFetchResponse({ success: true, data: { periodo: 2025, total: 1, filas: [] } })
+    );
+
+    await getActividadDocentesEscuela({ periodo: 2025, escuela_id: "esc-1" });
+
+    const url = vi.mocked(fetch).mock.calls[0][0] as string;
+    expect(url).toContain(`${API}/estadisticas/escuela/actividad-docentes`);
+    expect(url).toContain("periodo=2025");
+    expect(url).toContain("escuela_id=esc-1");
+  });
+
+  it("llama a actividad de docentes de escuela sin escuela_id cuando no se pasa", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockFetchResponse({ success: true, data: { periodo: 2025, total: 1, filas: [] } })
+    );
+
+    await getActividadDocentesEscuela({ periodo: 2025 });
+
+    const url = vi.mocked(fetch).mock.calls[0][0] as string;
+    expect(url).toContain(`${API}/estadisticas/escuela/actividad-docentes`);
+    expect(url).toContain("periodo=2025");
+    expect(url).not.toContain("escuela_id=");
+  });
+
+  it("llama a cobertura por zona con periodo", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockFetchResponse({ success: true, data: { periodo: 2025, total: 1, filas: [] } })
+    );
+
+    await getCoberturaPorZona({ periodo: 2025 });
+
+    const url = vi.mocked(fetch).mock.calls[0][0] as string;
+    expect(url).toContain(`${API}/estadisticas/padi/cobertura-por-zona`);
+    expect(url).toContain("periodo=2025");
+  });
+
+  it("llama a comparativa de escuela con escuela_id cuando se pasa", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockFetchResponse({ success: true, data: { periodo: 2025, tipo: "inicial", areas: [] } })
+    );
+
+    await getComparativaEscuela({ periodo: 2025, tipo: "inicial", escuela_id: "esc-1" });
+
+    const url = vi.mocked(fetch).mock.calls[0][0] as string;
+    expect(url).toContain(`${API}/estadisticas/escuela/comparativa`);
+    expect(url).toContain("periodo=2025");
+    expect(url).toContain("tipo=inicial");
+    expect(url).toContain("escuela_id=esc-1");
+  });
+
+  it("llama a comparativa de escuela sin escuela_id cuando no se pasa", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockFetchResponse({ success: true, data: { periodo: 2025, tipo: "inicial", areas: [] } })
+    );
+
+    await getComparativaEscuela({ periodo: 2025, tipo: "inicial" });
+
+    const url = vi.mocked(fetch).mock.calls[0][0] as string;
+    expect(url).toContain(`${API}/estadisticas/escuela/comparativa`);
+    expect(url).toContain("periodo=2025");
+    expect(url).toContain("tipo=inicial");
+    expect(url).not.toContain("escuela_id=");
+  });
+});
+
 const mockRiesgo = {
   periodo: 2025,
   umbral: 0.5,
@@ -334,6 +432,69 @@ describe("getEvolucionPadi", () => {
     await expect(getEvolucionPadi({ periodo: 2025 })).rejects.toThrow(
       "Error al cargar evolución"
     );
+  });
+});
+
+// ─── getProgresionEstudianteDocente / getProgresionEstudianteEscuela ────────
+describe("progresion de estudiante", () => {
+  const mockProgresion = {
+    estudiante_id: "est-1",
+    nombre: "Ana",
+    primer_apellido: "Lopez",
+    periodo: 2025,
+    areas: [],
+  };
+
+  it("llama a progresion de estudiante docente con aula_id cuando se pasa", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockFetchResponse({ success: true, data: mockProgresion })
+    );
+
+    await getProgresionEstudianteDocente({ estudiante_id: "est-1", aula_id: "a-1" });
+
+    const url = vi.mocked(fetch).mock.calls[0][0] as string;
+    expect(url).toContain(`${API}/estadisticas/docente/progresion-estudiante`);
+    expect(url).toContain("estudiante_id=est-1");
+    expect(url).toContain("aula_id=a-1");
+  });
+
+  it("llama a progresion de estudiante docente sin aula_id cuando no se pasa", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockFetchResponse({ success: true, data: mockProgresion })
+    );
+
+    await getProgresionEstudianteDocente({ estudiante_id: "est-1" });
+
+    const url = vi.mocked(fetch).mock.calls[0][0] as string;
+    expect(url).toContain(`${API}/estadisticas/docente/progresion-estudiante`);
+    expect(url).toContain("estudiante_id=est-1");
+    expect(url).not.toContain("aula_id=");
+  });
+
+  it("llama a progresion de estudiante escuela con escuela_id cuando se pasa", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockFetchResponse({ success: true, data: mockProgresion })
+    );
+
+    await getProgresionEstudianteEscuela({ estudiante_id: "est-1", escuela_id: "esc-1" });
+
+    const url = vi.mocked(fetch).mock.calls[0][0] as string;
+    expect(url).toContain(`${API}/estadisticas/escuela/progresion-estudiante`);
+    expect(url).toContain("estudiante_id=est-1");
+    expect(url).toContain("escuela_id=esc-1");
+  });
+
+  it("llama a progresion de estudiante escuela sin escuela_id cuando no se pasa", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockFetchResponse({ success: true, data: mockProgresion })
+    );
+
+    await getProgresionEstudianteEscuela({ estudiante_id: "est-1" });
+
+    const url = vi.mocked(fetch).mock.calls[0][0] as string;
+    expect(url).toContain(`${API}/estadisticas/escuela/progresion-estudiante`);
+    expect(url).toContain("estudiante_id=est-1");
+    expect(url).not.toContain("escuela_id=");
   });
 });
 

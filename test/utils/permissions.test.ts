@@ -6,7 +6,7 @@ import {
   permissions,
   getCurrentUser,
   hasPermission,
-} from "../../utils/permissions";
+} from "../../src/utils/permissions";
 import { setUserInStorage } from "../setup";
 
 // ─── canEquipoPadi ────────────────────────────────────────────────────────────

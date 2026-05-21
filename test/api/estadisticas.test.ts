@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { setUserInStorage, mockFetchResponse } from "../setup";
 
-vi.mock("../../api/auth", () => ({
+vi.mock("../../src/api/auth", () => ({
   getAuthHeaders: () => ({ Authorization: "Bearer fake" }),
 }));
 
@@ -19,7 +19,7 @@ import {
   getAreasCriticasEscuela,
   getAprobacionPreguntas,
   getDistribucionPuntajes,
-} from "../../api/estadisticas";
+} from "../../src/api/estadisticas";
 
 const API = "http://localhost:3000";
 

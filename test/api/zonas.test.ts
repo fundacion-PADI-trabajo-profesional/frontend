@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { setUserInStorage, mockFetchResponse } from "../setup";
 
-vi.mock("../../api/auth", () => ({
+vi.mock("../../src/api/auth", () => ({
   getAuthHeaders: () => ({ Authorization: "Bearer fake" }),
 }));
 
@@ -16,7 +16,7 @@ import {
   getEncargadosSinZona,
   asignarEncargadoAZona,
   desvincularEncargado,
-} from "../../api/zonas";
+} from "../../src/api/zonas";
 
 const USER = { id: "u-1", rol: "equipo_padi" };
 const API = "http://localhost:3000";
@@ -231,7 +231,7 @@ describe("getEncargadosZonaOptions", () => {
       mockFetchResponse({ success: true, data: [{ id: "enc-1" }] })
     );
 
-    const { getEncargadosZonaOptions } = await import("../../api/zonas");
+    const { getEncargadosZonaOptions } = await import("../../src/api/zonas");
     const result = await getEncargadosZonaOptions();
 
     const url = vi.mocked(fetch).mock.calls[0][0] as string;

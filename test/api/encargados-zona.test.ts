@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mockFetchResponse } from "../setup";
 
-vi.mock("../../api/auth", () => ({
+vi.mock("../../src/api/auth", () => ({
   getAuthHeaders: () => ({ Authorization: "Bearer fake" }),
 }));
 
@@ -11,7 +11,7 @@ import {
   updateEncargado,
   getCurrentEncargado,
   deleteEncargado,
-} from "../../api/encargados-zona";
+} from "../../src/api/encargados-zona";
 
 const API = "http://localhost:3000";
 

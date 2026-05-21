@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { filtrarAulasDisponibles, filtrarAulasParaEstudiante } from "../../utils/docentes-aulas";
-import type { Aula } from "../../api/aulas";
+import { filtrarAulasDisponibles, filtrarAulasParaEstudiante } from "../../src/utils/docentes-aulas";
+import type { Aula } from "../../src/api/aulas";
 
 const makeAula = (id: string, escuela_id: string): Aula => ({
   id,

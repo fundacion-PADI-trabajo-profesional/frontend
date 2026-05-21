@@ -110,10 +110,10 @@ npm run test:coverage
 
 ### Estructura de los tests
 
-Los tests viven en `src/test/` y se organizan en dos categorías:
+Los tests viven en `test/` y se organizan en dos categorías:
 
 \`\`\`
-src/test/
+test/
 ├── setup.ts                    # Configuración global: mocks de localStorage y fetch
 ├── utils/
 │   └── permissions.test.ts     # Tests de funciones de permisos por rol
@@ -142,7 +142,7 @@ src/test/
 - **Framework**: [Vitest](https://vitest.dev/) v3 en entorno `node`.
 - **Configuración**: `vitest.config.ts` en la raíz del proyecto.
 - **Variables de entorno**: `.env.test` define `VITE_API_URL=http://localhost:3000` para los tests.
-- **Setup global**: `src/test/setup.ts` registra mocks de `localStorage` y `fetch` antes de cada suite.
+- **Setup global**: `test/setup.ts` registra mocks de `localStorage` y `fetch` antes de cada suite.
 - **Mocking de módulos**: Los archivos que usan el cliente axios (`api` de `./auth`) son mockeados con `vi.mock` + `vi.hoisted` para evitar problemas de hoisting.
 
 ### Coverage
@@ -169,7 +169,7 @@ Los archivos medidos son `src/api/**` y `src/utils/**`. `src/api/auth.ts` está 
 
 ### Agregar un nuevo test
 
-1. Crear el archivo en `src/test/api/<nombre>.test.ts`.
+1. Crear el archivo en `test/api/<nombre>.test.ts`.
 2. Mockear el módulo `auth` si el archivo usa el cliente `api` (axios):
 
    \`\`\`typescript
@@ -178,7 +178,7 @@ Los archivos medidos son `src/api/**` y `src/utils/**`. `src/api/auth.ts` está 
      post: vi.fn(),
    }));
 
-   vi.mock("../../api/auth", () => ({
+  vi.mock("../../src/api/auth", () => ({
      api: apiMock,
      getAuthHeaders: () => ({ Authorization: "Bearer fake" }),
    }));
@@ -187,7 +187,7 @@ Los archivos medidos son `src/api/**` y `src/utils/**`. `src/api/auth.ts` está 
 3. Para simular un usuario logueado, usar el helper `setUserInStorage`:
 
    \`\`\`typescript
-   import { setUserInStorage, mockFetchResponse } from "../setup";
+  import { setUserInStorage, mockFetchResponse } from "../setup";
 
    beforeEach(() => {
      setUserInStorage({ id: "u-1", rol: "equipo_padi" });

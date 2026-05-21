@@ -3,7 +3,7 @@ import { setUserInStorage, mockFetchResponse } from "../setup";
 
 const apiMock = vi.hoisted(() => ({ post: vi.fn() }));
 
-vi.mock("../../api/auth", () => ({
+vi.mock("../../src/api/auth", () => ({
   api: apiMock,
   getAuthHeaders: () => ({ Authorization: "Bearer fake" }),
 }));
@@ -20,7 +20,7 @@ import {
   bulkCreateEstudiantes,
   getAulasPorEscuela,
   getEscuelas,
-} from "../../api/estudiantes";
+} from "../../src/api/estudiantes";
 
 const USER = { id: "u-1", rol: "equipo_padi" };
 const API = "http://localhost:3000";

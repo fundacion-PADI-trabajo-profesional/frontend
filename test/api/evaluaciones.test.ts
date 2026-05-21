@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { mockFetchResponse } from "../setup";
 
 // Mock del módulo auth para que getAuthHeaders no rompa en Node
-vi.mock("../../api/auth", () => ({
+vi.mock("../../src/api/auth", () => ({
   getAuthHeaders: () => ({ Authorization: "Bearer fake" }),
   api: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() },
 }));
@@ -18,7 +18,7 @@ import {
   enviarRespuestas,
   actualizarEvaluacionInstancia,
   getRespuestasParaRevision,
-} from "../../api/evaluaciones";
+} from "../../src/api/evaluaciones";
 
 const API = "http://localhost:3000";
 

@@ -85,6 +85,7 @@ export interface CreateEvaluacionPayload {
   fecha_creacion: string
 }
 
+/** Convierte la respuesta cruda del backend a un formato camelCase para el frontend. */
 function mapToCamelCase(data: any): EvaluacionInstancia {
   const nombre = data?.estudiantes?.personas?.nombre ?? "";
   const apellido = data?.estudiantes?.personas?.primer_apellido ?? "";
@@ -148,9 +149,7 @@ function mapToCamelCase(data: any): EvaluacionInstancia {
 // 3. FUNCIONES DEL WIZARD (FASE 2)
 // ----------------------------------------------------------------------
 
-/**
- * GET: Obtiene la lista de preguntas y respuestas previas para un área.
- */
+/** Obtiene las preguntas y respuestas previas de un área dentro de una evaluación. */
 export async function getPreguntasArea(evaluacionId: string, areaId: string): Promise<PreguntasResponse> {
   const res = await fetch(`${API_URL}/evaluaciones/${evaluacionId}/areas/${areaId}/preguntas`, {
     headers: getAuthHeaders(),
@@ -160,9 +159,7 @@ export async function getPreguntasArea(evaluacionId: string, areaId: string): Pr
   return json.data
 }
 
-/**
- * POST: Envía las respuestas de un paso del cuestionario y actualiza el estado.
- */
+/** Envía las respuestas de una evaluación parcial y actualiza su estado. */
 export async function enviarRespuestas(
   evaluacionId: string,
   areaId: string,
@@ -185,6 +182,7 @@ export async function enviarRespuestas(
 // 3. API CALLS
 // --------------------------------------------------------------------------
 
+/** Obtiene una instancia de evaluación por ID. */
 export async function getEvaluacionInstanciaById(id: string): Promise<EvaluacionInstancia> {
   const res = await fetch(`${API_URL}/evaluaciones/${id}`, {
     headers: getAuthHeaders(),
@@ -196,9 +194,7 @@ export async function getEvaluacionInstanciaById(id: string): Promise<Evaluacion
   return mapToCamelCase(json.data)
 }
 
-/**
- * GET: Obtiene evaluaciones filtradas por rol y escuela si aplica.
- */
+/** Obtiene evaluaciones filtradas por escuela, rol o profesor. */
 export async function getEvaluacionesInstancias(filters?: {
   escuela_id?: string;
   rol?: string;
@@ -218,9 +214,7 @@ export async function getEvaluacionesInstancias(filters?: {
   return (resData.data || []).map(mapToCamelCase);
 }
 
-/**
- * POST: Crear evaluación.
- */
+/** Crea una nueva instancia de evaluación. */
 export async function crearEvaluacionInstancia(
   data: CreateEvaluacionPayload,
   userInfo?: { userId: string; userRole: string }
@@ -245,6 +239,7 @@ export async function crearEvaluacionInstancia(
   return mapToCamelCase(responseData.data);
 }
 
+/** Obtiene las evaluaciones de un estudiante con paginación opcional. */
 export async function getEvaluacionesInstanciasByEstudiante(
   estudianteId: string,
   opts?: { limit?: number; offset?: number },
@@ -262,6 +257,7 @@ export async function getEvaluacionesInstanciasByEstudiante(
   return (resData.data || []).map(mapToCamelCase)
 }
 
+/** Obtiene las evaluaciones de un profesor con paginación opcional. */
 export async function getEvaluacionesInstanciasByProfesor(
   profesorId: string,
   opts?: { limit?: number; offset?: number },
@@ -279,6 +275,7 @@ export async function getEvaluacionesInstanciasByProfesor(
   return (resData.data || []).map(mapToCamelCase)
 }
 
+/** Actualiza una instancia de evaluación existente. */
 export async function actualizarEvaluacionInstancia(
   id: string,
   data: Partial<Omit<EvaluacionInstancia, "id" | "createdAt">>,
@@ -296,6 +293,7 @@ export async function actualizarEvaluacionInstancia(
   return mapToCamelCase(responseData.data)
 }
 
+/** Elimina una instancia de evaluación agregando contexto de usuario en query params. */
 export async function eliminarEvaluacionInstancia(
   id: string,
   userInfo?: { userId?: string; userRole?: string; usuario_id?: string; rol?: string }
@@ -319,9 +317,7 @@ export async function eliminarEvaluacionInstancia(
   }
 }
 
-/**
- * GET: Obtiene todas las preguntas y respuestas previas para un área (ideal para revisión).
- */
+/** Obtiene preguntas y respuestas para la revisión de una evaluación y un área. */
 export async function getRespuestasParaRevision(evaluacionId: string, areaId: string): Promise<PreguntasResponse> {
   const res = await fetch(`${API_URL}/evaluaciones/${evaluacionId}/areas/${areaId}/preguntas`, {
     headers: getAuthHeaders(),

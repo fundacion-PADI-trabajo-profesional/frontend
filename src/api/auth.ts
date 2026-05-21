@@ -7,7 +7,7 @@ let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;
 
 /**
- * Helper para obtener el token almacenado.
+ * Construye los headers JSON para requests autenticadas.
  */
 export const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
@@ -19,8 +19,6 @@ export const getAuthHeaders = () => {
 
 /**
  * Intenta renovar el access_token usando el refresh_token almacenado.
- * Llama al endpoint del backend /auth/refresh-token.
- * Retorna el nuevo access_token o null si falla.
  */
 async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = localStorage.getItem("refreshToken");
@@ -59,8 +57,7 @@ async function refreshAccessToken(): Promise<string | null> {
 }
 
 /**
- * Wrapper que garantiza que solo se haga un refresh a la vez,
- * incluso si múltiples requests fallan con 401 simultáneamente.
+ * Garantiza que solo haya un refresh de sesión en curso a la vez.
  */
 async function getRefreshedToken(): Promise<string | null> {
   if (isRefreshing && refreshPromise) {
@@ -77,7 +74,7 @@ async function getRefreshedToken(): Promise<string | null> {
 }
 
 /**
- * Maneja la respuesta del fetch. Si recibe 401, intenta refresh y reintenta UNA vez.
+ * Normaliza la respuesta HTTP y reintenta una vez ante 401.
  */
 async function handleResponse(response: Response, retryFn?: () => Promise<Response>) {
   if (response.status === 401 && retryFn) {
@@ -115,9 +112,7 @@ async function handleResponse(response: Response, retryFn?: () => Promise<Respon
 }
 
 /**
- * Intercepta todos los `fetch` globales de la app.
- * Ante un 401, intenta renovar el token una vez y reintenta la request.
- * Si la renovación falla, fuerza logout. Llamar una sola vez al arranque.
+ * Intercepta fetch global para renovar la sesión automáticamente ante 401.
  */
 export function setupFetchInterceptor() {
   const originalFetch = window.fetch.bind(window);
@@ -163,10 +158,10 @@ function forceLogout() {
 }
 
 /**
- * Objeto API estandarizado para usar en toda la app.
- * Incluye refresh automático de token ante respuestas 401.
+ * Cliente HTTP estándar con refresh automático ante respuestas 401.
  */
 export const api = {
+  /** Ejecuta una request GET autenticada y reintenta si recibe 401. */
   get: async (endpoint: string) => {
     const response = await fetch(`${API_URL}${endpoint}`, {
       method: "GET",
@@ -180,6 +175,7 @@ export const api = {
     );
   },
 
+  /** Ejecuta una request POST autenticada y reintenta si recibe 401. */
   post: async (endpoint: string, body: any) => {
     const response = await fetch(`${API_URL}${endpoint}`, {
       method: "POST",
@@ -195,6 +191,7 @@ export const api = {
     );
   },
 
+  /** Ejecuta una request PUT autenticada y reintenta si recibe 401. */
   put: async (endpoint: string, body: any) => {
     const response = await fetch(`${API_URL}${endpoint}`, {
       method: "PUT",
@@ -210,6 +207,7 @@ export const api = {
     );
   },
 
+  /** Ejecuta una request DELETE autenticada y reintenta si recibe 401. */
   delete: async (endpoint: string) => {
     const response = await fetch(`${API_URL}${endpoint}`, {
       method: "DELETE",
@@ -227,8 +225,7 @@ export const api = {
 // --- AUTENTICACIÓN ---
 
 /**
- * Envía credenciales.
- * Devuelve user, profile y session (con access_token y refresh_token).
+ * Inicia sesión con email y contraseña y devuelve user, profile y session.
  */
 export async function login(email: string, password: string) {
   const response = await fetch(`${API_URL}/auth/login`, {
@@ -249,6 +246,9 @@ export async function login(email: string, password: string) {
   };
 }
 
+/**
+ * Registra una nueva cuenta de usuario.
+ */
 export async function register(
   email: string,
   password: string,
@@ -270,16 +270,25 @@ export async function register(
   return data.user;
 }
 
+/**
+ * Actualiza el nombre y apellido del perfil del usuario autenticado.
+ */
 export async function updateProfileData(userId: string, nombre: string, apellido: string) {
   const response = await api.put("/auth/profile", { userId, nombre, apellido });
   return response.data;
 }
 
+/**
+ * Solicita un enlace de recuperación de contraseña por email.
+ */
 export async function requestPasswordReset(email: string) {
   const response = await api.post("/auth/reset-password-request", { email });
   return response.data;
 }
 
+/**
+ * Cambia la contraseña de un usuario usando tokens de sesión.
+ */
 export async function updatePasswordUser(accessToken: string, refreshToken: string, newPassword: string) {
   const response = await fetch(`${API_URL}/auth/update-password`, {
     method: "POST",

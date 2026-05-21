@@ -28,6 +28,7 @@ export interface UpdateEncargadoDto {
     zona_id: string;
 }
 
+/** Obtiene la lista completa de encargados de zona. */
 export async function getEncargados(): Promise<Encargado[]> {
     const response = await fetch(`${API_URL}/encargados`, {
         headers: getAuthHeaders(),
@@ -41,6 +42,7 @@ export async function getEncargados(): Promise<Encargado[]> {
     return json.data;
 }
 
+/** Crea un nuevo encargado de zona. */
 export async function createEncargado(data: CreateEncargadoDto): Promise<Encargado> {
     const response = await fetch(`${API_URL}/encargados`, {
         method: "POST",
@@ -57,6 +59,7 @@ export async function createEncargado(data: CreateEncargadoDto): Promise<Encarga
     return json.data;
 }
 
+/** Actualiza un encargado existente. */
 export async function updateEncargado(id: string, data: UpdateEncargadoDto): Promise<Encargado> {
     const response = await fetch(`${API_URL}/encargados/${id}`, {
         method: "PUT",
@@ -69,6 +72,7 @@ export async function updateEncargado(id: string, data: UpdateEncargadoDto): Pro
     return json.data;
 }
 
+/** Obtiene el encargado asociado a un usuario específico. */
 export async function getCurrentEncargado(userId: string): Promise<Encargado> {
     const response = await fetch(`${API_URL}/encargados/me?usuario_id=${userId}`, {
         headers: getAuthHeaders(),
@@ -82,6 +86,7 @@ export async function getCurrentEncargado(userId: string): Promise<Encargado> {
     return json.data;
 }
 
+/** Elimina un encargado por ID. */
 export async function deleteEncargado(id: string): Promise<void> {
     const response = await fetch(`${API_URL}/encargados/${id}`, {
         method: "DELETE",

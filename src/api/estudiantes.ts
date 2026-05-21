@@ -109,7 +109,7 @@ export interface EscuelaDropdown {
     nombre: string;
 }
 
-// Agrega la función de exportación
+/** Obtiene el catálogo de escuelas para los selectores del formulario. */
 export const getEscuelas = async (): Promise<EscuelaDropdown[]> => {
     const response = await fetch(`${API_URL}/escuelas`, {
         headers: getAuthHeaders(),
@@ -128,6 +128,7 @@ async function handleApiResponse<T>(response: Response): Promise<T> {
     return data.data
 }
 
+/** Obtiene los estudiantes visibles para la sesión actual. */
 export const getEstudiantes = async (): Promise<Estudiante[]> => {
     const stored = localStorage.getItem("padiUser");
     const user = stored ? JSON.parse(stored) : null;
@@ -146,6 +147,7 @@ export const getEstudiantes = async (): Promise<Estudiante[]> => {
     return handleApiResponse<Estudiante[]>(response);
 }
 
+/** Crea un nuevo estudiante con los datos del formulario. */
 export const createEstudiante = async (formData: EstudianteFormData): Promise<EstudianteCreado> => {
     const stored = localStorage.getItem("padiUser")
     const user = stored ? JSON.parse(stored) : null
@@ -163,6 +165,7 @@ export const createEstudiante = async (formData: EstudianteFormData): Promise<Es
     return handleApiResponse<EstudianteCreado>(response)
 }
 
+/** Obtiene el catálogo de géneros para el formulario. */
 export const getGeneros = async (): Promise<Genero[]> => {
     const response = await fetch(`${API_URL}/generos`, {
         headers: getAuthHeaders(),
@@ -170,6 +173,7 @@ export const getGeneros = async (): Promise<Genero[]> => {
     return handleApiResponse<Genero[]>(response);
 }
 
+/** Obtiene la lista de salas disponibles. */
 export const getSalas = async (): Promise<Sala[]> => {
     const response = await fetch(`${API_URL}/salas`, {
         headers: getAuthHeaders(),
@@ -177,6 +181,7 @@ export const getSalas = async (): Promise<Sala[]> => {
     return handleApiResponse<Sala[]>(response);
 }
 
+/** Actualiza un estudiante existente por ID. Lee usuario y rol desde padiUser para construir query params autenticados. */
 export async function updateEstudiante(id: string, data: any): Promise<Estudiante> {
     const res = await fetch(`${API_URL}/estudiantes/${id}`, {
         method: "PUT",
@@ -190,7 +195,7 @@ export async function updateEstudiante(id: string, data: any): Promise<Estudiant
     return body.data;
 }
 
-// Función para asignar un estudiante a un aula
+/** Asigna un estudiante a una aula. */
 export async function asignarEstudianteAula(
     estudianteId: string,
     aulaId: string,
@@ -223,7 +228,7 @@ export async function asignarEstudianteAula(
     }
 }
 
-// Función para desasignar un estudiante de un aula
+/** Desasigna un estudiante de una aula. */
 export async function desasignarEstudianteAula(
     estudianteId: string,
     userInfo?: { userId: string; userRole: string }
@@ -254,6 +259,7 @@ export async function desasignarEstudianteAula(
     }
 }
 
+/** Obtiene las aulas de una escuela específica. */
 export async function getAulasPorEscuela(escuelaId: string): Promise<any[]> {
     const response = await fetch(`${API_URL}/aulas?escuela_id=${escuelaId}`, {
         headers: getAuthHeaders(),
@@ -263,6 +269,7 @@ export async function getAulasPorEscuela(escuelaId: string): Promise<any[]> {
     return result.success ? result.data : [];
 }
 
+/** Elimina un estudiante por ID. */
 export async function deleteEstudiante(id: string): Promise<void> {
     const response = await fetch(`${API_URL}/estudiantes/${id}`, {
         method: "DELETE",
@@ -274,6 +281,7 @@ export async function deleteEstudiante(id: string): Promise<void> {
     }
 }
 
+/** Crea estudiantes en lote y soporta modo dry-run. */
 export async function bulkCreateEstudiantes(data: { estudiantes: any[], dryRun?: boolean }) {
     const user = JSON.parse(localStorage.getItem("padiUser") || "{}");
 

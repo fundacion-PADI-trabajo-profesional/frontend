@@ -19,6 +19,7 @@ export interface Directivo {
     } | null
 }
 
+/** Lee el usuario actual desde localStorage para firmar operaciones sensibles. */
 const getUserData = () => {
     const stored = localStorage.getItem("padiUser");
     if (stored) {
@@ -28,6 +29,7 @@ const getUserData = () => {
     return { usuario_id: "", rol: "" };
 };
 
+/** Obtiene todos los directivos. */
 export async function getDirectivos(): Promise<Directivo[]> {
     const res = await fetch(`${API_URL}/directivos`, {
         headers: getAuthHeaders(),
@@ -39,6 +41,7 @@ export async function getDirectivos(): Promise<Directivo[]> {
     return body.data || []
 }
 
+/** Obtiene los directivos disponibles para asignación. */
 export async function getDirectivosDisponibles(): Promise<Directivo[]> {
     const res = await fetch(`${API_URL}/directivos/disponibles`, {
         headers: getAuthHeaders(),
@@ -50,6 +53,7 @@ export async function getDirectivosDisponibles(): Promise<Directivo[]> {
     return body.data || []
 }
 
+/** Asigna una escuela a un directivo. */
 export async function asignarEscuelaADirectivo(directivoId: string, escuelaId: string) {
     const { usuario_id, rol } = getUserData();
     const res = await fetch(`${API_URL}/directivos/${directivoId}/asignar-escuela`, {

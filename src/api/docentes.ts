@@ -26,6 +26,7 @@ export interface Docente {
   }[]
 }
 
+/** Lee usuario, perfil y escuela desde localStorage para construir la sesión activa. */
 function getSessionUser() {
   const userRaw = localStorage.getItem("padiUser")
   const profileRaw = localStorage.getItem("padiProfile")
@@ -40,6 +41,7 @@ function getSessionUser() {
   return { id, rol, escuela_id }
 }
 
+/** Obtiene los docentes visibles para la sesión actual. */
 export async function getDocentes(): Promise<Docente[]> {
   const user = getSessionUser()
   if (!user.id || !user.rol) {
@@ -62,6 +64,7 @@ export async function getDocentes(): Promise<Docente[]> {
   return body.data || [];
 }
 
+/** Asigna un docente a una escuela. */
 export async function asignarDocenteAEscuela(
   docenteId: string,
   escuelaId: string,
@@ -87,6 +90,7 @@ export async function asignarDocenteAEscuela(
   }
 }
 
+/** Desasigna un docente de una escuela. */
 export async function desasignarDocenteDeEscuela(
   docenteId: string,
   escuelaId: string,

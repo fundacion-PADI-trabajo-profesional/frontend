@@ -59,6 +59,8 @@ export interface RiesgoResponse {
   total: number;
 }
 
+/** Realiza la lectura y validación de un endpoint de heatmap. */
+/** Realiza la lectura y validación de un endpoint de heatmap. */
 async function fetchHeatmap(url: string): Promise<HeatmapResponse> {
   const res = await fetch(url, { headers: getAuthHeaders() });
   const body: ApiResponse<HeatmapResponse> = await res.json();
@@ -68,6 +70,7 @@ async function fetchHeatmap(url: string): Promise<HeatmapResponse> {
   return body.data;
 }
 
+/** Obtiene el heatmap de zonas para un período y tipo de evaluación. */
 export async function getHeatmapZonas(params: {
   periodo: number;
   tipo: string;
@@ -77,6 +80,7 @@ export async function getHeatmapZonas(params: {
   );
 }
 
+/** Obtiene el heatmap de escuelas agrupado por zona. */
 export async function getHeatmapEscuelas(params: {
   periodo: number;
   tipo: string;
@@ -86,6 +90,7 @@ export async function getHeatmapEscuelas(params: {
   );
 }
 
+/** Obtiene el heatmap de aulas de una escuela con filtro opcional por escuela. */
 export async function getHeatmapAulas(params: {
   periodo: number;
   tipo: string;
@@ -96,6 +101,8 @@ export async function getHeatmapAulas(params: {
   return fetchHeatmap(`${API_URL}/estadisticas/escuela/heatmap-aulas?${qs}`);
 }
 
+/** Realiza la lectura y validación de un endpoint de estudiantes en riesgo. */
+/** Realiza la lectura y validación de un endpoint de estudiantes en riesgo. */
 async function fetchRiesgo(url: string): Promise<RiesgoResponse> {
   const res = await fetch(url, { headers: getAuthHeaders() });
   const body: ApiResponse<RiesgoResponse> = await res.json();
@@ -105,6 +112,7 @@ async function fetchRiesgo(url: string): Promise<RiesgoResponse> {
   return body.data;
 }
 
+/** Obtiene estudiantes en riesgo a nivel zona. */
 export async function getEstudiantesEnRiesgoZona(params: {
   periodo: number;
   umbral: number;
@@ -114,6 +122,7 @@ export async function getEstudiantesEnRiesgoZona(params: {
   );
 }
 
+/** Obtiene estudiantes en riesgo a nivel escuela. */
 export async function getEstudiantesEnRiesgoEscuela(params: {
   periodo: number;
   umbral: number;
@@ -154,6 +163,8 @@ export interface AreasCriticasResponse {
   areas: AreaCritica[];
 }
 
+/** Realiza la lectura y validación de un endpoint de evolución. */
+/** Realiza la lectura y validación de un endpoint de evolución. */
 async function fetchEvolucion(url: string): Promise<EvolucionResponse> {
   const res = await fetch(url, { headers: getAuthHeaders() });
   const body: ApiResponse<EvolucionResponse> = await res.json();
@@ -163,6 +174,8 @@ async function fetchEvolucion(url: string): Promise<EvolucionResponse> {
   return body.data;
 }
 
+/** Realiza la lectura y validación de un endpoint de áreas críticas. */
+/** Realiza la lectura y validación de un endpoint de áreas críticas. */
 async function fetchAreasCriticas(url: string): Promise<AreasCriticasResponse> {
   const res = await fetch(url, { headers: getAuthHeaders() });
   const body: ApiResponse<AreasCriticasResponse> = await res.json();
@@ -172,20 +185,24 @@ async function fetchAreasCriticas(url: string): Promise<AreasCriticasResponse> {
   return body.data;
 }
 
+/** Obtiene la evolución de PADI para un período. */
 export async function getEvolucionPadi(params: { periodo: number }): Promise<EvolucionResponse> {
   return fetchEvolucion(`${API_URL}/estadisticas/padi/evolucion?periodo=${params.periodo}`);
 }
 
+/** Obtiene la evolución de una zona para un período. */
 export async function getEvolucionZona(params: { periodo: number }): Promise<EvolucionResponse> {
   return fetchEvolucion(`${API_URL}/estadisticas/zona/evolucion?periodo=${params.periodo}`);
 }
 
+/** Obtiene la evolución de una escuela para un período. */
 export async function getEvolucionEscuela(params: { periodo: number; escuela_id?: string }): Promise<EvolucionResponse> {
   const qs = new URLSearchParams({ periodo: String(params.periodo) });
   if (params.escuela_id) qs.set("escuela_id", params.escuela_id);
   return fetchEvolucion(`${API_URL}/estadisticas/escuela/evolucion?${qs}`);
 }
 
+/** Obtiene las áreas críticas de PADI. */
 export async function getAreasCriticasPadi(params: {
   periodo: number;
   tipo: string;
@@ -195,6 +212,7 @@ export async function getAreasCriticasPadi(params: {
   );
 }
 
+/** Obtiene las áreas críticas de una zona. */
 export async function getAreasCriticasZona(params: {
   periodo: number;
   tipo: string;
@@ -204,6 +222,7 @@ export async function getAreasCriticasZona(params: {
   );
 }
 
+/** Obtiene las áreas críticas de una escuela. */
 export async function getAreasCriticasEscuela(params: {
   periodo: number;
   tipo: string;
@@ -253,6 +272,7 @@ async function fetchDocente<T>(url: string, errorMsg: string): Promise<T> {
   return body.data;
 }
 
+/** Obtiene el porcentaje de aprobación por pregunta para un docente o aula. */
 export async function getAprobacionPreguntas(params: {
   periodo: number;
   aula_id: string;
@@ -269,6 +289,7 @@ export async function getAprobacionPreguntas(params: {
   );
 }
 
+/** Obtiene la distribución de puntajes para un aula. */
 export async function getDistribucionPuntajes(params: {
   periodo: number;
   aula_id: string;
@@ -351,12 +372,14 @@ async function fetchSimple<T>(url: string, errorMsg: string): Promise<T> {
   return body.data;
 }
 
+/** Obtiene la actividad de docentes de la zona para un período. */
 export const getActividadDocentesZona = (p: { periodo: number }) =>
   fetchSimple<ActividadResponse>(
     `${API_URL}/estadisticas/zona/actividad-docentes?periodo=${p.periodo}`,
     "Error al cargar actividad de docentes"
   );
 
+/** Obtiene la actividad de docentes de una escuela para un período. */
 export const getActividadDocentesEscuela = (p: { periodo: number; escuela_id?: string }) => {
   const qs = new URLSearchParams({ periodo: String(p.periodo) });
   if (p.escuela_id) qs.set("escuela_id", p.escuela_id);
@@ -366,12 +389,14 @@ export const getActividadDocentesEscuela = (p: { periodo: number; escuela_id?: s
   );
 };
 
+/** Obtiene la cobertura por zona para un período. */
 export const getCoberturaPorZona = (p: { periodo: number }) =>
   fetchSimple<CoberturaResponse>(
     `${API_URL}/estadisticas/padi/cobertura-por-zona?periodo=${p.periodo}`,
     "Error al cargar cobertura por zona"
   );
 
+/** Obtiene la comparativa de una escuela frente a zona y referencia nacional. */
 export const getComparativaEscuela = (p: { periodo: number; tipo: string; escuela_id?: string }) => {
   const qs = new URLSearchParams({ periodo: String(p.periodo), tipo: p.tipo });
   if (p.escuela_id) qs.set("escuela_id", p.escuela_id);
@@ -381,6 +406,7 @@ export const getComparativaEscuela = (p: { periodo: number; tipo: string; escuel
   );
 };
 
+/** Obtiene la progresión de un estudiante para el docente. */
 export const getProgresionEstudianteDocente = (p: { estudiante_id: string; aula_id?: string }) => {
   const qs = new URLSearchParams({ estudiante_id: p.estudiante_id });
   if (p.aula_id) qs.set("aula_id", p.aula_id);
@@ -390,6 +416,7 @@ export const getProgresionEstudianteDocente = (p: { estudiante_id: string; aula_
   );
 };
 
+/** Obtiene la progresión de un estudiante para la escuela. */
 export const getProgresionEstudianteEscuela = (p: { estudiante_id: string; escuela_id?: string }) => {
   const qs = new URLSearchParams({ estudiante_id: p.estudiante_id });
   if (p.escuela_id) qs.set("escuela_id", p.escuela_id);

@@ -2,6 +2,7 @@ import { api } from "./auth";
 import type { Estudiante } from "./estudiantes";
 
 
+/** Lee usuario y rol desde padiUser para construir query params autenticados. */
 const getUserData = () => {
   const stored = localStorage.getItem("padiUser");
   if (stored) {
@@ -41,12 +42,14 @@ export interface CreateAulaDto {
   escuela_id?: string;
 }
 
+/** Obtiene las aulas visibles para la sesión actual. */
 export const getAulas = async (): Promise<Aula[]> => {
   const { usuario_id, rol } = getUserData();
   const response = await api.get(`/aulas?usuario_id=${usuario_id}&rol=${rol}`);
   return response.data.data || [];
 };
 
+/** Crea una nueva aula. */
 export const createAula = async (data: CreateAulaDto): Promise<Aula> => {
   const { usuario_id, rol } = getUserData();
   const payload = { ...data, usuario_id, rol };
@@ -54,6 +57,7 @@ export const createAula = async (data: CreateAulaDto): Promise<Aula> => {
   return response.data.data;
 };
 
+/** Actualiza una aula existente por ID. */
 export const updateAula = async (id: string, data: Partial<CreateAulaDto>): Promise<Aula> => {
   const { usuario_id, rol } = getUserData();
   const payload = { ...data, usuario_id, rol };
@@ -61,6 +65,7 @@ export const updateAula = async (id: string, data: Partial<CreateAulaDto>): Prom
   return response.data.data;
 };
 
+/** Elimina una aula por ID. */
 export const deleteAula = async (id: string): Promise<void> => {
   const { usuario_id, rol } = getUserData();
   await api.delete(`/aulas/${id}?usuario_id=${usuario_id}&rol=${rol}`);
@@ -95,12 +100,14 @@ export interface DocenteAulaConEstudiantes {
   estudiantes: Estudiante[];
 }
 
+/** Obtiene los docentes asignados a una aula. */
 export const getAulaDocentes = async (aulaId: string): Promise<AulaDocente[]> => {
   const { usuario_id, rol } = getUserData();
   const response = await api.get(`/aulas/${aulaId}/docentes?usuario_id=${usuario_id}&rol=${rol}`);
   return response.data.data || [];
 };
 
+/** Asigna un docente a una aula. */
 export const asignarDocenteAula = async (aulaId: string, profesorId: string) => {
   const { usuario_id, rol } = getUserData();
   const payload = { profesor_id: profesorId, usuario_id, rol };
@@ -108,6 +115,7 @@ export const asignarDocenteAula = async (aulaId: string, profesorId: string) => 
   return response.data;
 };
 
+/** Desasigna un docente de una aula. */
 export const desasignarDocenteAula = async (aulaId: string, profesorId: string) => {
   const { usuario_id, rol } = getUserData();
   const payload = { profesor_id: profesorId, usuario_id, rol };
@@ -115,33 +123,37 @@ export const desasignarDocenteAula = async (aulaId: string, profesorId: string) 
   return response.data;
 };
 
+/** Obtiene las aulas de un docente junto con sus estudiantes. */
 export const getDocenteAulasConEstudiantes = async (): Promise<DocenteAulaConEstudiantes[]> => {
   const { usuario_id, rol } = getUserData();
   const response = await api.get(`/docentes/aulas?usuario_id=${usuario_id}&rol=${rol}`);
   return response.data.data || [];
 };
 
+/** Obtiene los estudiantes asignados a una aula. */
 export const getAulaEstudiantes = async (aulaId: string): Promise<Estudiante[]> => {
   const { usuario_id, rol } = getUserData();
   const response = await api.get(`/aulas/${aulaId}/estudiantes?usuario_id=${usuario_id}&rol=${rol}`);
   return response.data.data || [];
 };
 
+/** Asigna un estudiante a una aula. */
 export const asignarEstudianteAula = async (aulaId: string, estudianteId: string) => {
-    // Obtenemos datos de sesión para validación de roles en el backend
-    const stored = localStorage.getItem("padiUser");
-    const user = stored ? JSON.parse(stored) : null;
+  // Obtenemos datos de sesión para validación de roles en el backend
+  const stored = localStorage.getItem("padiUser");
+  const user = stored ? JSON.parse(stored) : null;
 
-    const payload = { 
-        estudiante_id: estudianteId, // Debe coincidir con el controlador
-        usuario_id: user?.id, // ID del usuario que realiza la acción
-        rol: user?.rol 
-    };
+  const payload = {
+    estudiante_id: estudianteId, // Debe coincidir con el controlador
+    usuario_id: user?.id, // ID del usuario que realiza la acción
+    rol: user?.rol
+  };
 
-    const response = await api.post(`/aulas/${aulaId}/asignar-estudiante`, payload);
-    return response.data;
+  const response = await api.post(`/aulas/${aulaId}/asignar-estudiante`, payload);
+  return response.data;
 };
 
+/** Desasigna un estudiante de una aula. */
 export const desasignarEstudianteAula = async (aulaId: string, estudianteId: string) => {
   const { usuario_id, rol } = getUserData();
   const payload = { estudiante_id: estudianteId, usuario_id, rol };
@@ -149,6 +161,7 @@ export const desasignarEstudianteAula = async (aulaId: string, estudianteId: str
   return response.data;
 };
 
+/** Obtiene las aulas filtradas por escuela. */
 export const getAulasPorEscuela = async (escuelaId: string): Promise<Aula[]> => {
   const { usuario_id, rol } = getUserData();
   // Pasamos escuela_id como query param adicional

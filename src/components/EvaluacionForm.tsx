@@ -201,7 +201,6 @@ export default function EvaluacionForm({ onSuccess,  evaluacionAEditar, profile,
         // --- MODO EDITAR ---
         const updated = await actualizarEvaluacionInstancia(evaluacionAEditar.id, payload);
         resultId = updated.id;
-        console.log("[v0] Evaluación actualizada:", payload);
       } else {
         // --- MODO CREAR ---
 
@@ -227,7 +226,6 @@ export default function EvaluacionForm({ onSuccess,  evaluacionAEditar, profile,
         };
         const result = await crearEvaluacionInstancia(payloadBackend, userInfo);
         resultId = result.id;
-        console.log("[v0] Evaluación creada:", result.id, payloadBackend);
       }
 
       setSuccess(true)

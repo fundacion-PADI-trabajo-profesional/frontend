@@ -8,7 +8,7 @@ const apiMock = vi.hoisted(() => ({
   delete: vi.fn(),
 }));
 
-vi.mock("../../api/auth", () => ({
+vi.mock("../../src/api/auth", () => ({
   api: apiMock,
   getAuthHeaders: () => ({ Authorization: "Bearer fake" }),
 }));
@@ -21,7 +21,7 @@ import {
   asignarDirectivo,
   desasignarDirectivo,
   getDirectivosDisponibles,
-} from "../../api/escuelas";
+} from "../../src/api/escuelas";
 
 const USER = { id: "u-1", rol: "equipo_padi" };
 

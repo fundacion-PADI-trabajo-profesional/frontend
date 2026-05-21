@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { setUserInStorage, mockFetchResponse } from "../setup";
 
-vi.mock("../../api/auth", () => ({
+vi.mock("../../src/api/auth", () => ({
   getAuthHeaders: () => ({ Authorization: "Bearer fake" }),
 }));
 
@@ -9,7 +9,7 @@ import {
   getDirectivos,
   getDirectivosDisponibles,
   asignarEscuelaADirectivo,
-} from "../../api/directivos";
+} from "../../src/api/directivos";
 
 const USER = { id: "u-1", rol: "equipo_padi" };
 const API = "http://localhost:3000";

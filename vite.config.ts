@@ -7,7 +7,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    setupFiles: ['src/test/setup.ts'],
+    setupFiles: ['test/setup.ts'],
     env: {
       VITE_API_URL: 'http://localhost:3000',
     },

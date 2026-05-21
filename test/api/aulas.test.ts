@@ -9,7 +9,7 @@ const apiMock = vi.hoisted(() => ({
   delete: vi.fn(),
 }));
 
-vi.mock("../../api/auth", () => ({
+vi.mock("../../src/api/auth", () => ({
   api: apiMock,
   getAuthHeaders: () => ({ Authorization: "Bearer fake" }),
 }));
@@ -27,7 +27,7 @@ import {
   asignarEstudianteAula,
   desasignarEstudianteAula,
   getAulasPorEscuela,
-} from "../../api/aulas";
+} from "../../src/api/aulas";
 
 const USER = { id: "u-1", rol: "equipo_padi" };
 

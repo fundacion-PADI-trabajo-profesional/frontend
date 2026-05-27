@@ -149,7 +149,7 @@ export default function EstudiantesCompacto({ estudiantes, onAddEstudiante, onEd
             const nombre = encodeURIComponent(`${selectedStudent.personas.nombre} ${selectedStudent.personas.primer_apellido}`)
             const aulaId = selectedStudent.aula_id || selectedStudent.aula_asignada?.id || selectedStudent.aula_asignada?.comision;
             let ruta = `/evaluaciones?estudianteId=${selectedStudent.id}&nombre=${nombre}&salaId=${selectedStudent.sala_id}`;
-            
+
             if (aulaId) {
                 ruta += `&aulaId=${aulaId}`;
             }
@@ -369,16 +369,16 @@ export default function EstudiantesCompacto({ estudiantes, onAddEstudiante, onEd
             </Menu>
 
             <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>
-                <DialogTitle>Eliminar estudiante</DialogTitle>
+                <DialogTitle>Dar de baja estudiante</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        ¿Estás seguro que querés eliminar a <strong>{selectedStudent?.personas.nombre} {selectedStudent?.personas.primer_apellido}</strong>?
-                        Se eliminarán también todas sus evaluaciones y asignaciones. Esta acción no se puede deshacer.
+                        ¿Estás seguro que querés dar de baja a <strong>{selectedStudent?.personas.nombre} {selectedStudent?.personas.primer_apellido}</strong>?
+                        El estudiante dejará de aparecer en el sistema, pero sus evaluaciones e historial se conservarán.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setConfirmDeleteOpen(false)}>Cancelar</Button>
-                    <Button onClick={handleConfirmEliminar} color="error" variant="contained">Eliminar</Button>
+                    <Button onClick={handleConfirmEliminar} color="error" variant="contained">Dar de baja</Button>
                 </DialogActions>
             </Dialog>
         </Box>

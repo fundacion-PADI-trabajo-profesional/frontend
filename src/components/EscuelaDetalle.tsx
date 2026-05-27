@@ -119,7 +119,7 @@ export default function EscuelaDetalle({ escuela, onEdit }: any) {
                         variant="contained"
                         startIcon={<EditIcon />}
                         onClick={onEdit}
-                        sx={{ bgcolor: '#000', borderRadius: 2, px: 3, '&:hover': { bgcolor: '#333' } }}
+                        sx={{ bgcolor: '#5fb878', borderRadius: 2, px: 3, '&:hover': { bgcolor: '#333' } }}
                     >
                         EDITAR ESCUELA
                     </Button>

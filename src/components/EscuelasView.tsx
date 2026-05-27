@@ -4,6 +4,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SearchIcon from "@mui/icons-material/Search";
 import EscuelasList from "./EscuelasList";
 import EscuelaForm from "./EscuelaForm";
+import EscuelaDetalle from "./EscuelaDetalle";
 import EditarEscuela from "./EditarEscuela";
 import BotonNuevo from "./BotonNuevo";
 import { getEscuelas, type Escuela } from "../api/escuelas";
@@ -26,6 +27,7 @@ export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVe
     const [, setError] = useState<string | null>(null);
     const [busqueda, setBusqueda] = useState("");
     const [createModalOpen, setCreateModalOpen] = useState(false);
+    const [escuelaToView, setEscuelaToView] = useState<Escuela | null>(null);
     const [escuelaToEdit, setEscuelaToEdit] = useState<Escuela | null>(null);
 
     const fetchData = async () => {
@@ -68,6 +70,12 @@ export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVe
         );
     }, [escuelas, busqueda]);
 
+    const handleEditFromDetalle = () => {
+        const esc = escuelaToView;
+        setEscuelaToView(null);
+        setEscuelaToEdit(esc);
+    };
+
     if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}><CircularProgress /></Box>;
 
     return (
@@ -105,9 +113,22 @@ export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVe
             <EscuelasList
                 escuelas={escuelasFiltradas}
                 onView={onVerAulas}
-                onEdit={(esc) => setEscuelaToEdit(esc)}
+                onDetalle={(esc) => setEscuelaToView(esc)}
             />
 
+            {/* Modal detalle de escuela */}
+            <Dialog open={!!escuelaToView} onClose={() => setEscuelaToView(null)} fullWidth maxWidth="lg">
+                <DialogContent sx={{ p: 3 }}>
+                    {escuelaToView && (
+                        <EscuelaDetalle
+                            escuela={escuelaToView}
+                            onEdit={handleEditFromDetalle}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal editar escuela */}
             <Dialog open={!!escuelaToEdit} onClose={() => setEscuelaToEdit(null)} fullWidth maxWidth="md">
                 <DialogContent sx={{ p: 0 }}>
                     {escuelaToEdit && (
@@ -120,6 +141,7 @@ export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVe
                 </DialogContent>
             </Dialog>
 
+            {/* Modal nueva escuela */}
             <Dialog open={createModalOpen} onClose={() => setCreateModalOpen(false)} fullWidth maxWidth="sm">
                 <DialogContent sx={{ p: 0 }}>
                     {createModalOpen && (

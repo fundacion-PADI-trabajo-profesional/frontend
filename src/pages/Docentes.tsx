@@ -28,6 +28,7 @@ export default function DocentesPage() {
   const [selectedAulaId, setSelectedAulaId] = useState("")
   const [aulasDisponibles, setAulasDisponibles] = useState<Aula[]>([])
   const [loadingAulas, setLoadingAulas] = useState(false)
+  const [confirmDialog, setConfirmDialog] = useState<{ message: string; onConfirm: () => void } | null>(null)
 
   const navigate = useNavigate()
   const canManageAsignaciones = currentRole === "equipo_padi" || currentRole === "encargado_zona"
@@ -136,32 +137,40 @@ export default function DocentesPage() {
     }
   }
 
-  const handleDesasignarAula = async (docenteId: string, aulaId: string) => {
-    const ok = window.confirm("¿Quitar este docente del aula?")
-    if (!ok) return
-    try {
-      setSaving(true)
-      await desasignarDocenteAula(aulaId, docenteId)
-      await loadData()
-    } catch (e: any) {
-      setError(e.message || "Error al desasignar aula")
-    } finally {
-      setSaving(false)
-    }
+  const handleDesasignarAula = (docenteId: string, aulaId: string) => {
+    setConfirmDialog({
+      message: "¿Quitar este docente del aula?",
+      onConfirm: async () => {
+        setConfirmDialog(null)
+        try {
+          setSaving(true)
+          await desasignarDocenteAula(aulaId, docenteId)
+          await loadData()
+        } catch (e: any) {
+          setError(e.message || "Error al desasignar aula")
+        } finally {
+          setSaving(false)
+        }
+      },
+    })
   }
 
-  const handleDesasignarColegio = async (docenteId: string, escuelaId: string) => {
-    const ok = window.confirm("¿Quitar este docente del colegio? También se cerrarán sus asignaciones a aulas de ese colegio.")
-    if (!ok) return
-    try {
-      setSaving(true)
-      await desasignarDocenteDeEscuela(docenteId, escuelaId)
-      await loadData()
-    } catch (e: any) {
-      setError(e.message || "Error al desasignar colegio")
-    } finally {
-      setSaving(false)
-    }
+  const handleDesasignarColegio = (docenteId: string, escuelaId: string) => {
+    setConfirmDialog({
+      message: "¿Quitar este docente del colegio? También se cerrarán sus asignaciones a aulas de ese colegio.",
+      onConfirm: async () => {
+        setConfirmDialog(null)
+        try {
+          setSaving(true)
+          await desasignarDocenteDeEscuela(docenteId, escuelaId)
+          await loadData()
+        } catch (e: any) {
+          setError(e.message || "Error al desasignar colegio")
+        } finally {
+          setSaving(false)
+        }
+      },
+    })
   }
 
   const docentesFiltrados = items.filter((d) => {
@@ -475,6 +484,21 @@ export default function DocentesPage() {
         onClose={() => setCreateModalOpen(false)}
         onSuccess={loadData}
       />
+
+      {confirmDialog && (
+        <Box sx={{ position: "fixed", inset: 0, bgcolor: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1400 }}>
+          <Box sx={{ bgcolor: "#fff", p: 3, borderRadius: 2, minWidth: 360, maxWidth: 460, boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>Confirmar acción</Typography>
+            <Typography variant="body2" sx={{ color: "#555", mb: 3 }}>{confirmDialog.message}</Typography>
+            <Stack direction="row" spacing={1} justifyContent="flex-end">
+              <Button onClick={() => setConfirmDialog(null)} disabled={saving}>Cancelar</Button>
+              <Button variant="contained" color="error" onClick={confirmDialog.onConfirm} disabled={saving}>
+                Confirmar
+              </Button>
+            </Stack>
+          </Box>
+        </Box>
+      )}
 
     </Box>
 

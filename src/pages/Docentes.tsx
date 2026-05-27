@@ -296,7 +296,6 @@ export default function DocentesPage() {
                     key={d.id}
                     hover
                     sx={{ cursor: "pointer", '&:last-child td, &:last-child th': { border: 0 } }}
-                  // onClick={() => navigate(`/evaluaciones?docenteId=${d.id}&backTo=/docentes&backLabel=Volver%20a%20docentes`)}
                   >
                     <TableCell align="center">{d.apellido}</TableCell>
                     <TableCell align="center">{d.nombre}</TableCell>

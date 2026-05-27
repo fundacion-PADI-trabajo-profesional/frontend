@@ -36,6 +36,7 @@ import {
 } from "../api/estadisticas";
 import { getEstudiantes, type Estudiante } from "../api/estudiantes";
 import { getEscuelas, type Escuela } from "../api/escuelas";
+import SinEscuelaAsignada from "../components/SinEscuelaAsignada";
 
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 5 }, (_, i) => CURRENT_YEAR - i);
@@ -46,6 +47,15 @@ function getUserRol(): string {
     return stored ? JSON.parse(stored).rol : "";
   } catch {
     return "";
+  }
+}
+
+function getUserEscuelaId(): string | null {
+  try {
+    const stored = localStorage.getItem("padiUser");
+    return stored ? JSON.parse(stored).escuela_id ?? null : null;
+  } catch {
+    return null;
   }
 }
 
@@ -135,6 +145,10 @@ export default function EstadisticasEscuela() {
         backTo="/home"
       />
 
+      {rol === "director" && !getUserEscuelaId() ? (
+        <SinEscuelaAsignada />
+      ) : (
+        <>
       <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap", alignItems: "center" }}>
         <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel>Período</InputLabel>
@@ -269,6 +283,8 @@ export default function EstadisticasEscuela() {
             </Paper>
           )}
         </Box>
+      )}
+        </>
       )}
     </Box>
   );

@@ -11,6 +11,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { getAulasPorEscuela, getAulaEstudiantes, Aula } from "../api/aulas";
+import { getNivelSocioeconomicoLabel } from "../api/escuelas";
 import { Estudiante } from "../api/estudiantes";
 
 export default function EscuelaDetalle({ escuela, onEdit }: any) {
@@ -111,7 +112,7 @@ export default function EscuelaDetalle({ escuela, onEdit }: any) {
                     <Box>
                         <Typography variant="h3" sx={{ fontWeight: 800, mb: 0.5 }}>{escuela.nombre}</Typography>
                         <Typography variant="body1" sx={{ color: 'text.secondary', fontWeight: 500 }}>
-                            Zona: {escuela.zona?.nombre} | Dirección: {escuela.direccion || "No especificada"}
+                            Zona: {escuela.zona?.nombre} | Dirección: {escuela.direccion || "No especificada"} | Nivel socioeconómico: {getNivelSocioeconomicoLabel(escuela.nivel_socioeconomico)}
                         </Typography>
                     </Box>
                     <Button

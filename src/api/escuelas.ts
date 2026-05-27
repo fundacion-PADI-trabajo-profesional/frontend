@@ -15,6 +15,7 @@ export interface Escuela {
     nombre: string;
     direccion?: string;
     telefono?: string;
+    nivel_socioeconomico?: string;
     zona?: {
         id: string;
         nombre: string;
@@ -38,7 +39,19 @@ export interface CreateEscuelaDto {
     direccion?: string;
     telefono?: string;
     zona_id: string;
+    nivel_socioeconomico?: string;
 }
+
+export const NIVELES_SOCIOECONOMICOS = [
+    { value: "alto", label: "Alto" },
+    { value: "medio", label: "Medio" },
+    { value: "bajo", label: "Bajo" },
+    { value: "sin_definir", label: "Sin Definir" },
+];
+
+export const getNivelSocioeconomicoLabel = (value?: string) => {
+    return NIVELES_SOCIOECONOMICOS.find(n => n.value === value)?.label ?? "Sin Definir";
+};
 
 /** Obtiene las escuelas visibles para la sesión actual. */
 export const getEscuelas = async (): Promise<Escuela[]> => {

@@ -149,7 +149,7 @@ export default function EstudiantesCompacto({ estudiantes, onAddEstudiante, onEd
             const nombre = encodeURIComponent(`${selectedStudent.personas.nombre} ${selectedStudent.personas.primer_apellido}`)
             const aulaId = selectedStudent.aula_id || selectedStudent.aula_asignada?.id || selectedStudent.aula_asignada?.comision;
             let ruta = `/evaluaciones?estudianteId=${selectedStudent.id}&nombre=${nombre}&salaId=${selectedStudent.sala_id}`;
-            
+
             if (aulaId) {
                 ruta += `&aulaId=${aulaId}`;
             }
@@ -187,7 +187,7 @@ export default function EstudiantesCompacto({ estudiantes, onAddEstudiante, onEd
                 borderBottom: idx < com.estudiantes.length - 1 ? "1px solid #f5f5f5" : "1px solid #eee",
                 "&:hover": { bgcolor: "#fafafa" },
             }}>
-                <Typography sx={{ fontSize: 13, flexGrow: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", mr: 1 }}>
+                <Typography sx={{ fontSize: 15, flexGrow: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", mr: 1 }}>
                     {est.personas.primer_apellido}, {est.personas.nombre}
                 </Typography>
                 <EvalDots historial={est.evaluaciones_historial ?? []} salaId={est.sala_id} allSalaIds={allSalaIds} salaNombresMap={salaNombresMap} />
@@ -213,10 +213,10 @@ export default function EstudiantesCompacto({ estudiantes, onAddEstudiante, onEd
                         ? <ExpandMoreIcon sx={{ fontSize: 12, color: "#aaa", mr: 0.5, flexShrink: 0 }} />
                         : <ChevronRightIcon sx={{ fontSize: 12, color: "#aaa", mr: 0.5, flexShrink: 0 }} />
                     }
-                    <Typography sx={{ fontSize: 12, fontStyle: "italic", color: com.sinAula ? "#e65100" : "#777", flexGrow: 1 }}>
+                    <Typography sx={{ fontSize: 16, fontStyle: "italic", color: com.sinAula ? "#e65100" : "#777", flexGrow: 1 }}>
                         {com.label}
                     </Typography>
-                    <Typography sx={{ fontSize: 11, color: "#bbb", flexShrink: 0 }}>{com.estudiantes.length}</Typography>
+                    <Typography sx={{ fontSize: 15, color: "#bbb", flexShrink: 0 }}>{com.estudiantes.length}</Typography>
                 </Box>
                 {comExpanded && renderStudents(com, indentStudents)}
             </Box>
@@ -239,11 +239,11 @@ export default function EstudiantesCompacto({ estudiantes, onAddEstudiante, onEd
             {/* Header sala */}
             <Box sx={{ display: "flex", alignItems: "center", bgcolor: "#f5f5f5", px: 2, py: 0.9, borderBottom: "1px solid #eee" }}>
                 <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#A3BE54", mr: 1, flexShrink: 0 }} />
-                <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#444", flexGrow: 1 }}>
+                <Typography sx={{ fontSize: 17, fontWeight: 700, color: "#444", flexGrow: 1 }}>
                     {sala.nombre}
                 </Typography>
                 <Box sx={{ bgcolor: "#A3BE54", color: "#fff", borderRadius: 10, px: 0.75, lineHeight: 1.6, flexShrink: 0 }}>
-                    <Typography sx={{ fontSize: 11 }}>{sala.total}</Typography>
+                    <Typography sx={{ fontSize: 16 }}>{sala.total}</Typography>
                 </Box>
             </Box>
             {/* Comisiones */}
@@ -261,15 +261,15 @@ export default function EstudiantesCompacto({ estudiantes, onAddEstudiante, onEd
             borderTop: "3px solid #eaeffd",
         }}>
             {/* Header escuela */}
-            <Box sx={{ bgcolor: "#eaeffd", px: 2, py: 0.9, borderBottom: "1px solid #d0d8f8", display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: 13, flexGrow: 1, color: "#2c3e50", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <Box sx={{ bgcolor: "#eaeffd", px: 2, py: 1.25, borderBottom: "1px solid #d0d8f8", display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography sx={{ fontWeight: 700, fontSize: 19, flexGrow: 1, color: "#2c3e50", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {esc.nombre}
                 </Typography>
                 {esc.zona_nombre && (
-                    <Typography sx={{ fontSize: 11, color: "#777", flexShrink: 0 }}>{esc.zona_nombre}</Typography>
+                    <Typography sx={{ fontSize: 15, color: "#777", flexShrink: 0 }}>{esc.zona_nombre}</Typography>
                 )}
                 <Box sx={{ bgcolor: "#5c7cfa", color: "#fff", borderRadius: 10, px: 0.75, lineHeight: 1.6, flexShrink: 0 }}>
-                    <Typography sx={{ fontSize: 11 }}>{esc.total}</Typography>
+                    <Typography sx={{ fontSize: 14 }}>{esc.total}</Typography>
                 </Box>
             </Box>
             {/* Salas colapsables dentro de la carta */}
@@ -290,8 +290,8 @@ export default function EstudiantesCompacto({ estudiantes, onAddEstudiante, onEd
                                     : <ChevronRightIcon sx={{ fontSize: 13, color: "#888", mr: 0.5, flexShrink: 0 }} />
                                 }
                                 <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: "#A3BE54", mr: 0.75, flexShrink: 0 }} />
-                                <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#555", flexGrow: 1 }}>{sala.nombre}</Typography>
-                                <Typography sx={{ fontSize: 11, color: "#999", flexShrink: 0 }}>{sala.total}</Typography>
+                                <Typography sx={{ fontSize: 17, fontWeight: 600, color: "#555", flexGrow: 1 }}>{sala.nombre}</Typography>
+                                <Typography sx={{ fontSize: 16, color: "#999", flexShrink: 0 }}>{sala.total}</Typography>
                             </Box>
                             {salaExpanded && renderSalaContent(sala, esc.id, 3, 4)}
                         </Box>
@@ -327,7 +327,7 @@ export default function EstudiantesCompacto({ estudiantes, onAddEstudiante, onEd
 
             {/* ENCARGADO / PADI: grid de escuelas */}
             {!isSingleEscuela && (
-                <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 1.5, alignItems: "stretch" }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))", gap: 1.5, alignItems: "stretch" }}>
                     {grupos.map(esc => renderEscuelaCard(esc))}
                 </Box>
             )}

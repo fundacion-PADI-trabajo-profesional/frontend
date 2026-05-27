@@ -22,11 +22,45 @@ export default function AdminDashboard({ rol }: Props) {
             </Typography>
 
             <Grid container spacing={3}>
+                {isEncargado && (
+                    <Grid item xs={12} sm={6} md={4}>
+                        <DashboardCard
+                            title="Evaluaciones PADI"
+                            description="Gestión de evaluaciones del sistema con filtros por escuela, alumno y estado."
+                            icon="📋"
+                            color="#A3BE54"
+                            onClick={() => navigate("/evaluaciones")}
+                        />
+                    </Grid>
+                )}
+
+                {isEquipoPadi && (
+                    <Grid item xs={12} sm={6} md={4}>
+                        <DashboardCard
+                            title="Evaluaciones PADI"
+                            description="Gestión de evaluaciones del sistema con filtros por escuela, alumno y estado."
+                            icon="📋"
+                            color="#A3BE54"
+                            onClick={() => navigate("/evaluaciones")}
+                        />
+                    </Grid>
+                )}
+
+                <Grid item xs={12} sm={6} md={4}>
+                    <DashboardCard
+                        title="Estudiantes"
+                        description="Alta, edición y consulta de la base de datos de estudiantes."
+                        icon="🎒"
+                        color="#2196F3"
+                        onClick={() => navigate("/estudiantes")}
+                    />
+                </Grid>
+
                 {isEquipoPadi && (
                     <Grid item xs={12} sm={6} md={4}>
                         <DashboardCard
                             title="Panel de control"
-                            description="Zonas, encargados y navegación en cascada hasta detalle de evaluaciones."
+                            description="Gestión centralizada de zonas y encargados, con acceso directo a escuelas, aulas y evaluaciones."
                             icon="🧭"
                             color="#4CAF50"
                             onClick={() => navigate("/panel-control")}
@@ -38,7 +72,7 @@ export default function AdminDashboard({ rol }: Props) {
                     <Grid item xs={12} sm={6} md={4}>
                         <DashboardCard
                             title="Escuelas"
-                            description="Alta y gestión de instituciones educativas y comisiones."
+                            description="Alta y edición de instituciones educativas, con gestión de aulas y asignación de directivos y docentes."
                             icon="🏫"
                             color="#FF9800"
                             onClick={() => navigate("/escuelas")}
@@ -61,52 +95,18 @@ export default function AdminDashboard({ rol }: Props) {
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard
                         title="Docentes"
-                        description="Alta y asignación de docentes."
+                        description="Alta de docentes en escuelas y aulas."
                         icon="👩‍🏫"
                         color="#E91E63"
                         onClick={() => navigate("/docentes")}
                     />
                 </Grid>
 
-                <Grid item xs={12} sm={6} md={4}>
-                    <DashboardCard
-                        title="Estudiantes"
-                        description="Base de datos de estudiantes."
-                        icon="🎒"
-                        color="#2196F3"
-                        onClick={() => navigate("/estudiantes")}
-                    />
-                </Grid>
-
-                {isEncargado && (
-                    <Grid item xs={12} sm={6} md={4}>
-                        <DashboardCard
-                            title="Evaluaciones PADI"
-                            description="Ver y gestionar todas las evaluaciones del sistema."
-                            icon="📋"
-                            color="#A3BE54"
-                            onClick={() => navigate("/evaluaciones")}
-                        />
-                    </Grid>
-                )}
-
-                {isEquipoPadi && (
-                    <Grid item xs={12} sm={6} md={4}>
-                        <DashboardCard
-                            title="Evaluaciones PADI"
-                            description="Ver y gestionar todas las evaluaciones del sistema."
-                            icon="📋"
-                            color="#A3BE54"
-                            onClick={() => navigate("/evaluaciones")}
-                        />
-                    </Grid>
-                )}
-
                 {isEquipoPadi && (
                     <Grid item xs={12} sm={6} md={4}>
                         <DashboardCard
                             title="Usuarios"
-                            description="Invitá nuevos usuarios al sistema de forma individual o masiva desde un Excel."
+                            description="Gestión de usuarios del sistema PADI"
                             icon="👥"
                             color="#7B1FA2"
                             onClick={() => navigate("/usuarios")}
@@ -118,7 +118,7 @@ export default function AdminDashboard({ rol }: Props) {
                     <Grid item xs={12} sm={6} md={4}>
                         <DashboardCard
                             title="Estadísticas"
-                            description="Mapa de calor de rendimiento por zona y área de evaluación."
+                            description="Análisis de rendimiento estudiantil por zona, área crítica, cobertura y nivel socioeconómico."
                             icon="📊"
                             color="#A3BE54"
                             onClick={() => navigate("/estadisticas/padi")}
@@ -130,7 +130,7 @@ export default function AdminDashboard({ rol }: Props) {
                     <Grid item xs={12} sm={6} md={4}>
                         <DashboardCard
                             title="Estadísticas"
-                            description="Rendimiento por escuela y área de evaluación en tu zona."
+                            description="Análisis de rendimiento estudiantil por zona, área crítica, cobertura y nivel socioeconómico."
                             icon="📊"
                             color="#A3BE54"
                             onClick={() => navigate("/estadisticas/zona")}

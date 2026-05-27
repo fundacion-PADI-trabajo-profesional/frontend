@@ -1,266 +1,121 @@
-import { useState, useEffect } from "react";
-import {
-    Box, Typography, Grid, Paper, List, ListItem, ListItemText,
-    Button, IconButton, ListItemButton, Menu, MenuItem, ListItemIcon
-} from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { Box, Typography, Grid, Paper, Button, Avatar, Divider } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import AssessmentIcon from "@mui/icons-material/Assessment";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import { getAulasPorEscuela, getAulaEstudiantes, Aula } from "../api/aulas";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import PlaceIcon from "@mui/icons-material/Place";
+import EqualizerIcon from "@mui/icons-material/Equalizer";
+import PersonIcon from "@mui/icons-material/Person";
 import { getNivelSocioeconomicoLabel } from "../api/escuelas";
-import { Estudiante } from "../api/estudiantes";
+
+function getInitials(nombre?: string | null, apellido?: string | null) {
+    return `${nombre?.[0] ?? ""}${apellido?.[0] ?? ""}`.toUpperCase() || "?";
+}
+
+function InfoItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+    return (
+        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+            <Box sx={{ color: "#5fb878", mt: 0.3 }}>{icon}</Box>
+            <Box>
+                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", fontSize: "0.65rem" }}>
+                    {label}
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500, color: "text.primary" }}>
+                    {value}
+                </Typography>
+            </Box>
+        </Box>
+    );
+}
+
+function PersonCard({ title, people, getName, getSubtitle }: {
+    title: string;
+    people: any[];
+    getName: (p: any) => string;
+    getSubtitle: (p: any) => string;
+}) {
+    return (
+        <Box sx={{ border: "1px solid #e8e8e8", borderRadius: 2, overflow: "hidden", height: "100%" }}>
+            <Box sx={{ px: 2.5, py: 1.5, bgcolor: "#f5f5f5", borderBottom: "1px solid #e8e8e8", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{title}</Typography>
+                <Box sx={{ bgcolor: "#5fb878", color: "#fff", borderRadius: "12px", px: 1.2, py: 0.2, fontSize: "0.75rem", fontWeight: 700, minWidth: 24, textAlign: "center" }}>
+                    {people.length}
+                </Box>
+            </Box>
+            <Box sx={{ p: people.length === 0 ? 3 : 0 }}>
+                {people.length === 0 ? (
+                    <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic", textAlign: "center" }}>
+                        No hay {title.toLowerCase()} asignados
+                    </Typography>
+                ) : (
+                    people.map((p, i) => (
+                        <Box key={p.id}>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2.5, py: 1.5 }}>
+                                <Avatar sx={{ width: 36, height: 36, bgcolor: "#5fb878", fontSize: "0.8rem", fontWeight: 700 }}>
+                                    {getName(p).split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase()}
+                                </Avatar>
+                                <Box>
+                                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{getName(p)}</Typography>
+                                    <Typography variant="caption" sx={{ color: "text.secondary" }}>{getSubtitle(p)}</Typography>
+                                </Box>
+                            </Box>
+                            {i < people.length - 1 && <Divider />}
+                        </Box>
+                    ))
+                )}
+            </Box>
+        </Box>
+    );
+}
 
 export default function EscuelaDetalle({ escuela, onEdit }: any) {
-    const navigate = useNavigate();
-    const [aulas, setAulas] = useState<Aula[]>([]);
-    const [view, setView] = useState<"salas" | "aulas" | "estudiantes">("salas");
-    const [selectedSala, setSelectedSala] = useState<number | null>(null);
-    const [selectedAula, setSelectedAula] = useState<Aula | null>(null);
-    const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
-    const [loading, setLoading] = useState(false);
-
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const [activeStudent, setActiveStudent] = useState<Estudiante | null>(null);
-    const [userRole, setUserRole] = useState<string>("");
-
-    useEffect(() => {
-        const stored = localStorage.getItem("padiUser");
-        const user = stored ? JSON.parse(stored) : null;
-        if (user) setUserRole(user.rol);
-        if (escuela?.id) loadAulas();
-    }, [escuela]);
-
-    const loadAulas = async () => {
-        const data = await getAulasPorEscuela(escuela.id);
-        setAulas(data);
-    };
-
-    const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, est: Estudiante) => {
-        event.stopPropagation();
-        setAnchorEl(event.currentTarget);
-        setActiveStudent(est);
-    };
-
-    const handleMenuClose = () => {
-        setAnchorEl(null);
-        setActiveStudent(null);
-    };
-
-    const handleEvaluar = () => {
-        if (activeStudent && selectedAula) {
-            const aulaLabel = `${selectedAula.sala?.nombre} - ${selectedAula.comision} (${selectedAula.turno})`;
-            navigate(`/evaluaciones?estudianteId=${activeStudent.id}&nombre=${encodeURIComponent(`${activeStudent.personas.nombre} ${activeStudent.personas.primer_apellido}`)}&salaId=${activeStudent.sala_id}&aulaId=${selectedAula.id}&aulaLabel=${encodeURIComponent(aulaLabel)}&backTo=${encodeURIComponent(`/escuelas/${escuela.id}`)}&backLabel=${encodeURIComponent("Volver a escuela")}`);
-        }
-        handleMenuClose();
-    };
-
-    const handleVerHistorial = () => {
-        if (activeStudent) {
-            const nombre = `${activeStudent.personas.nombre} ${activeStudent.personas.primer_apellido}`;
-            const params = new URLSearchParams({
-                estudianteId: activeStudent.id,
-                nombre,
-                backTo: `/escuelas/${escuela.id}`,
-                backLabel: "Volver a escuela",
-            });
-            navigate(`/historial-estudiante?${params.toString()}`);
-        }
-        handleMenuClose();
-    };
-
-    const handleModificarEstudiante = () => {
-        if (activeStudent) navigate(`/estudiantes?estudianteId=${activeStudent.id}&edit=true`);
-        handleMenuClose();
-    };
-
-    const salasUnicas = Array.from(new Set(aulas.map(a => a.sala_id))).map(id => {
-        return aulas.find(a => a.sala_id === id)?.sala;
-    });
-
-    const handleSalaClick = (salaId: number) => {
-        const aulasDeSala = aulas.filter(a => a.sala_id === salaId);
-        if (aulasDeSala.length === 1) handleAulaClick(aulasDeSala[0]);
-        else { setSelectedSala(salaId); setView("aulas"); }
-    };
-
-    const handleAulaClick = async (aula: Aula) => {
-        setLoading(true);
-        setSelectedAula(aula);
-        try {
-            const data = await getAulaEstudiantes(aula.id);
-            setEstudiantes(data);
-            setView("estudiantes");
-        } catch (error) { console.error(error); }
-        finally { setLoading(false); }
-    };
-
-    const columnBoxStyle = {
-        bgcolor: '#f9f9f9',
-        borderRadius: 2,
-        minHeight: 300,
-        overflow: 'hidden'
-    };
-
     return (
         <Box>
-            <Paper sx={{ p: 4, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
-                    <Box>
-                        <Typography variant="h3" sx={{ fontWeight: 800, mb: 0.5 }}>{escuela.nombre}</Typography>
-                        <Typography variant="body1" sx={{ color: 'text.secondary', fontWeight: 500 }}>
-                            Zona: {escuela.zona?.nombre} | Dirección: {escuela.direccion || "No especificada"} | Nivel socioeconómico: {getNivelSocioeconomicoLabel(escuela.nivel_socioeconomico)}
-                        </Typography>
-                    </Box>
+            <Paper sx={{ p: 4, borderRadius: 3, boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}>
+
+                {/* Encabezado */}
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3 }}>
+                    <Typography variant="h4" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+                        {escuela.nombre}
+                    </Typography>
                     <Button
                         variant="contained"
                         startIcon={<EditIcon />}
                         onClick={onEdit}
-                        sx={{ bgcolor: '#5fb878', borderRadius: 2, px: 3, '&:hover': { bgcolor: '#333' } }}
+                        sx={{ bgcolor: "#5fb878", borderRadius: 2, px: 3, flexShrink: 0, ml: 2, "&:hover": { bgcolor: "#333" } }}
                     >
                         EDITAR ESCUELA
                     </Button>
                 </Box>
 
+                {/* Info de la escuela */}
+                <Box sx={{ display: "flex", gap: 4, mb: 3, flexWrap: "wrap" }}>
+                    <InfoItem icon={<LocationOnIcon fontSize="small" />} label="Zona" value={escuela.zona?.nombre || "Sin zona"} />
+                    <InfoItem icon={<PlaceIcon fontSize="small" />} label="Dirección" value={escuela.direccion || "No especificada"} />
+                    <InfoItem icon={<EqualizerIcon fontSize="small" />} label="Nivel socioeconómico" value={getNivelSocioeconomicoLabel(escuela.nivel_socioeconomico)} />
+                </Box>
+
+                <Divider sx={{ mb: 3 }} />
+
+                {/* Directivos y Docentes */}
                 <Grid container spacing={3}>
-                    {/* COLUMNA 1: DIRECTIVOS */}
-                    <Grid item xs={12} md={4}>
-                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Directivos</Typography>
-                        <Box sx={columnBoxStyle}>
-                            <List disablePadding>
-                                {escuela.directivos?.length > 0 ? (
-                                    escuela.directivos.map((dir: any) => (
-                                        <ListItem key={dir.id} divider>
-                                            <ListItemText
-                                                primary={<Typography sx={{ fontWeight: 600 }}>{dir.nombre} {dir.apellido}</Typography>}
-                                                secondary="Director"
-                                            />
-                                        </ListItem>
-                                    ))
-                                ) : (
-                                    <Typography sx={{ p: 3, textAlign: 'center', color: 'text.secondary', fontStyle: 'italic' }}>
-                                        No hay directivos asignados
-                                    </Typography>
-                                )}
-                            </List>
-                        </Box>
+                    <Grid item xs={12} md={6}>
+                        <PersonCard
+                            title="Directivos"
+                            people={escuela.directivos ?? []}
+                            getName={(d) => `${d.nombre} ${d.apellido}`}
+                            getSubtitle={() => "Director"}
+                        />
                     </Grid>
-
-                    {/* COLUMNA 2: DOCENTES */}
-                    <Grid item xs={12} md={4}>
-                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Docentes</Typography>
-                        <Box sx={columnBoxStyle}>
-                            <List disablePadding>
-                                {escuela.profesores?.length > 0 ? (
-                                    escuela.profesores.map((prof: any) => (
-                                        <ListItem key={prof.id} divider>
-                                            <ListItemText
-                                                primary={<Typography sx={{ fontWeight: 600 }}>{prof.personas?.nombre} {prof.personas?.primer_apellido}</Typography>}
-                                                secondary="Docente"
-                                            />
-                                        </ListItem>
-                                    ))
-                                ) : (
-                                    <Typography sx={{ p: 3, textAlign: 'center', color: 'text.secondary', fontStyle: 'italic' }}>
-                                        No hay docentes asignados
-                                    </Typography>
-                                )}
-                            </List>
-                        </Box>
-                    </Grid>
-
-                    {/* COLUMNA 3: SALAS / ESTUDIANTES */}
-                    <Grid item xs={12} md={4}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
-                            {view !== "salas" && (
-                                <IconButton size="small" onClick={() => setView(view === "estudiantes" && aulas.filter(a => a.sala_id === selectedAula?.sala_id).length > 1 ? "aulas" : "salas")}>
-                                    <ArrowBackIcon fontSize="small" />
-                                </IconButton>
-                            )}
-                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                                {view === "salas" ? "Salas" : view === "aulas" ? "Comisiones" : `Alumnos: ${selectedAula?.comision}`}
-                            </Typography>
-                        </Box>
-
-                        <Box sx={columnBoxStyle}>
-                            {view === "salas" && (
-                                <List disablePadding>
-                                    {salasUnicas?.length > 0 ? (
-                                        salasUnicas.map((sala) => (
-                                            <ListItem key={sala?.id} disablePadding divider>
-                                                <ListItemButton onClick={() => handleSalaClick(sala!.id)} sx={{ py: 1.5 }}>
-                                                    <ListItemText primary={<Typography sx={{ fontWeight: 500 }}>{sala?.nombre || `Sala de ${sala?.grado}`}</Typography>} />
-                                                    <ChevronRightIcon color="action" fontSize="small" />
-                                                </ListItemButton>
-                                            </ListItem>
-                                        ))
-                                    ) : (
-                                        <Typography sx={{ p: 3, textAlign: 'center', color: 'text.secondary', fontStyle: 'italic' }}>
-                                            No hay salas asignadas
-                                        </Typography>
-                                    )}
-                                </List>
-                            )}
-
-                            {view === "aulas" && (
-                                <List disablePadding>
-                                    {aulas.filter(a => a.sala_id === selectedSala).map((aula) => (
-                                        <ListItem key={aula.id} disablePadding divider>
-                                            <ListItemButton onClick={() => handleAulaClick(aula)} sx={{ py: 1.5 }}>
-                                                <ListItemText
-                                                    primary={<Typography sx={{ fontWeight: 600 }}>Comisión {aula.comision}</Typography>}
-                                                    secondary={`Turno: ${aula.turno}`}
-                                                />
-                                                <ChevronRightIcon color="action" fontSize="small" />
-                                            </ListItemButton>
-                                        </ListItem>
-                                    ))}
-                                </List>
-                            )}
-
-                            {view === "estudiantes" && (
-                                <List disablePadding>
-                                    {loading ? (
-                                        <Typography sx={{ p: 2 }}>Cargando...</Typography>
-                                    ) : estudiantes.map((est) => (
-                                        <ListItem
-                                            key={est.id}
-                                            divider
-                                            secondaryAction={
-                                                <IconButton edge="end" onClick={(e) => handleMenuOpen(e, est)}>
-                                                    <MoreVertIcon fontSize="small" />
-                                                </IconButton>
-                                            }
-                                        >
-                                            <ListItemText
-                                                primary={<Typography sx={{ fontWeight: 500, fontSize: '0.9rem' }}>{est.personas?.primer_apellido}, {est.personas?.nombre}</Typography>}
-                                                secondary={`DNI: ${est.personas?.dni}`}
-                                            />
-                                        </ListItem>
-                                    ))}
-                                </List>
-                            )}
-                        </Box>
+                    <Grid item xs={12} md={6}>
+                        <PersonCard
+                            title="Docentes"
+                            people={escuela.profesores ?? []}
+                            getName={(p) => `${p.personas?.nombre ?? ""} ${p.personas?.primer_apellido ?? ""}`}
+                            getSubtitle={() => "Docente"}
+                        />
                     </Grid>
                 </Grid>
-            </Paper>
 
-            <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-                <Box sx={{ px: 2, py: 1, borderBottom: "1px solid #eee", mb: 1 }}>
-                    <Typography variant="caption" color="textSecondary">Opciones</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                        {activeStudent?.personas.nombre} {activeStudent?.personas.primer_apellido}
-                    </Typography>
-                </Box>
-                <MenuItem onClick={handleEvaluar}><ListItemIcon><AssessmentIcon fontSize="small" /></ListItemIcon> Tomar Evaluación</MenuItem>
-                {userRole !== "docente" && (
-                    <MenuItem onClick={handleModificarEstudiante}><ListItemIcon><EditIcon fontSize="small" /></ListItemIcon> Modificar datos</MenuItem>
-                )}
-                <MenuItem onClick={handleVerHistorial}><ListItemIcon><VisibilityIcon fontSize="small" /></ListItemIcon> Ver historial</MenuItem>
-            </Menu>
+            </Paper>
         </Box>
     );
 }

@@ -60,6 +60,30 @@ padi/
   npm install
   ```
 
+## Configuración del entorno
+
+La URL del backend se configura con la variable de entorno `VITE_API_URL`.
+
+| Archivo | Propósito |
+|---|---|
+| `.env` | Apunta al backend de producción (Firebase Cloud Functions) |
+| `.env.local` | Override local para desarrollo |
+| `.env.test` | URL fija para los tests |
+
+### Con backend Docker (local)
+
+```env
+VITE_API_URL=http://localhost:8080
+```
+
+### Con emulador de Firebase
+
+```env
+VITE_API_URL=http://127.0.0.1:5001/fundacionpadi-41cb2/us-central1/api
+```
+
+> El backend Docker debe estar corriendo antes de levantar el frontend. Ver el README del backend.
+
 ## Desarrollo
 
 El entorno de desarrollo se apoya en Vite, que proporciona Hot Module Replacement (HMR) para reflejar los cambios de forma inmediata durante la edición de páginas, componentes y estilos.
@@ -92,35 +116,6 @@ npm run build
 
 Compila la aplicación para producción en la carpeta `dist`.
 
-### Vista previa de producción
-
-```bash
-npm run preview
-```
-
-Previsualiza el build de producción localmente.
-
-### Linting
-
-```bash
-npm run lint
-```
-
-Ejecuta ESLint para verificar el código.
-
-### Storybook
-
-```bash
-npm run storybook
-```
-
-Inicia Storybook en `http://localhost:6006`.
-
-```bash
-npm run build-storybook
-```
-
-Genera el build estático de Storybook.
 
 ## Tests
 

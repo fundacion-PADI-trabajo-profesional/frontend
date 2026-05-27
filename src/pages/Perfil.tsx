@@ -17,10 +17,12 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 import SchoolIcon from "@mui/icons-material/School";
+import PlaceIcon from "@mui/icons-material/Place";
 import EmailIcon from "@mui/icons-material/Email";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import SaveIcon from "@mui/icons-material/Save";
 import { updateProfileData, requestPasswordReset } from "../api/auth";
+import { getCurrentEncargado } from "../api/encargados-zona";
 
 const modalStyle = {
   position: "absolute" as "absolute",
@@ -81,6 +83,16 @@ export default function Perfil({ open, onClose, user, profile, onUpdateSuccess }
   // Datos jerárquicos solicitados: Usuario -> Escuela -> Zona
   const nombreEscuela = profile?.escuela?.nombre || profile?.escuelas?.[0]?.nombre || "Escuela no asignada";
   // const nombreZona = profile?.escuela?.zona?.nombre || profile?.escuelas?.[0]?.zona || "Zona no definida";
+
+  const [zonaEncargado, setZonaEncargado] = useState<{ id: string; nombre: string } | null | undefined>(undefined);
+
+  useEffect(() => {
+    if (profile?.rol === "encargado_zona" && open) {
+      getCurrentEncargado(profile.id)
+        .then(data => setZonaEncargado(data.zona ?? null))
+        .catch(() => setZonaEncargado(null));
+    }
+  }, [profile?.rol, profile?.id, open]);
 
   const [resetSent, setResetSent] = useState(false);
 
@@ -312,20 +324,38 @@ export default function Perfil({ open, onClose, user, profile, onUpdateSuccess }
                 </Box>
               </Box> */}
 
-              {/* Escuela */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={{ p: 1, borderRadius: 2, bgcolor: '#fff4e6' }}>
-                  <SchoolIcon sx={{ color: PADI_COLORS.naranja }} />
+              {/* Zona o Institución según rol */}
+              {profile?.rol === "encargado_zona" ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box sx={{ p: 1, borderRadius: 2, bgcolor: '#eefaf0' }}>
+                    <PlaceIcon sx={{ color: PADI_COLORS.verde }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" sx={{ color: PADI_COLORS.gris, fontWeight: 700, textTransform: 'uppercase' }}>
+                      Zona
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 700, color: PADI_COLORS.verde }}>
+                      {zonaEncargado === undefined
+                        ? "Cargando..."
+                        : zonaEncargado?.nombre ?? "Sin zona asignada"}
+                    </Typography>
+                  </Box>
                 </Box>
-                <Box>
-                  <Typography variant="caption" sx={{ color: PADI_COLORS.gris, fontWeight: 700, textTransform: 'uppercase' }}>
-                    Institución
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 700, color: PADI_COLORS.naranja }}>
-                    {nombreEscuela}
-                  </Typography>
+              ) : (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box sx={{ p: 1, borderRadius: 2, bgcolor: '#fff4e6' }}>
+                    <SchoolIcon sx={{ color: PADI_COLORS.naranja }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" sx={{ color: PADI_COLORS.gris, fontWeight: 700, textTransform: 'uppercase' }}>
+                      Institución
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 700, color: PADI_COLORS.naranja }}>
+                      {nombreEscuela}
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
+              )}
 
               <Button
                 fullWidth

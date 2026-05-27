@@ -55,6 +55,7 @@ export interface EstudianteDetalle {
   fechaNacimiento: string | null
   genero: string
   escuelaNombre?: string
+  fechaBaja?: string | null
 }
 
 export interface EvaluacionInstancia {
@@ -128,6 +129,7 @@ function mapToCamelCase(data: any): EvaluacionInstancia {
       fechaNacimiento: data.estudiantes?.personas?.fecha_nacimiento || null,
       genero: data.estudiantes?.generos?.descripcion ?? "",
       escuelaNombre: nombreEscuela || "No asignada",
+      fechaBaja: data.estudiantes?.fecha_baja ?? null,
     },
 
     profesorId: data.profesor_id,

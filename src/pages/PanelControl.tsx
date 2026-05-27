@@ -10,7 +10,6 @@ import { type Escuela, getEscuelas } from "../api/escuelas";
 import { type Aula, getAulaEstudiantes} from "../api/aulas";
 import { type Estudiante, getEstudiantes, getSalas, type Sala } from "../api/estudiantes";
 import { getDocentes, type Docente } from "../api/docentes";
-import { getDirectivos, type Directivo } from "../api/directivos";
 import {
     getZonas,
     type Zona,
@@ -35,7 +34,6 @@ export default function PanelControl() {
     const [zonas, setZonas] = useState<Zona[]>([]);
     const [escuelas, setEscuelas] = useState<Escuela[]>([]);
     const [aulas] = useState<Aula[]>([]);
-    const [, setDirectivos] = useState<Directivo[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -76,12 +74,8 @@ export default function PanelControl() {
                 const zonasData = await getZonas();
                 setZonas(zonasData);
             } else {
-                const [escuelasData, directivosData] = await Promise.all([
-                    getEscuelas(),
-                    getDirectivos(),
-                ]);
+                const escuelasData = await getEscuelas();
                 setEscuelas(escuelasData);
-                setDirectivos(directivosData);
             }
         } catch (e: any) {
             setError(e.message || "Error al cargar panel de control");

@@ -7,6 +7,7 @@ import Perfil from "./Perfil";
 import DocenteDashboard from "./dashboards/DocenteDashboard";
 import DirectivoDashboard from "./dashboards/DirectivoDashboard";
 import AdminDashboard from "./dashboards/AdminDashboard";
+import { getCurrentEncargado } from "../api/encargados-zona";
 
 interface HomeProps {
   onLogout: () => void;
@@ -17,6 +18,7 @@ export default function Home({ onLogout }: HomeProps) {
   const [profile, setProfile] = useState<any | null>(null);
   const [loadingUser, setLoadingUser] = useState<boolean>(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [zonaNombre, setZonaNombre] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const loadUserData = async () => {
@@ -37,6 +39,14 @@ export default function Home({ onLogout }: HomeProps) {
   useEffect(() => {
     loadUserData();
   }, []);
+
+  useEffect(() => {
+    if (profile?.rol === "encargado_zona") {
+      getCurrentEncargado(profile.id)
+        .then(data => setZonaNombre(data.zona?.nombre ?? null))
+        .catch(() => setZonaNombre(null));
+    }
+  }, [profile?.rol, profile?.id]);
 
   // Redirección si no hay usuario
   useEffect(() => {
@@ -93,6 +103,13 @@ export default function Home({ onLogout }: HomeProps) {
                     label={profile.escuela.nombre}
                     size="small"
                     sx={{ height: 20, fontSize: "0.65rem", bgcolor: "#1976d2", color: "white" }}
+                  />
+                )}
+                {profile.rol === "encargado_zona" && (
+                  <Chip
+                    label={zonaNombre ?? "Sin zona asignada"}
+                    size="small"
+                    sx={{ height: 20, fontSize: "0.65rem", bgcolor: "#01a5de", color: "white" }}
                   />
                 )}
               </Box>

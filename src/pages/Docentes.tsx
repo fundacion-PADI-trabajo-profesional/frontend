@@ -12,6 +12,7 @@ import { filtrarAulasDisponibles } from "../utils/docentes-aulas"
 import { BuscadorPadi } from "../components/SearchBar";
 import BotonNuevo from "../components/BotonNuevo"
 import DocenteForm from "../components/DocenteForm"
+import SinEscuelaAsignada from "../components/SinEscuelaAsignada"
 
 export default function DocentesPage() {
   const [items, setItems] = useState<Docente[]>([])
@@ -28,6 +29,7 @@ export default function DocentesPage() {
   const [selectedAulaId, setSelectedAulaId] = useState("")
   const [aulasDisponibles, setAulasDisponibles] = useState<Aula[]>([])
   const [loadingAulas, setLoadingAulas] = useState(false)
+  const [noEscuela, setNoEscuela] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState<{ message: string; onConfirm: () => void } | null>(null)
 
   const navigate = useNavigate()
@@ -41,6 +43,11 @@ export default function DocentesPage() {
       const stored = localStorage.getItem("padiUser")
       const user = stored ? JSON.parse(stored) : null
       setCurrentRole(user?.rol || "")
+
+      if (user?.rol === "director" && !user?.escuela_id) {
+        setNoEscuela(true)
+        return
+      }
 
       const [docentesData, escuelasData] = await Promise.all([
         getDocentes(),
@@ -229,7 +236,9 @@ export default function DocentesPage() {
           </Box>
         </Box>
         
-        {loading ? (
+        {noEscuela ? (
+          <SinEscuelaAsignada />
+        ) : loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
             <CircularProgress />
           </Box>

@@ -12,6 +12,7 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import BulkUploadForm from "../components/BulkUploadForm"
 import { TextField, InputAdornment } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import SinEscuelaAsignada from "../components/SinEscuelaAsignada";
 
 /**
  * Página principal de Estudiantes.
@@ -24,6 +25,7 @@ export default function Estudiantes() {
     const [estudiantes, setEstudiantes] = useState<Estudiante[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [noEscuela, setNoEscuela] = useState(false)
     const [refreshKey, setRefreshKey] = useState(0)
     const [estudianteCreado, setEstudianteCreado] = useState<EstudianteCreado | null>(null)
     const [selectedForEdit, setSelectedForEdit] = useState<Estudiante | null>(null);
@@ -53,6 +55,10 @@ export default function Estudiantes() {
         setError(null)
         try {
             const user = JSON.parse(localStorage.getItem("padiUser") || "{}");
+            if (user?.rol === "director" && !user?.escuela_id) {
+                setNoEscuela(true)
+                return
+            }
             if (user?.rol === "docente") {
                 const aulas = await getDocenteAulasConEstudiantes();
                 setAulasDocente(aulas);
@@ -185,7 +191,9 @@ export default function Estudiantes() {
             <Container maxWidth="xl" sx={{ mt: view === 'form' ? 0 : 4, pb: 6 }}>
                 {view === 'list' && (
                     <>
-                        {loading ? (
+                        {noEscuela ? (
+                            <SinEscuelaAsignada />
+                        ) : loading ? (
                             <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}><CircularProgress /></Box>
                         ) : error ? (
                             <Alert severity="error">{error}</Alert>

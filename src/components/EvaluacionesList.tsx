@@ -27,6 +27,7 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { getEvaluacionesInstancias, eliminarEvaluacionInstancia, getEvaluacionesInstanciasByProfesor, type EvaluacionInstancia } from "../api/evaluaciones"
 import { permissions } from "../utils/permissions"
 import { TextField, MenuItem, Grid } from "@mui/material"
+import SinEscuelaAsignada from "./SinEscuelaAsignada"
 
 const TOTAL_AREAS_EVALUACION = 4;
 const ESTADO_NO_INICIADA = "N"
@@ -44,6 +45,7 @@ export default function EvaluacionesList({
   const [evaluaciones, setEvaluaciones] = useState<EvaluacionInstancia[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [noEscuela, setNoEscuela] = useState(false)
   const [profile, setProfile] = useState<any>(null)
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
@@ -82,6 +84,11 @@ export default function EvaluacionesList({
     try {
       const userStr = localStorage.getItem("padiUser");
       const user = userStr ? JSON.parse(userStr) : null;
+
+      if (!docenteId && user?.rol === "director" && !user?.escuela_id) {
+        setNoEscuela(true);
+        return;
+      }
 
       let data: EvaluacionInstancia[] = [];
 
@@ -219,6 +226,10 @@ export default function EvaluacionesList({
     return acc;
   }, {});
 
+
+  if (noEscuela) {
+    return <SinEscuelaAsignada />;
+  }
 
   if (loading) {
     return (

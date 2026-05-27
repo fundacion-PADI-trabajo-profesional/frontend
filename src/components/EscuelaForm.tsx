@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Box, TextField, Button, Grid, Typography, MenuItem, CircularProgress, Alert, Divider, IconButton } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import SchoolIcon from '@mui/icons-material/School';
-import { createEscuela } from "../api/escuelas";
+import { createEscuela, NIVELES_SOCIOECONOMICOS } from "../api/escuelas";
 import { getZonas, Zona } from "../api/zonas";
 import { getCurrentEncargado } from "../api/encargados-zona";
 
@@ -22,7 +22,8 @@ export default function EscuelaForm({ onCancel, onSuccess, defaultZonaId }: Prop
         nombre: "",
         direccion: "",
         telefono: "",
-        zona_id: defaultZonaId || ""
+        zona_id: defaultZonaId || "",
+        nivel_socioeconomico: "sin_definir"
     });
 
     useEffect(() => {
@@ -163,6 +164,20 @@ export default function EscuelaForm({ onCancel, onSuccess, defaultZonaId }: Prop
                             value={formData.telefono}
                             onChange={handleChange}
                         />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                        <TextField
+                            select
+                            label="Nivel Socioeconómico"
+                            name="nivel_socioeconomico"
+                            fullWidth
+                            value={formData.nivel_socioeconomico}
+                            onChange={handleChange}
+                        >
+                            {NIVELES_SOCIOECONOMICOS.map((n) => (
+                                <MenuItem key={n.value} value={n.value}>{n.label}</MenuItem>
+                            ))}
+                        </TextField>
                     </Grid>
                 </Grid>
 

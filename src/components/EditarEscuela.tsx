@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import { updateEscuela, deleteEscuela, Escuela, asignarDirectivo, desasignarDirectivo, getDirectivosDisponibles } from "../api/escuelas";
+import { updateEscuela, deleteEscuela, Escuela, asignarDirectivo, desasignarDirectivo, getDirectivosDisponibles, NIVELES_SOCIOECONOMICOS } from "../api/escuelas";
 import { getZonas, Zona } from "../api/zonas";
 import { Directivo } from "../api/directivos";
 
@@ -22,7 +22,8 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
         nombre: escuela.nombre || "",
         direccion: escuela.direccion || "",
         telefono: escuela.telefono || "",
-        zona_id: escuela.zona?.id || ""
+        zona_id: escuela.zona?.id || "",
+        nivel_socioeconomico: escuela.nivel_socioeconomico || "sin_definir"
     });
 
     const [zonas, setZonas] = useState<Zona[]>([]);
@@ -135,9 +136,18 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
                             {zonas.map(z => <MenuItem key={z.id} value={z.id}>{z.nombre}</MenuItem>)}
                         </TextField>
                     </Grid>
-                    <Grid item xs={12}>
+                    <Grid item xs={12} sm={6}>
                         <TextField fullWidth label="Dirección" value={formData.direccion}
                             onChange={(e) => setFormData({ ...formData, direccion: e.target.value })} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                        <TextField select fullWidth label="Nivel Socioeconómico"
+                            value={formData.nivel_socioeconomico}
+                            onChange={(e) => setFormData({ ...formData, nivel_socioeconomico: e.target.value })}>
+                            {NIVELES_SOCIOECONOMICOS.map((n) => (
+                                <MenuItem key={n.value} value={n.value}>{n.label}</MenuItem>
+                            ))}
+                        </TextField>
                     </Grid>
                 </Grid>
 

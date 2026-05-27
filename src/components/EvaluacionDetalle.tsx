@@ -115,9 +115,10 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
     }, [evaluacionId])
 
 
+    const isReadOnly = !!data?.estudiante?.fechaBaja
+
     const handleAreaClick = (areaId: string, areaNombre: string, statusId: string, aciertosIndividuales: number, totalQuestions: number) => {
         if (statusId === 'A' || statusId === 'D' || statusId === 'C') {
-            // Área completada: mostrar revisión de respuestas
             setRevisionData({
                 id: areaId,
                 nombre: areaNombre,
@@ -128,19 +129,20 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
             setRevisionOpen(true);
             return;
         }
-        // Área no iniciada o en progreso: abrir wizard
+        // Si el alumno está dado de baja, no se puede iniciar/continuar evaluación
+        if (isReadOnly) return;
         setSelectedArea({ id: areaId, nombre: areaNombre });
         setWizardOpen(true);
     }
 
     // Abre el wizard para corregir desde la pantalla de revisión
     const handleCorrectFromRevision = () => {
-        if (!revisionData) return;
+        if (!revisionData || isReadOnly) return;
         setRevisionOpen(false);
         setSelectedArea({ id: revisionData.id, nombre: revisionData.nombre });
         setWizardOpen(true);
     }
-    
+
     if (loading) return <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
     if (error) return <Box sx={{ p: 4 }}><Typography color="error">{error}</Typography><Button onClick={onBack}>Volver</Button></Box>
     if (!data || !data.estudiante) return <Box sx={{ p: 4 }}><Typography>No se encontraron datos del estudiante.</Typography></Box>
@@ -175,6 +177,13 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                     {evaluacion.salaNombre || evaluacion.salaId}
                 </Typography>
             </Box>
+
+            {/* AVISO ALUMNO DADO DE BAJA */}
+            {isReadOnly && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                    Este estudiante fue dado de baja. Las evaluaciones son de solo lectura.
+                </Alert>
+            )}
 
             {/* ALERT DE APROBACIÓN GENERAL */}
             {evaluacion.estadoId !== 'N' && evaluacion.estadoId !== 'E' && (
@@ -365,7 +374,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                         setRevisionData(null);
                         loadEvaluationData();
                     }}
-                    onCorrect={handleCorrectFromRevision}
+                    onCorrect={isReadOnly ? undefined : handleCorrectFromRevision}
                     evaluacionId={evaluacionId}
                     areaId={revisionData.id}
                     areaNombre={revisionData.nombre}

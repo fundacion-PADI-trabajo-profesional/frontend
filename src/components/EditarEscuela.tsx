@@ -202,7 +202,7 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
                     <Box>
                         {userRole === "equipo_padi" && (
                             <Button variant="text" color="error" startIcon={<DeleteIcon />} onClick={() => setConfirmDeleteOpen(true)}>
-                                ELIMINAR ESCUELA
+                                DESVINCULAR ESCUELA
                             </Button>
                         )}
                     </Box>
@@ -216,10 +216,10 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
             </Paper>
 
             <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>
-                <DialogTitle sx={{ fontWeight: 600 }}>⚠️ ELIMINAR ESCUELA</DialogTitle>
+                <DialogTitle sx={{ fontWeight: 600 }}>⚠️ DESVINCULAR ESCUELA</DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ whiteSpace: 'pre-line' }}>
-                        {"Esta acción eliminará permanentemente la escuela y liberará automáticamente:\n\n• Todos los estudiantes (quedarán sin escuela asignada)\n• Todos los directivos (quedarán disponibles para otras escuelas)\n• Todos los docentes (quedarán disponibles para otras escuelas)\n\n¿Está completamente seguro de continuar?"}
+                        {"La escuela quedará inactiva y desaparecerá de la gestión, pero sus datos históricos se conservan para métricas.\n\nSe liberarán automáticamente:\n• Todos los estudiantes (quedarán sin escuela asignada)\n• Todos los directivos (quedarán disponibles para otras escuelas)\n• Todos los docentes (quedarán disponibles para otras escuelas)\n\nEn los reportes comparativos figurará como \"(Desvinculada)\".\n\n¿Está seguro de continuar?"}
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions sx={{ p: 3 }}>

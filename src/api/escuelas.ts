@@ -16,6 +16,7 @@ export interface Escuela {
     direccion?: string;
     telefono?: string;
     nivel_socioeconomico?: string;
+    desvinculada_at?: string | null;
     zona?: {
         id: string;
         nombre: string;

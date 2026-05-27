@@ -425,3 +425,34 @@ export const getProgresionEstudianteEscuela = (p: { estudiante_id: string; escue
     "Error al cargar progresión"
   );
 };
+
+export interface PorcentajeNivel {
+  porcentaje: number | null;
+  evaluaciones: number;
+}
+
+export interface AreaPorNivel {
+  area_id: string;
+  area_nombre: string;
+  area_orden: number;
+  por_nivel: {
+    alto: PorcentajeNivel;
+    medio: PorcentajeNivel;
+    bajo: PorcentajeNivel;
+    sin_definir: PorcentajeNivel;
+  };
+}
+
+export interface RendimientoNivelResponse {
+  periodo: number;
+  tipo: string;
+  areas: AreaPorNivel[];
+  total_evaluaciones: number;
+}
+
+/** Obtiene el rendimiento promedio por área agrupado por nivel socioeconómico de la escuela. */
+export const getRendimientoPorNivelSocioeconomico = (p: { periodo: number; tipo: string }) =>
+  fetchSimple<RendimientoNivelResponse>(
+    `${API_URL}/estadisticas/padi/rendimiento-por-nivel-socioeconomico?periodo=${p.periodo}&tipo=${p.tipo}`,
+    "Error al cargar rendimiento por nivel socioeconómico"
+  );

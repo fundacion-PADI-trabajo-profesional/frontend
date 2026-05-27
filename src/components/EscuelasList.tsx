@@ -1,17 +1,35 @@
+import { useState } from "react";
 import {
     Table, TableBody, TableCell, TableContainer, TableHead,
-    TableRow, Paper, IconButton, Box, Button, Typography
+    TableRow, Paper, Button, Typography, Menu, MenuItem, ListItemIcon
 } from "@mui/material";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import EditIcon from "@mui/icons-material/Edit";
 import { type Escuela } from "../api/escuelas";
 
 interface Props {
     escuelas: Escuela[];
-    onDetalle?: (escuela: Escuela) => void;
     onView: (escuela: Escuela) => void;
+    onDetalle?: (escuela: Escuela) => void;
+    onEditar?: (escuela: Escuela) => void;
 }
 
-export default function EscuelasList({ escuelas, onDetalle, onView }: Props) {
+export default function EscuelasList({ escuelas, onView, onDetalle, onEditar }: Props) {
+    const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+    const [menuEscuela, setMenuEscuela] = useState<Escuela | null>(null);
+
+    const handleOpenMenu = (e: React.MouseEvent<HTMLElement>, escuela: Escuela) => {
+        e.stopPropagation();
+        setMenuAnchor(e.currentTarget);
+        setMenuEscuela(escuela);
+    };
+
+    const handleCloseMenu = () => {
+        setMenuAnchor(null);
+        setMenuEscuela(null);
+    };
 
     const escuelaDirectorName = (escuela: Escuela) => {
         if (!escuela.directivos?.length) return "Sin director asignado";
@@ -44,28 +62,42 @@ export default function EscuelasList({ escuelas, onDetalle, onView }: Props) {
                                 <TableCell align="center" sx={{ fontWeight: 500 }}>
                                     {escuela.nombre}
                                 </TableCell>
-
                                 <TableCell align="center">
                                     {escuelaDirectorName(escuela)}
                                 </TableCell>
-
                                 <TableCell align="center">
-                                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, alignItems: 'center' }}>
-                                        <Button
-                                            size="small"
-                                            variant="outlined"
-                                            sx={{ textTransform: "none" }}
-                                            onClick={() => onView(escuela)}
-                                        >
-                                            Ver aulas
-                                        </Button>
+                                    <Button
+                                        size="small"
+                                        variant="outlined"
+                                        endIcon={<KeyboardArrowDownIcon />}
+                                        onClick={(e) => handleOpenMenu(e, escuela)}
+                                        sx={{ textTransform: "none" }}
+                                    >
+                                        Acciones
+                                    </Button>
 
+                                    <Menu
+                                        anchorEl={menuAnchor}
+                                        open={Boolean(menuAnchor) && menuEscuela?.id === escuela.id}
+                                        onClose={handleCloseMenu}
+                                    >
+                                        <MenuItem onClick={() => { handleCloseMenu(); onView(escuela); }}>
+                                            <ListItemIcon><MeetingRoomIcon fontSize="small" /></ListItemIcon>
+                                            Ver aulas
+                                        </MenuItem>
                                         {onDetalle && (
-                                            <IconButton size="small" onClick={() => onDetalle(escuela)} title="Ver detalle">
-                                                <VisibilityIcon fontSize="small" />
-                                            </IconButton>
+                                            <MenuItem onClick={() => { handleCloseMenu(); onDetalle(escuela); }}>
+                                                <ListItemIcon><VisibilityIcon fontSize="small" /></ListItemIcon>
+                                                Ver detalles
+                                            </MenuItem>
                                         )}
-                                    </Box>
+                                        {onEditar && (
+                                            <MenuItem onClick={() => { handleCloseMenu(); onEditar(escuela); }}>
+                                                <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
+                                                Editar escuela
+                                            </MenuItem>
+                                        )}
+                                    </Menu>
                                 </TableCell>
                             </TableRow>
                         ))

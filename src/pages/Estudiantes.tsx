@@ -183,6 +183,9 @@ export default function Estudiantes() {
                         <Typography variant="h3" sx={{ fontWeight: 700, mb: 1, fontSize: { xs: '2.25rem', md: '3rem' } }}>
                             {getTitle()}
                         </Typography>
+                        <Typography variant="body1" sx={{ color: "#666" }}>
+                            Alta de nuevos estudiantes, edición de datos y gestión de la base de estudiantes por escuela, sala y comisión.
+                        </Typography>
                     </Container>
                 </Box>
             )}
@@ -483,10 +486,10 @@ export default function Estudiantes() {
                     open={modalMasivoOpen}
                     onCancel={() => setModalMasivoOpen(false)}
                     onSuccess={(data) => {
-                        setModalMasivoOpen(false); 
-                        setCantidadCreados(data.length); 
+                        setModalMasivoOpen(false);
+                        setCantidadCreados(data.length);
                         setView('successBulk');
-                        setRefreshKey(k => k + 1); 
+                        setRefreshKey(k => k + 1);
                     }}
                 />
 

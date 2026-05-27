@@ -1,9 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Box, Container, Typography, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, CircularProgress, Alert, Button, Stack, Chip, MenuItem, TextField, InputAdornment } from "@mui/material"
+import { Box, Container, Typography, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, CircularProgress, Alert, Button, Stack, Chip, MenuItem, TextField, InputAdornment, Menu, ListItemIcon } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import SearchIcon from "@mui/icons-material/Search"
+import VisibilityIcon from "@mui/icons-material/Visibility"
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown"
+import SchoolIcon from "@mui/icons-material/School"
+import MeetingRoomIcon from "@mui/icons-material/MeetingRoom"
 import { useNavigate } from "react-router-dom"
 import { asignarDocenteAEscuela, desasignarDocenteDeEscuela, getDocentes, type Docente } from "../api/docentes"
 import { getEscuelas, type Escuela } from "../api/escuelas"
@@ -31,6 +35,19 @@ export default function DocentesPage() {
   const [loadingAulas, setLoadingAulas] = useState(false)
   const [noEscuela, setNoEscuela] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState<{ message: string; onConfirm: () => void } | null>(null)
+
+  const [gestionMenuAnchor, setGestionMenuAnchor] = useState<null | HTMLElement>(null)
+  const [gestionDocente, setGestionDocente] = useState<Docente | null>(null)
+
+  const handleOpenGestion = (e: React.MouseEvent<HTMLElement>, docente: Docente) => {
+    e.stopPropagation()
+    setGestionMenuAnchor(e.currentTarget)
+    setGestionDocente(docente)
+  }
+  const handleCloseGestion = () => {
+    setGestionMenuAnchor(null)
+    setGestionDocente(null)
+  }
 
   const navigate = useNavigate()
   const canManageAsignaciones = currentRole === "equipo_padi" || currentRole === "encargado_zona"
@@ -199,20 +216,20 @@ export default function DocentesPage() {
             Docentes
           </Typography>
           <Typography variant="body1" sx={{ color: "#666" }}>
-            Listado de docentes del sistema
+            Asignación de docentes a escuelas y aulas del sistema.
           </Typography>
         </Container>
       </Box>
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box sx={{ 
-          display: 'grid', 
-          gridTemplateColumns: '1fr auto 1fr', 
-          alignItems: 'center', 
-          mb: 3 
+        <Box sx={{
+          display: 'grid',
+          gridTemplateColumns: '1fr auto 1fr',
+          alignItems: 'center',
+          mb: 3
         }}>
-        <Box />
-          <BuscadorPadi 
+          <Box />
+          <BuscadorPadi
             placeholder="Buscar docente por nombre o apellido..."
             value={busqueda}
             onChange={(e: any) => setBusqueda(e.target.value)}
@@ -224,18 +241,18 @@ export default function DocentesPage() {
               ),
             }}
           />
-          
+
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <BotonNuevo 
-              texto="Nuevo docente" 
+            <BotonNuevo
+              texto="Nuevo docente"
               onClick={() => {
                 console.log("¡El botón funciona y manda el click!");
                 setCreateModalOpen(true);
-              }} 
+              }}
             />
           </Box>
         </Box>
-        
+
         {noEscuela ? (
           <SinEscuelaAsignada />
         ) : loading ? (
@@ -246,12 +263,12 @@ export default function DocentesPage() {
           <Alert severity="error">{error}</Alert>
         ) : items.length === 0 ? (
           <Typography sx={{ color: "#666" }}>No hay docentes registrados.</Typography>
-        ) : docentesFiltrados.length === 0 ? ( 
-          <Box sx={{ 
-            textAlign: "center", 
-            py: 6, 
-            px: 2, 
-            borderRadius: 2, 
+        ) : docentesFiltrados.length === 0 ? (
+          <Box sx={{
+            textAlign: "center",
+            py: 6,
+            px: 2,
+            borderRadius: 2,
           }}>
             <Typography variant="h6" sx={{ color: "#555", mb: 1 }}>
               No se encontraron resultados
@@ -269,7 +286,8 @@ export default function DocentesPage() {
                   <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Nombre</TableCell>
                   <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Colegios asignados</TableCell>
                   <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Aulas asignadas</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Acciones</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Gestión</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", color: "#444" }}>Evaluaciones</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -278,7 +296,6 @@ export default function DocentesPage() {
                     key={d.id}
                     hover
                     sx={{ cursor: "pointer", '&:last-child td, &:last-child th': { border: 0 } }}
-                    onClick={() => navigate(`/evaluaciones?docenteId=${d.id}&backTo=/docentes&backLabel=Volver%20a%20docentes`)}
                   >
                     <TableCell align="center">{d.apellido}</TableCell>
                     <TableCell align="center">{d.nombre}</TableCell>
@@ -318,38 +335,56 @@ export default function DocentesPage() {
                         </Stack>
                       )}
                     </TableCell>
-                    <TableCell align="center">
-                      <Stack direction="row" spacing={1} justifyContent="center">
-                        <Button size="small" variant="text">
-                          Ver evaluaciones
-                        </Button>
-                        {canManageAsignaciones && (
+                    {/* Columna Gestión */}
+                    <TableCell align="center" onClick={(e) => e.stopPropagation()}>
+                      {(canManageAsignaciones || canManageAulas) ? (
+                        <>
                           <Button
                             size="small"
                             variant="outlined"
+                            endIcon={<KeyboardArrowDownIcon />}
+                            onClick={(e) => handleOpenGestion(e, d)}
                             disabled={saving}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleOpenAsignarColegio(d)
-                            }}
+                            sx={{ textTransform: "none" }}
                           >
-                            Asignar colegio
+                            Gestionar Asignaciones
                           </Button>
-                        )}
-                        {canManageAulas && (
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            disabled={saving}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleOpenAsignarAula(d)
-                            }}
+                          <Menu
+                            anchorEl={gestionMenuAnchor}
+                            open={Boolean(gestionMenuAnchor) && gestionDocente?.id === d.id}
+                            onClose={handleCloseGestion}
                           >
-                            Asignar aula
-                          </Button>
-                        )}
-                      </Stack>
+                            {canManageAsignaciones && (
+                              <MenuItem onClick={() => { handleCloseGestion(); handleOpenAsignarColegio(d) }}>
+                                <ListItemIcon><SchoolIcon fontSize="small" /></ListItemIcon>
+                                Asignar colegio
+                              </MenuItem>
+                            )}
+                            {canManageAulas && (
+                              <MenuItem onClick={() => { handleCloseGestion(); handleOpenAsignarAula(d) }}>
+                                <ListItemIcon><MeetingRoomIcon fontSize="small" /></ListItemIcon>
+                                Asignar aula
+                              </MenuItem>
+                            )}
+                          </Menu>
+                        </>
+                      ) : (
+                        <Typography variant="body2" sx={{ color: "#bbb" }}>—</Typography>
+                      )}
+                    </TableCell>
+                    <TableCell align="center" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        size="small"
+                        variant="text"
+                        startIcon={<VisibilityIcon fontSize="small" />}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigate(`/evaluaciones?docenteId=${d.id}&backTo=/docentes&backLabel=Volver%20a%20docentes`)
+                        }}
+                        sx={{ color: "#5c7cfa", textTransform: "none" }}
+                      >
+                        Ver
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

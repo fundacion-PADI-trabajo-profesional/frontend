@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { createZona, desvincularEncargado, type Zona } from "../api/zonas";
-import AsignarEncargadoModal from "../components/AsignarEncargadoModal"; 
+import AsignarEncargadoModal from "../components/AsignarEncargadoModal";
 import BotonNuevo from "../components/BotonNuevo";
 import ZonaForm from "../components/ZonaForm";
 
@@ -33,7 +33,7 @@ export default function Zonas({ zonas, onVerEscuelas, onUpdate, setError }: Zona
     // Estado para crear zona
     const [zonaDialogOpen, setZonaDialogOpen] = useState(false);
     const [savingZona, setSavingZona] = useState(false);
-   
+
     // Estado para el modal de encargados
     const [encargadoModalOpen, setEncargadoModalOpen] = useState(false);
     const [selectedZonaForEncargado, setSelectedZonaForEncargado] = useState<Zona | null>(null);
@@ -53,7 +53,7 @@ export default function Zonas({ zonas, onVerEscuelas, onUpdate, setError }: Zona
             await onUpdate();
         } catch (e: any) {
             // Lanzamos el error para que lo ataje el catch de ZonaForm y lo muestre en el TextField
-            throw e; 
+            throw e;
         } finally {
             setSavingZona(false);
         }
@@ -86,19 +86,19 @@ export default function Zonas({ zonas, onVerEscuelas, onUpdate, setError }: Zona
     return (
         <>
             <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-                <BotonNuevo 
-                    texto="Nueva zona" 
-                    onClick={openCreateZonaDialog} 
+                <BotonNuevo
+                    texto="Nueva zona"
+                    onClick={openCreateZonaDialog}
                 />
             </Box>
             <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
                 <Table>
                     <TableHead sx={{ bgcolor: "#f8f9fa" }}>
                         <TableRow>
-                            <TableCell sx={{ fontWeight: "bold" }}>Zona</TableCell>
-                            <TableCell sx={{ fontWeight: "bold" }}>Encargados</TableCell>
-                            <TableCell sx={{ fontWeight: "bold" }} align="center">Escuelas</TableCell>
-                            <TableCell sx={{ fontWeight: "bold" }} align="center">Acciones</TableCell>
+                            <TableCell sx={{ fontWeight: "bold", width: "20%" }}>Zona</TableCell>
+                            <TableCell sx={{ fontWeight: "bold", width: "35%" }}>Encargados</TableCell>
+                            <TableCell sx={{ fontWeight: "bold", width: "25%" }} align="center">Gestión</TableCell>
+                            <TableCell sx={{ fontWeight: "bold", width: "25%" }} align="center">Mas Acciones</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -144,22 +144,24 @@ export default function Zonas({ zonas, onVerEscuelas, onUpdate, setError }: Zona
                                                 )}
                                             </Box>
                                         </TableCell>
-                                        <TableCell align="center">{zona._count?.escuelas || 0}</TableCell>
                                         <TableCell align="center">
                                             <Button
                                                 size="small"
+                                                variant="outlined"
                                                 sx={{ textTransform: "none", mr: 1 }}
                                                 onClick={() => openEncargadoModal(zona)}
                                             >
                                                 Asignar encargado
                                             </Button>
+                                        </TableCell>
+                                        <TableCell align="center">
                                             <Button
                                                 size="small"
                                                 variant="outlined"
                                                 sx={{ textTransform: "none" }}
                                                 onClick={() => onVerEscuelas(zona)}
                                             >
-                                                Ver escuelas
+                                                Ver escuelas ({zona._count?.escuelas || 0})
                                             </Button>
                                         </TableCell>
                                     </TableRow>
@@ -174,10 +176,10 @@ export default function Zonas({ zonas, onVerEscuelas, onUpdate, setError }: Zona
             <Dialog open={zonaDialogOpen} onClose={() => setZonaDialogOpen(false)} fullWidth maxWidth="sm">
                 <DialogTitle sx={{ fontWeight: "bold" }}>Nueva zona</DialogTitle>
                 <DialogContent>
-                    <ZonaForm 
-                        onSubmit={handleCreateZona} 
-                        onCancel={() => setZonaDialogOpen(false)} 
-                        loading={savingZona} 
+                    <ZonaForm
+                        onSubmit={handleCreateZona}
+                        onCancel={() => setZonaDialogOpen(false)}
+                        loading={savingZona}
                     />
                 </DialogContent>
             </Dialog>
@@ -204,9 +206,9 @@ export default function Zonas({ zonas, onVerEscuelas, onUpdate, setError }: Zona
                     <Button onClick={() => setConfirmDeleteOpen(false)} color="inherit">
                         Cancelar
                     </Button>
-                    <Button 
-                        onClick={confirmRemoveEncargado} 
-                        variant="contained" 
+                    <Button
+                        onClick={confirmRemoveEncargado}
+                        variant="contained"
                         color="error"
                         sx={{ textTransform: "none", fontWeight: "bold" }}
                     >

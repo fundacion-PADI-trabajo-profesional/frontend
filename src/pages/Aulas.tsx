@@ -1,22 +1,22 @@
 import { useEffect, useState } from "react";
 import { Container, Box, CircularProgress, Alert } from "@mui/material";
-import { useNavigate, useSearchParams } from "react-router-dom"; 
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { type Aula } from "../api/aulas";
-import { type Sala } from "../api/estudiantes"; 
+import { type Sala } from "../api/estudiantes";
 import SalasView from "../components/SalasView";
 import AulasView from "../components/AulasView";
-import EstudiantesAulaView from "../components/EstudiantesAulaView"; 
+import EstudiantesAulaView from "../components/EstudiantesAulaView";
 import PageHeader from "../components/PageHeader";
 
 export default function AulasPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams(); 
-  
+  const [searchParams] = useSearchParams();
+
   const [currentRole, setCurrentRole] = useState("");
   const [escuelaId, setEscuelaId] = useState<string | null>(null);
-  const [isInitializing, setIsInitializing] = useState(true); 
-  
-  const [selectedSala, setSelectedSala] = useState<Sala | null>(null); 
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  const [selectedSala, setSelectedSala] = useState<Sala | null>(null);
   const [selectedAula, setSelectedAula] = useState<Aula | null>(null);
   const [escuelaNombre, setEscuelaNombre] = useState<string>("");
 
@@ -26,7 +26,7 @@ export default function AulasPage() {
       navigate("/login");
       return;
     }
-    
+
     const user = JSON.parse(stored);
     setCurrentRole(user.rol);
 
@@ -41,15 +41,15 @@ export default function AulasPage() {
     setEscuelaId(paramEscuelaId || user.escuela_id || "");
     setEscuelaNombre(paramEscuelaNombre || user.escuela_nombre || "");
 
-    setIsInitializing(false); 
+    setIsInitializing(false);
   }, [navigate, searchParams]);
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
-      <PageHeader 
+      <PageHeader
         title="Niveles y Comisiones"
         subtitle="Gestión de salas, comisiones y alumnos de la institución."
-        backTo="/home"
+        backTo="/escuelas"
       />
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -57,42 +57,42 @@ export default function AulasPage() {
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
             <CircularProgress />
           </Box>
-        ) : 
-        
-        !escuelaId ? (
-          <Alert severity="warning">
-            No se especificó ninguna escuela. Si sos administrador, volvé al Panel de Control y seleccioná una institución primero.
-          </Alert>
-        ) : 
-        
-        // Mostrar las Salas (si no hay ninguna seleccionada)
-        !selectedSala ? (
-          <SalasView
-            escuelaId={escuelaId}
-            escuelaNombre={escuelaNombre}
-            onVolver={() => navigate("/home")} 
-            onVerAulas={(sala) => setSelectedSala(sala)} 
-          />
-        ) : 
-        
-        // Mostrar las Aulas de esa Sala (si no hay aula seleccionada)
-        !selectedAula ? (
-          <AulasView 
-            escuelaId={escuelaId}
-            salaSeleccionada={selectedSala} 
-            isEquipoPadi={currentRole === "equipo_padi"}
-            onVolver={() => setSelectedSala(null)} 
-            onVerEstudiantes={(aula) => setSelectedAula(aula)} 
-          />
-        ) : 
-        
-        // Mostrar los Estudiantes del Aula
-        (
-          <EstudiantesAulaView 
-            aula={selectedAula} 
-            onVolver={() => setSelectedAula(null)} 
-          />
-        )}
+        ) :
+
+          !escuelaId ? (
+            <Alert severity="warning">
+              No se especificó ninguna escuela. Si sos administrador, volvé al Panel de Control y seleccioná una institución primero.
+            </Alert>
+          ) :
+
+            // Mostrar las Salas (si no hay ninguna seleccionada)
+            !selectedSala ? (
+              <SalasView
+                escuelaId={escuelaId}
+                escuelaNombre={escuelaNombre}
+                onVolver={() => navigate(-1)}
+                onVerAulas={(sala) => setSelectedSala(sala)}
+              />
+            ) :
+
+              // Mostrar las Aulas de esa Sala (si no hay aula seleccionada)
+              !selectedAula ? (
+                <AulasView
+                  escuelaId={escuelaId}
+                  salaSeleccionada={selectedSala}
+                  isEquipoPadi={currentRole === "equipo_padi"}
+                  onVolver={() => setSelectedSala(null)}
+                  onVerEstudiantes={(aula) => setSelectedAula(aula)}
+                />
+              ) :
+
+                // Mostrar los Estudiantes del Aula
+                (
+                  <EstudiantesAulaView
+                    aula={selectedAula}
+                    onVolver={() => setSelectedAula(null)}
+                  />
+                )}
       </Container>
     </Box>
   );

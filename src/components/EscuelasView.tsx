@@ -110,10 +110,16 @@ export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVe
                 </Box>
             </Box>
 
+            {/* <EscuelasList
+                escuelas={escuelasFiltradas}
+                onView={onVerAulas}
+                onDetalle={(esc) => setEscuelaToView(esc)}
+            /> */}
             <EscuelasList
                 escuelas={escuelasFiltradas}
                 onView={onVerAulas}
                 onDetalle={(esc) => setEscuelaToView(esc)}
+                onEditar={(esc) => setEscuelaToEdit(esc)}
             />
 
             {/* Modal detalle de escuela */}

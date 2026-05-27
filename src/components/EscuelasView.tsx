@@ -1,14 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
-import { Box, Button, Typography, Dialog, DialogContent, CircularProgress, TextField, MenuItem, DialogActions, DialogTitle, InputAdornment } from "@mui/material";
+import { Box, Button, Typography, Dialog, DialogContent, CircularProgress, InputAdornment } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SearchIcon from "@mui/icons-material/Search";
 import EscuelasList from "./EscuelasList";
 import EscuelaForm from "./EscuelaForm";
+import EditarEscuela from "./EditarEscuela";
 import BotonNuevo from "./BotonNuevo";
 import { getEscuelas, type Escuela } from "../api/escuelas";
-import { getDirectivos, type Directivo, asignarEscuelaADirectivo } from "../api/directivos";
 import { getZonas } from "../api/zonas";
-import { getAulas, type Aula } from "../api/aulas"; 
 import { BuscadorPadi } from "./SearchBar";
 
 interface Props {
@@ -16,38 +15,23 @@ interface Props {
     isEquipoPadi: boolean;
     onVolver: () => void;
     onVerAulas: (escuela: Escuela) => void;
-    showBack?: boolean; 
+    showBack?: boolean;
     showTitle?: boolean;
 }
 
 export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVerAulas, showBack, showTitle }: Props) {
     const [escuelas, setEscuelas] = useState<Escuela[]>([]);
-    const [, setAulas] = useState<Aula[]>([]); 
-    const [directivos, setDirectivos] = useState<Directivo[]>([]);
     const [zonaNombre, setZonaNombre] = useState("");
     const [loading, setLoading] = useState(true);
     const [, setError] = useState<string | null>(null);
     const [busqueda, setBusqueda] = useState("");
     const [createModalOpen, setCreateModalOpen] = useState(false);
-    const [directorDialogOpen, setDirectorDialogOpen] = useState(false);
-    const [directorEscuelaTarget, setDirectorEscuelaTarget] = useState<Escuela | null>(null);
-    const [directorId, setDirectorId] = useState("");
-    const [savingDirector, setSavingDirector] = useState(false);
+    const [escuelaToEdit, setEscuelaToEdit] = useState<Escuela | null>(null);
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [escData, dirData, aulasData] = await Promise.all([
-                getEscuelas(),
-                getDirectivos().catch((err) => {
-                    console.warn("Aviso: No se pudieron cargar directivos", err);
-                    return [];
-                }),
-                getAulas().catch((err) => {
-                    console.warn("Aviso: No se pudieron cargar aulas", err);
-                    return [];
-                })
-            ]);
+            const escData = await getEscuelas();
 
             let zonasData: any[] = [];
             if (isEquipoPadi) {
@@ -57,20 +41,16 @@ export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVe
             let filtered = escData;
 
             if (zonaIdParam) {
-                // Caso PADI filtrando por zona
                 filtered = escData.filter(e => e.zona?.id === zonaIdParam);
-                const zona = zonasData.find(z => z.id === zonaIdParam);
+                const zona = zonasData.find((z: any) => z.id === zonaIdParam);
                 setZonaNombre(zona?.nombre || "Zona desconocida");
             } else if (!isEquipoPadi && escData.length > 0) {
-                // Caso Encargado: Saca el nombre de la zona desde la primera escuela que le vino
                 setZonaNombre(escData[0].zona?.nombre || "Mi Zona");
             } else {
                 setZonaNombre("Todas las Escuelas");
             }
 
             setEscuelas(filtered);
-            setDirectivos(dirData);
-            setAulas(aulasData);
         } catch (e) {
             console.error("Error en fetchData:", e);
             setError("Error al cargar datos");
@@ -82,22 +62,11 @@ export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVe
     useEffect(() => { fetchData(); }, [zonaIdParam]);
 
     const escuelasFiltradas = useMemo(() => {
-        return escuelas.filter(escuela => 
+        return escuelas.filter(escuela =>
             escuela.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
             escuela.direccion?.toLowerCase().includes(busqueda.toLowerCase())
         );
     }, [escuelas, busqueda]);
-
-    const handleAssignDirector = async () => {
-        if (!directorEscuelaTarget || !directorId) return;
-        setSavingDirector(true);
-        try {
-            await asignarEscuelaADirectivo(directorId, directorEscuelaTarget.id);
-            setDirectorDialogOpen(false);
-            await fetchData();
-        } catch (e) { setError("Error al asignar director"); }
-        finally { setSavingDirector(false); }
-    };
 
     if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}><CircularProgress /></Box>;
 
@@ -113,10 +82,10 @@ export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVe
                     {showTitle ? (
                         <Typography variant="h5" sx={{ fontWeight: 700 }}>{zonaNombre}</Typography>
                     ) : (
-                        <Box /> 
+                        <Box />
                     )}
 
-                    <BuscadorPadi 
+                    <BuscadorPadi
                         placeholder="Buscar escuela por nombre o dirección..."
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
@@ -128,50 +97,39 @@ export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVe
                             ),
                         }}
                     />
-                    
+
                     <BotonNuevo texto="Nueva escuela" onClick={() => setCreateModalOpen(true)} />
                 </Box>
             </Box>
 
             <EscuelasList
                 escuelas={escuelasFiltradas}
-                isEquipoPadi={isEquipoPadi}
                 onView={onVerAulas}
-                onAssignDirector={(esc) => {
-                    setDirectorEscuelaTarget(esc);
-                    const assigned = directivos.find(d => d.escuela?.id === esc.id);
-                    setDirectorId(assigned?.id || "");
-                    setDirectorDialogOpen(true);
-                }}
+                onEdit={(esc) => setEscuelaToEdit(esc)}
             />
 
-            {/* Modales de Crear y Asignar Director */}
-            <Dialog open={createModalOpen} onClose={() => setCreateModalOpen(false)} fullWidth maxWidth="sm">
+            <Dialog open={!!escuelaToEdit} onClose={() => setEscuelaToEdit(null)} fullWidth maxWidth="md">
                 <DialogContent sx={{ p: 0 }}>
-                    {createModalOpen && (
-                        <EscuelaForm 
-                            defaultZonaId={zonaIdParam || undefined} 
-                            onCancel={() => setCreateModalOpen(false)} 
-                            onSuccess={() => { setCreateModalOpen(false); fetchData(); }} 
+                    {escuelaToEdit && (
+                        <EditarEscuela
+                            escuela={escuelaToEdit}
+                            onCancel={() => setEscuelaToEdit(null)}
+                            onSuccess={() => { setEscuelaToEdit(null); fetchData(); }}
                         />
                     )}
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={directorDialogOpen} onClose={() => setDirectorDialogOpen(false)} fullWidth maxWidth="sm">
-                <DialogTitle sx={{ fontWeight: 700 }}>Asignar director</DialogTitle>
-                <DialogContent>
-                    <Typography sx={{ mb: 2 }}>Escuela: <strong>{directorEscuelaTarget?.nombre}</strong></Typography>
-                    <TextField select fullWidth label="Director" value={directorId} onChange={(e) => setDirectorId(e.target.value)}>
-                        {directivos.map((d) => (
-                            <MenuItem key={d.id} value={d.id}>{d.apellido}, {d.nombre}</MenuItem>
-                        ))}
-                    </TextField>
+            <Dialog open={createModalOpen} onClose={() => setCreateModalOpen(false)} fullWidth maxWidth="sm">
+                <DialogContent sx={{ p: 0 }}>
+                    {createModalOpen && (
+                        <EscuelaForm
+                            defaultZonaId={zonaIdParam || undefined}
+                            onCancel={() => setCreateModalOpen(false)}
+                            onSuccess={() => { setCreateModalOpen(false); fetchData(); }}
+                        />
+                    )}
                 </DialogContent>
-                <DialogActions sx={{ p: 2 }}>
-                    <Button onClick={() => setDirectorDialogOpen(false)}>Cancelar</Button>
-                    <Button variant="contained" onClick={handleAssignDirector} disabled={!directorId || savingDirector}>Guardar</Button>
-                </DialogActions>
             </Dialog>
         </Box>
     );

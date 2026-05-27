@@ -17,6 +17,12 @@ interface Props {
     onSuccess: () => void;
 }
 
+interface DirectivoActual {
+    id: string;
+    nombre: string;
+    apellido: string;
+}
+
 export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
     const [formData, setFormData] = useState({
         nombre: escuela.nombre || "",
@@ -32,7 +38,14 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
     const [userRole, setUserRole] = useState("");
     const [loading, setLoading] = useState(false);
     const [notification, setNotification] = useState({ open: false, message: "", severity: "success" as "success" | "error" });
-    const [confirmDialog, setConfirmDialog] = useState({ open: false, title: "", message: "", onConfirm: () => { } });
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
+    // Estado local de directivos: refleja cambios pendientes sin llamar a la API
+    const [directivosActuales, setDirectivosActuales] = useState<DirectivoActual[]>(
+        escuela.directivos?.map(d => ({ id: d.id, nombre: d.nombre, apellido: d.apellido })) || []
+    );
+    const [toAssign, setToAssign] = useState<string[]>([]);
+    const [toUnassign, setToUnassign] = useState<string[]>([]);
 
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem("padiUser") || "{}");
@@ -48,15 +61,44 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
 
     const loadDirectivosDisponibles = async () => {
         try {
-            const data = await getDirectivosDisponibles(); // Solo directivos sin escuela asignada
+            const data = await getDirectivosDisponibles();
             setDirectivosDisponibles(data);
         } catch (err) { console.error("Error cargando directivos"); }
+    };
+
+    const handleAgregarDirectivo = () => {
+        if (!directivoSeleccionado) return;
+        const dir = directivosDisponibles.find(d => d.id === directivoSeleccionado);
+        if (!dir) return;
+
+        setDirectivosActuales(prev => [...prev, { id: dir.id, nombre: dir.nombre, apellido: dir.apellido }]);
+        setToAssign(prev => [...prev, dir.id]);
+        setDirectivoSeleccionado("");
+    };
+
+    const handleQuitarDirectivo = (usuarioId: string) => {
+        setDirectivosActuales(prev => prev.filter(d => d.id !== usuarioId));
+        if (toAssign.includes(usuarioId)) {
+            // Fue agregado en esta sesión, solo lo sacamos de la cola
+            setToAssign(prev => prev.filter(id => id !== usuarioId));
+        } else {
+            // Estaba asignado originalmente, hay que desasignarlo al guardar
+            setToUnassign(prev => [...prev, usuarioId]);
+        }
     };
 
     const handleSave = async () => {
         setLoading(true);
         try {
             await updateEscuela(escuela.id, formData);
+
+            for (const id of toAssign) {
+                await asignarDirectivo(escuela.id, id);
+            }
+            for (const id of toUnassign) {
+                await desasignarDirectivo(id);
+            }
+
             setNotification({ open: true, message: "¡Institución actualizada!", severity: "success" });
             setTimeout(() => onSuccess(), 1000);
         } catch (err: any) {
@@ -64,61 +106,29 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
         } finally { setLoading(false); }
     };
 
-    const handleAsignarDirectivo = async () => {
-        const id = directivoSeleccionado;
-        if (!id) return;
-
-        try {
-            await asignarDirectivo(escuela.id, id);
-            setNotification({ open: true, message: "Directivo asignado", severity: "success" });
-            onSuccess();
-        } catch (err) {
-            setNotification({ open: true, message: "Error al asignar", severity: "error" });
-        }
-    };
-
-    const handleDesasignarDirectivo = async (usuarioId: string) => {
-        setConfirmDialog({
-            open: true,
-            title: "Confirmar desasignación",
-            message: "¿Está seguro de quitar a este directivo de la escuela?",
-            onConfirm: async () => {
-                try {
-                    await desasignarDirectivo(usuarioId);
-                    onSuccess();
-                } catch (err) {
-                    setNotification({ open: true, message: "Error al desasignar", severity: "error" });
-                }
-                setConfirmDialog({ ...confirmDialog, open: false });
-            }
-        });
-    };
-
     const handleDelete = async () => {
-        setConfirmDialog({
-            open: true,
-            title: "⚠️ ELIMINAR ESCUELA",
-            message: "Esta acción eliminará permanentemente la escuela y liberará automáticamente:\n\n• Todos los estudiantes (quedarán sin escuela asignada)\n• Todos los directivos (quedarán disponibles para otras escuelas)\n• Todos los docentes (quedarán disponibles para otras escuelas)\n\n¿Está completamente seguro de continuar?",
-            onConfirm: async () => {
-                try {
-                    await deleteEscuela(escuela.id);
-                    setNotification({
-                        open: true,
-                        message: "Escuela eliminada correctamente. Todos los vínculos han sido liberados.",
-                        severity: "success"
-                    });
-                    setTimeout(() => onSuccess(), 2000);
-                } catch (err: any) {
-                    setNotification({
-                        open: true,
-                        message: err.message || "Error al eliminar la escuela",
-                        severity: "error"
-                    });
-                }
-                setConfirmDialog({ ...confirmDialog, open: false });
-            }
-        });
+        try {
+            await deleteEscuela(escuela.id);
+            setNotification({
+                open: true,
+                message: "Escuela eliminada correctamente. Todos los vínculos han sido liberados.",
+                severity: "success"
+            });
+            setTimeout(() => onSuccess(), 2000);
+        } catch (err: any) {
+            setNotification({
+                open: true,
+                message: err.message || "Error al eliminar la escuela",
+                severity: "error"
+            });
+        }
+        setConfirmDeleteOpen(false);
     };
+
+    // Excluir de la lista desplegable los directivos que ya están asignados
+    const directivosParaSeleccionar = directivosDisponibles.filter(
+        d => !directivosActuales.some(actual => actual.id === d.id)
+    );
 
     return (
         <Box>
@@ -153,17 +163,20 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
 
                 <Divider sx={{ my: 4 }} />
 
-                {/* CUERPO DIRECTIVO */}
                 <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Cuerpo Directivo</Typography>
                 <List sx={{ mb: 2, bgcolor: '#fcfcfc', borderRadius: 2 }}>
-                    {escuela.directivos?.map((dir: any) => (
+                    {directivosActuales.length === 0 ? (
+                        <ListItem>
+                            <ListItemText secondary="Sin directivos asignados" />
+                        </ListItem>
+                    ) : directivosActuales.map((dir) => (
                         <ListItem key={dir.id} divider>
                             <ListItemText
                                 primary={`${dir.nombre} ${dir.apellido}`}
                                 secondary="Director asignado"
                             />
                             <ListItemSecondaryAction>
-                                <IconButton edge="end" color="error" onClick={() => handleDesasignarDirectivo(dir.id)}>
+                                <IconButton edge="end" color="error" onClick={() => handleQuitarDirectivo(dir.id)}>
                                     <DeleteIcon fontSize="small" />
                                 </IconButton>
                             </ListItemSecondaryAction>
@@ -173,22 +186,22 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
                 <Box sx={{ display: 'flex', gap: 2, p: 2, bgcolor: '#f0f0f0', borderRadius: 2, mb: 4 }}>
                     <TextField select fullWidth size="small" label="Seleccionar Directivo"
                         value={directivoSeleccionado} onChange={(e) => setDirectivoSeleccionado(e.target.value)}>
-                        {directivosDisponibles.map((d) => (
+                        {directivosParaSeleccionar.map((d) => (
                             <MenuItem key={d.id} value={d.id}>
                                 {`${d.nombre} ${d.apellido}`}
                             </MenuItem>
                         ))}
                     </TextField>
                     <Button variant="outlined" startIcon={<PersonAddIcon />}
-                        onClick={handleAsignarDirectivo} sx={{ borderColor: '#375E9E', color: '#375E9E' }}>
-                        ASIGNAR
+                        onClick={handleAgregarDirectivo} sx={{ borderColor: '#375E9E', color: '#375E9E' }}>
+                        AGREGAR
                     </Button>
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 5 }}>
                     <Box>
-                        {userRole === "equipo_padi" && ( // FIX PUNTO 3: Solo PADI ve esto
-                            <Button variant="text" color="error" startIcon={<DeleteIcon />} onClick={handleDelete}>
+                        {userRole === "equipo_padi" && (
+                            <Button variant="text" color="error" startIcon={<DeleteIcon />} onClick={() => setConfirmDeleteOpen(true)}>
                                 ELIMINAR ESCUELA
                             </Button>
                         )}
@@ -202,39 +215,18 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
                 </Box>
             </Paper>
 
-            {/* Dialog de confirmación */}
-            <Dialog
-                open={confirmDialog.open}
-                onClose={() => setConfirmDialog({ ...confirmDialog, open: false })}
-                aria-labelledby="confirm-dialog-title"
-                aria-describedby="confirm-dialog-description"
-            >
-                <DialogTitle id="confirm-dialog-title" sx={{ fontWeight: 600 }}>
-                    {confirmDialog.title}
-                </DialogTitle>
+            <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>
+                <DialogTitle sx={{ fontWeight: 600 }}>⚠️ ELIMINAR ESCUELA</DialogTitle>
                 <DialogContent>
-                    <DialogContentText
-                        id="confirm-dialog-description"
-                        sx={{ whiteSpace: 'pre-line' }}
-                    >
-                        {confirmDialog.message}
+                    <DialogContentText sx={{ whiteSpace: 'pre-line' }}>
+                        {"Esta acción eliminará permanentemente la escuela y liberará automáticamente:\n\n• Todos los estudiantes (quedarán sin escuela asignada)\n• Todos los directivos (quedarán disponibles para otras escuelas)\n• Todos los docentes (quedarán disponibles para otras escuelas)\n\n¿Está completamente seguro de continuar?"}
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions sx={{ p: 3 }}>
-                    <Button
-                        onClick={() => setConfirmDialog({ ...confirmDialog, open: false })}
-                        variant="outlined"
-                        sx={{ mr: 1 }}
-                    >
+                    <Button onClick={() => setConfirmDeleteOpen(false)} variant="outlined" sx={{ mr: 1 }}>
                         Cancelar
                     </Button>
-                    <Button
-                        onClick={confirmDialog.onConfirm}
-                        variant="contained"
-                        color="error"
-                        sx={{ fontWeight: 600 }}
-                        autoFocus
-                    >
+                    <Button onClick={handleDelete} variant="contained" color="error" sx={{ fontWeight: 600 }} autoFocus>
                         Confirmar
                     </Button>
                 </DialogActions>

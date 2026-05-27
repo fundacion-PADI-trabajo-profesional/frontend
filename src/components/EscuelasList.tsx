@@ -9,17 +9,9 @@ interface Props {
     escuelas: Escuela[];
     onEdit?: (escuela: Escuela) => void;
     onView: (escuela: Escuela) => void;
-    isEquipoPadi?: boolean;
-    onAssignDirector?: (escuela: Escuela) => void;
 }
 
-export default function EscuelasList({
-    escuelas,
-    onEdit,
-    onView,
-    isEquipoPadi,
-    onAssignDirector,
-}: Props) {
+export default function EscuelasList({ escuelas, onEdit, onView }: Props) {
     
     const escuelaDirectorName = (escuela: Escuela) => {
         if (!escuela.directivos?.length) return "Sin director asignado";
@@ -60,16 +52,6 @@ export default function EscuelasList({
 
                                 <TableCell align="center">
                                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, alignItems: 'center' }}>
-                                        {isEquipoPadi && onAssignDirector && (
-                                            <Button
-                                                size="small"
-                                                sx={{ textTransform: "none" }}
-                                                onClick={() => onAssignDirector(escuela)}
-                                            >
-                                                Asignar director
-                                            </Button>
-                                        )}
-                                        
                                         <Button
                                             size="small"
                                             variant="outlined"

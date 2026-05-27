@@ -19,11 +19,13 @@ import GraficoRendimientoZonas from "../components/GraficoRendimientoZonas";
 import GraficoEvolucion from "../components/GraficoEvolucion";
 import GraficoAreasCriticas from "../components/GraficoAreasCriticas";
 import GraficoCobertura from "../components/GraficoCobertura";
+import GraficoNivelSocioeconomico from "../components/GraficoNivelSocioeconomico";
 import {
   getHeatmapZonas,
   getEvolucionPadi,
   getAreasCriticasPadi,
   getCoberturaPorZona,
+  getRendimientoPorNivelSocioeconomico,
 } from "../api/estadisticas";
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -59,7 +61,13 @@ export default function EstadisticasPadi() {
     enabled: tab === 3,
   });
 
-  const showTipo = tab === 0 || tab === 2;
+  const nseQuery = useQuery({
+    queryKey: ["estadisticas-padi-nse", periodo, tipo],
+    queryFn: () => getRendimientoPorNivelSocioeconomico({ periodo, tipo }),
+    enabled: tab === 4,
+  });
+
+  const showTipo = tab === 0 || tab === 2 || tab === 4;
 
   return (
     <Box sx={{ p: 3 }}>
@@ -102,6 +110,7 @@ export default function EstadisticasPadi() {
         <Tab label="Evolución" />
         <Tab label="Áreas Críticas" />
         <Tab label="Cobertura" />
+        <Tab label="Nivel Socioeconómico" />
       </Tabs>
 
       {tab === 0 && (
@@ -137,6 +146,14 @@ export default function EstadisticasPadi() {
           {coberturaQuery.isLoading && <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}><CircularProgress /></Box>}
           {coberturaQuery.error && <Alert severity="error">{(coberturaQuery.error as Error).message}</Alert>}
           {coberturaQuery.data && <Paper variant="outlined" sx={{ p: 2 }}><GraficoCobertura data={coberturaQuery.data} /></Paper>}
+        </>
+      )}
+
+      {tab === 4 && (
+        <>
+          {nseQuery.isLoading && <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}><CircularProgress /></Box>}
+          {nseQuery.error && <Alert severity="error">{(nseQuery.error as Error).message}</Alert>}
+          {nseQuery.data && <Paper variant="outlined" sx={{ p: 2 }}><GraficoNivelSocioeconomico data={nseQuery.data} /></Paper>}
         </>
       )}
     </Box>

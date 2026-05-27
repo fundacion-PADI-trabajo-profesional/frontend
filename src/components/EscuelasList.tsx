@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
     Table, TableBody, TableCell, TableContainer, TableHead,
-    TableRow, Paper, Box, Button, Typography, Menu, MenuItem, ListItemIcon
+    TableRow, Paper, Button, Typography, Menu, MenuItem, ListItemIcon
 } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";

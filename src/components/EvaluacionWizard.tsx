@@ -163,39 +163,39 @@ function MobileCircleRow({
                 '&::-webkit-scrollbar': { display: 'none' },
                 scrollbarWidth: 'none',
             }}>
-            {preguntas.map((p, idx) => {
-                const answer = respuestas[p.id];
-                const isCurrent = idx === currentIndex;
-                const isYes = answer === 1;
-                const isNo = answer === 0;
-                const isAnswered = isYes || isNo;
+                {preguntas.map((p, idx) => {
+                    const answer = respuestas[p.id];
+                    const isCurrent = idx === currentIndex;
+                    const isYes = answer === 1;
+                    const isNo = answer === 0;
+                    const isAnswered = isYes || isNo;
 
-                return (
-                    <Box
-                        key={p.id}
-                        ref={isCurrent ? currentRef : null}
-                        onClick={() => onJump(idx)}
-                        sx={{
-                            width: 32,
-                            height: 32,
-                            flexShrink: 0,
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: isAnswered ? '0.8rem' : '0.7rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            border: isCurrent ? '2.5px solid #5c7cfa' : '2px solid transparent',
-                            bgcolor: isYes ? '#dcfce7' : isNo ? '#fee2e2' : '#f3f4f6',
-                            color: isCurrent ? '#5c7cfa' : isYes ? '#16a34a' : isNo ? '#ef4444' : '#9ca3af',
-                            boxShadow: isCurrent ? '0 0 0 2px #c7d2fe' : 'none',
-                        }}
-                    >
-                        {isYes ? '✓' : isNo ? '✗' : idx + 1}
-                    </Box>
-                );
-            })}
+                    return (
+                        <Box
+                            key={p.id}
+                            ref={isCurrent ? currentRef : null}
+                            onClick={() => onJump(idx)}
+                            sx={{
+                                width: 32,
+                                height: 32,
+                                flexShrink: 0,
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: isAnswered ? '0.8rem' : '0.7rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                border: isCurrent ? '2.5px solid #5c7cfa' : '2px solid transparent',
+                                bgcolor: isYes ? '#dcfce7' : isNo ? '#fee2e2' : '#f3f4f6',
+                                color: isCurrent ? '#5c7cfa' : isYes ? '#16a34a' : isNo ? '#ef4444' : '#9ca3af',
+                                boxShadow: isCurrent ? '0 0 0 2px #c7d2fe' : 'none',
+                            }}
+                        >
+                            {isYes ? '✓' : isNo ? '✗' : idx + 1}
+                        </Box>
+                    );
+                })}
             </Box>
             <Box sx={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 40, background: 'linear-gradient(to right, transparent, #f5f5f5)', pointerEvents: 'none' }} />
         </Box>
@@ -230,9 +230,9 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                     setPreguntas(data.preguntas || [])
 
                     const map: Record<string, number | null> = {}
-                    ;(data.respuestas || []).forEach((r) => {
-                        map[r.pregunta_id] = r.respuesta;
-                    });
+                        ; (data.respuestas || []).forEach((r) => {
+                            map[r.pregunta_id] = r.respuesta;
+                        });
                     setRespuestas(map);
 
                     const allIds = data.preguntas.map(p => p.id);
@@ -437,13 +437,34 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                 <Card sx={{ flex: 1, borderRadius: 4, display: 'flex', flexDirection: 'column', mb: 2 }}>
                                     <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 4 }}>
 
-                                        <Box sx={{ mb: 2 }}>
+                                        {/* <Box sx={{ mb: 2 }}>
                                             {preguntaActual.tipoPregunta && (
                                                 <Box component="span" sx={{
                                                     px: 1.5, py: 0.5, borderRadius: 1, fontSize: '0.75rem', fontWeight: 700,
                                                     bgcolor: preguntaActual.tipoPregunta === 'Evaluable' ? '#DBEAFE' : '#FFFBEB',
                                                     color: preguntaActual.tipoPregunta === 'Evaluable' ? '#2563EB' : '#D97706',
                                                 }}>
+                                                    {preguntaActual.tipoPregunta}
+                                                </Box>
+                                            )}
+                                        </Box> */}
+                                        <Box sx={{ mb: 3 }}>
+                                            {preguntaActual.tipoPregunta && (
+                                                <Box component="span" sx={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: 0.75,
+                                                    px: 2,
+                                                    py: 0.75,
+                                                    borderRadius: 2,
+                                                    fontSize: '0.875rem',
+                                                    fontWeight: 700,
+                                                    letterSpacing: 0.2,
+                                                    bgcolor: preguntaActual.tipoPregunta === 'Evaluable' ? '#DBEAFE' : '#FEF3C7',
+                                                    color: preguntaActual.tipoPregunta === 'Evaluable' ? '#1D4ED8' : '#B45309',
+                                                    border: `1.5px solid ${preguntaActual.tipoPregunta === 'Evaluable' ? '#93C5FD' : '#FCD34D'}`,
+                                                }}>
+                                                    {preguntaActual.tipoPregunta === 'Evaluable' ? '📋' : '👁️'}
                                                     {preguntaActual.tipoPregunta}
                                                 </Box>
                                             )}

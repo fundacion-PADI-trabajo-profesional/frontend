@@ -2,17 +2,17 @@ import {
     Table, TableBody, TableCell, TableContainer, TableHead,
     TableRow, Paper, IconButton, Box, Button, Typography
 } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import { type Escuela } from "../api/escuelas";
 
 interface Props {
     escuelas: Escuela[];
-    onEdit?: (escuela: Escuela) => void;
+    onDetalle?: (escuela: Escuela) => void;
     onView: (escuela: Escuela) => void;
 }
 
-export default function EscuelasList({ escuelas, onEdit, onView }: Props) {
-    
+export default function EscuelasList({ escuelas, onDetalle, onView }: Props) {
+
     const escuelaDirectorName = (escuela: Escuela) => {
         if (!escuela.directivos?.length) return "Sin director asignado";
         const d = escuela.directivos[0];
@@ -24,7 +24,6 @@ export default function EscuelasList({ escuelas, onEdit, onView }: Props) {
             <Table>
                 <TableHead sx={{ bgcolor: "#f8f9fa" }}>
                     <TableRow>
-                        {/* Centramos los encabezados */}
                         <TableCell align="center" sx={{ fontWeight: "bold" }}>Escuela</TableCell>
                         <TableCell align="center" sx={{ fontWeight: "bold" }}>Director</TableCell>
                         <TableCell align="center" sx={{ fontWeight: "bold" }}>Acciones</TableCell>
@@ -45,7 +44,7 @@ export default function EscuelasList({ escuelas, onEdit, onView }: Props) {
                                 <TableCell align="center" sx={{ fontWeight: 500 }}>
                                     {escuela.nombre}
                                 </TableCell>
-                                
+
                                 <TableCell align="center">
                                     {escuelaDirectorName(escuela)}
                                 </TableCell>
@@ -61,9 +60,9 @@ export default function EscuelasList({ escuelas, onEdit, onView }: Props) {
                                             Ver aulas
                                         </Button>
 
-                                        {onEdit && (
-                                            <IconButton size="small" onClick={() => onEdit(escuela)}>
-                                                <EditIcon fontSize="small" />
+                                        {onDetalle && (
+                                            <IconButton size="small" onClick={() => onDetalle(escuela)} title="Ver detalle">
+                                                <VisibilityIcon fontSize="small" />
                                             </IconButton>
                                         )}
                                     </Box>

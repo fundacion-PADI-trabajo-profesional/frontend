@@ -50,8 +50,8 @@ export default function CambiarContrasenaTemporal() {
     "& .MuiOutlinedInput-root": {
       borderRadius: 2,
       "& fieldset": { borderColor: "transparent" },
-      "&:hover fieldset": { borderColor: "#5fb878" },
-      "&.Mui-focused fieldset": { borderColor: "#5fb878" },
+      "&:hover fieldset": { borderColor: "#A3BE54" },
+      "&.Mui-focused fieldset": { borderColor: "#A3BE54" },
     },
   };
 

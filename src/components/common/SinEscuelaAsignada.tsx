@@ -5,7 +5,7 @@ export default function SinEscuelaAsignada() {
     return (
         <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
             <Paper elevation={0} sx={{ p: 5, borderRadius: 3, maxWidth: 480, textAlign: "center", border: "1px solid #e8e8e8" }}>
-                <SchoolIcon sx={{ fontSize: 52, color: "#5fb878", mb: 2 }} />
+                <SchoolIcon sx={{ fontSize: 52, color: "#A3BE54", mb: 2 }} />
                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
                     Sin escuela asignada
                 </Typography>

@@ -52,6 +52,10 @@ export const permissions = {
     assignEstudianteAula: (userRole: string) =>
         ["equipo_padi", "encargado_zona", "director"].includes(userRole),
 
+    // Crear docente: equipo_padi, encargado_zona, director
+    createDocente: (userRole: string) =>
+        ["equipo_padi", "encargado_zona", "director"].includes(userRole),
+
     // Ver todas las escuelas (para equipo_padi)
     viewAllEscuelas: (userRole: string) =>
         userRole === "equipo_padi",

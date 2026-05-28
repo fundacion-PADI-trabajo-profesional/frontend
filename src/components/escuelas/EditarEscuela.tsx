@@ -208,7 +208,7 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
                         <Button onClick={onCancel} variant="outlined">CANCELAR</Button>
-                        <Button variant="contained" onClick={handleSave} disabled={loading} sx={{ bgcolor: '#5fb878', color: '#fff', px: 4, '&:hover': { bgcolor: '#000' } }}>
+                        <Button variant="contained" onClick={handleSave} disabled={loading} sx={{ bgcolor: '#A3BE54', color: '#fff', px: 4, '&:hover': { bgcolor: '#000' } }}>
                             {loading ? <CircularProgress size={24} color="inherit" /> : "GUARDAR CAMBIOS"}
                         </Button>
                     </Box>

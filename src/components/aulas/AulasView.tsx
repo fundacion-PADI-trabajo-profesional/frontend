@@ -137,7 +137,7 @@ export default function AulasView({ escuelaId, salaSeleccionada, onVerEstudiante
                                 setMode("form");
                             }}
                             sx={{
-                                bgcolor: "#5fb878",
+                                bgcolor: "#A3BE54",
                                 textTransform: "none",
                                 fontWeight: 600,
                                 "&:hover": { bgcolor: "#4a9960" }

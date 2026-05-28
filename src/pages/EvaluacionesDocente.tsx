@@ -4,8 +4,8 @@ import { useEffect, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { Box, Container, CircularProgress, Alert, Typography } from "@mui/material"
 import { getEvaluacionesInstanciasByProfesor, type EvaluacionInstancia } from "../api/evaluaciones"
-import EvaluacionesTable from "../components/EvaluacionesTable"
-import PageHeader from "../components/PageHeader"
+import EvaluacionesTable from "../components/evaluaciones/EvaluacionesTable"
+import PageHeader from "../components/common/PageHeader"
 
 export default function EvaluacionesDocente() {
   const [searchParams] = useSearchParams()

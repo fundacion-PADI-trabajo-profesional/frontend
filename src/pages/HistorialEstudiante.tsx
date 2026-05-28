@@ -4,9 +4,9 @@ import { useEffect, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { Box, Container, Typography, CircularProgress, Alert } from "@mui/material"
 import { getEvaluacionesInstanciasByEstudiante, eliminarEvaluacionInstancia, type EvaluacionInstancia } from "../api/evaluaciones"
-import EvaluacionesTable from "../components/EvaluacionesTable"
-import PageHeader from "../components/PageHeader"
-import EvaluacionDetalle from "../components/EvaluacionDetalle"
+import EvaluacionesTable from "../components/evaluaciones/EvaluacionesTable"
+import PageHeader from "../components/common/PageHeader"
+import EvaluacionDetalle from "../components/evaluaciones/EvaluacionDetalle"
 
 export default function HistorialEstudiante() {
   const [searchParams] = useSearchParams()

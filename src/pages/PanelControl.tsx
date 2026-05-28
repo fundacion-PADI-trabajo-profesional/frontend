@@ -15,11 +15,11 @@ import {
     type Zona,
 } from "../api/zonas";
 import Zonas from "./Zonas";
-import PageHeader from "../components/PageHeader";
-import EscuelasView from "../components/EscuelasView";
-import AulasView from "../components/AulasView";
-import EstudiantesAulaView from "../components/EstudiantesAulaView";
-import SalasView from "../components/SalasView";
+import PageHeader from "../components/common/PageHeader";
+import EscuelasView from "../components/escuelas/EscuelasView";
+import AulasView from "../components/aulas/AulasView";
+import EstudiantesAulaView from "../components/aulas/EstudiantesAulaView";
+import SalasView from "../components/aulas/SalasView";
 type ViewMode = "zonas" | "escuelas" | "salas" | "aulas" | "estudiantes";
 
 export default function PanelControl() {

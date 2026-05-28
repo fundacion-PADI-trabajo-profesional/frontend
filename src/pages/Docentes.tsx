@@ -13,10 +13,10 @@ import { asignarDocenteAEscuela, desasignarDocenteDeEscuela, getDocentes, type D
 import { getEscuelas, type Escuela } from "../api/escuelas"
 import { getAulas, asignarDocenteAula, desasignarDocenteAula, type Aula } from "../api/aulas"
 import { filtrarAulasDisponibles } from "../utils/docentes-aulas"
-import { BuscadorPadi } from "../components/SearchBar";
-import BotonNuevo from "../components/BotonNuevo"
-import DocenteForm from "../components/DocenteForm"
-import SinEscuelaAsignada from "../components/SinEscuelaAsignada"
+import { BuscadorPadi } from "../components/common/SearchBar";
+import BotonNuevo from "../components/common/BotonNuevo"
+import DocenteForm from "../components/forms/DocenteForm"
+import SinEscuelaAsignada from "../components/common/SinEscuelaAsignada"
 
 export default function DocentesPage() {
   const [items, setItems] = useState<Docente[]>([])

@@ -20,11 +20,24 @@ import { ROLES } from "./types";
 import type { Usuario } from "./types";
 
 interface Props {
+  /** Usuario al que se le cambiará el rol. El diálogo se abre cuando es distinto de `null`. */
   usuario: Usuario | null;
+  /** Callback invocado al cancelar o tras un error. */
   onClose: () => void;
+  /**
+   * Callback invocado tras confirmar el cambio exitosamente.
+   * Recibe el ID del usuario y el nuevo rol para actualizar la lista sin recargarla.
+   */
   onRolChanged: (userId: string, newRol: string) => void;
 }
 
+/**
+ * Diálogo modal para cambiar el rol de un usuario existente.
+ *
+ * Sincroniza el selector con el rol actual del usuario cada vez que `usuario` cambia.
+ * El botón de confirmar se deshabilita si el rol seleccionado es igual al actual.
+ * Solo accesible para usuarios con rol `equipo_padi`; el backend también lo valida.
+ */
 export default function ModalCambiarRol({ usuario, onClose, onRolChanged }: Props) {
   const [rolValue, setRolValue] = useState("");
   const [loading, setLoading] = useState(false);

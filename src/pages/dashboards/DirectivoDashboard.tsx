@@ -1,6 +1,6 @@
 import { Grid, Typography, Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import DashboardCard from "../../components/DashboardCard";
+import DashboardCard from "../../components/common/DashboardCard";
 
 export default function DirectivoDashboard() {
     const navigate = useNavigate();

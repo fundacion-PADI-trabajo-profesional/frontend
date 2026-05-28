@@ -9,10 +9,10 @@ import { asignarDocenteAEscuela, desasignarDocenteDeEscuela, getDocentes, type D
 import { getEscuelas, type Escuela } from "../api/escuelas"
 import { getAulas, asignarDocenteAula, desasignarDocenteAula, type Aula } from "../api/aulas"
 import { filtrarAulasDisponibles } from "../utils/docentes-aulas"
-import { BuscadorPadi } from "../components/SearchBar";
-import BotonNuevo from "../components/BotonNuevo"
-import DocenteForm from "../components/DocenteForm"
-import SinEscuelaAsignada from "../components/SinEscuelaAsignada"
+import { BuscadorPadi } from "../components/common/SearchBar";
+import BotonNuevo from "../components/common/BotonNuevo"
+import DocenteForm from "../components/forms/DocenteForm"
+import SinEscuelaAsignada from "../components/common/SinEscuelaAsignada"
 
 export default function DocentesPage() {
   const [items, setItems] = useState<Docente[]>([])
@@ -205,14 +205,14 @@ export default function DocentesPage() {
       </Box>
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box sx={{ 
-          display: 'grid', 
-          gridTemplateColumns: '1fr auto 1fr', 
-          alignItems: 'center', 
-          mb: 3 
+        <Box sx={{
+          display: 'grid',
+          gridTemplateColumns: '1fr auto 1fr',
+          alignItems: 'center',
+          mb: 3
         }}>
-        <Box />
-          <BuscadorPadi 
+          <Box />
+          <BuscadorPadi
             placeholder="Buscar docente por nombre o apellido..."
             value={busqueda}
             onChange={(e: any) => setBusqueda(e.target.value)}
@@ -224,18 +224,18 @@ export default function DocentesPage() {
               ),
             }}
           />
-          
+
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <BotonNuevo 
-              texto="Nuevo docente" 
+            <BotonNuevo
+              texto="Nuevo docente"
               onClick={() => {
                 console.log("¡El botón funciona y manda el click!");
                 setCreateModalOpen(true);
-              }} 
+              }}
             />
           </Box>
         </Box>
-        
+
         {noEscuela ? (
           <SinEscuelaAsignada />
         ) : loading ? (
@@ -246,12 +246,12 @@ export default function DocentesPage() {
           <Alert severity="error">{error}</Alert>
         ) : items.length === 0 ? (
           <Typography sx={{ color: "#666" }}>No hay docentes registrados.</Typography>
-        ) : docentesFiltrados.length === 0 ? ( 
-          <Box sx={{ 
-            textAlign: "center", 
-            py: 6, 
-            px: 2, 
-            borderRadius: 2, 
+        ) : docentesFiltrados.length === 0 ? (
+          <Box sx={{
+            textAlign: "center",
+            py: 6,
+            px: 2,
+            borderRadius: 2,
           }}>
             <Typography variant="h6" sx={{ color: "#555", mb: 1 }}>
               No se encontraron resultados

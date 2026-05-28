@@ -1,7 +1,7 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Container, Box } from "@mui/material";
-import EscuelasView from "../components/EscuelasView";
-import PageHeader from "../components/PageHeader";
+import EscuelasView from "../components/escuelas/EscuelasView";
+import PageHeader from "../components/common/PageHeader";
 
 export default function EscuelasPage() {
     const navigate = useNavigate();
@@ -14,18 +14,18 @@ export default function EscuelasPage() {
 
     return (
         <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
-            <PageHeader 
+            <PageHeader
                 title="Gestión de Escuelas"
                 subtitle="Administración general de instituciones."
                 backTo="/home"
             />
             <Container maxWidth="lg" sx={{ py: 4 }}>
-                <EscuelasView 
+                <EscuelasView
                     zonaIdParam={zonaId}
                     isEquipoPadi={isEquipoPadi}
-                    onVolver={() => navigate(-1)} 
+                    onVolver={() => navigate(-1)}
                     onVerAulas={(escuela) => navigate(`/aulas?escuelaId=${escuela.id}&escuelaNombre=${escuela.nombre}`)}
-                    showBack={false}  
+                    showBack={false}
                     showTitle={!!zonaId}
                 />
             </Container>

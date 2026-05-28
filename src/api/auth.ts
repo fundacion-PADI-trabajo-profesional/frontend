@@ -207,6 +207,22 @@ export const api = {
     );
   },
 
+  /** Ejecuta una request PATCH autenticada y reintenta si recibe 401. */
+  patch: async (endpoint: string, body: any) => {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      method: "PATCH",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(body),
+    });
+    return handleResponse(response, () =>
+      fetch(`${API_URL}${endpoint}`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(body),
+      })
+    );
+  },
+
   /** Ejecuta una request DELETE autenticada y reintenta si recibe 401. */
   delete: async (endpoint: string) => {
     const response = await fetch(`${API_URL}${endpoint}`, {
@@ -349,5 +365,13 @@ export async function adminDeleteUser(userId: string) {
  */
 export async function adminResendInvite(userId: string) {
   const response = await api.post(`/admin/users/${userId}/resend-invite`, {});
+  return response.data;
+}
+
+/**
+ * Cambia el rol de un usuario existente.
+ */
+export async function adminUpdateUserRol(userId: string, rol: string) {
+  const response = await api.patch(`/admin/users/${userId}/rol`, { rol });
   return response.data;
 }

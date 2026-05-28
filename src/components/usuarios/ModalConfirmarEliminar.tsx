@@ -11,11 +11,21 @@ import { adminDeleteUser } from "../../api/auth";
 import type { Usuario } from "./types";
 
 interface Props {
+  /** Usuario a eliminar. El diálogo se abre cuando este valor es distinto de `null`. */
   usuario: Usuario | null;
+  /** Callback invocado al cancelar o tras completar la eliminación. */
   onClose: () => void;
+  /** Callback invocado tras eliminar exitosamente; la lista debe recargarse. */
   onDeleted: () => void;
 }
 
+/**
+ * Diálogo de confirmación para eliminar un usuario del sistema.
+ *
+ * La eliminación es una baja lógica: revoca el acceso en Supabase Auth
+ * pero preserva el historial de datos del usuario en la base de datos.
+ * El diálogo se muestra cuando `usuario` es distinto de `null`.
+ */
 export default function ModalConfirmarEliminar({ usuario, onClose, onDeleted }: Props) {
   const [loading, setLoading] = useState(false);
 

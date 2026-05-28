@@ -11,19 +11,19 @@ vi.mock("react-router-dom", async () => {
     };
 });
 
-import DashboardCard from "../../src/components/DashboardCard";
-import BotonNuevo from "../../src/components/BotonNuevo";
-import PageHeader from "../../src/components/PageHeader";
-import SalasView from "../../src/components/SalasView";
-import EscuelasView from "../../src/components/EscuelasView";
-import AulasView from "../../src/components/AulasView";
-import EvaluacionesList from "../../src/components/EvaluacionesList";
+import DashboardCard from "../../src/components/common/DashboardCard";
+import BotonNuevo from "../../src/components/common/BotonNuevo";
+import PageHeader from "../../src/components/common/PageHeader";
+import SalasView from "../../src/components/aulas/SalasView";
+import EscuelasView from "../../src/components/escuelas/EscuelasView";
+import AulasView from "../../src/components/aulas/AulasView";
+import EvaluacionesList from "../../src/components/evaluaciones/EvaluacionesList";
 import Login from "../../src/pages/Login";
 import Home from "../../src/pages/Home";
 import PanelControl from "../../src/pages/PanelControl";
-import EstudiantesCompacto from "../../src/components/EstudiantesCompacto";
+import EstudiantesCompacto from "../../src/components/estudiantes/EstudiantesCompacto";
 import type { Estudiante } from "../../src/api/estudiantes";
-import ProgresionEstudiante from "../../src/components/ProgresionEstudiante";
+import ProgresionEstudiante from "../../src/components/graficos/ProgresionEstudiante";
 
 function makeStudent(overrides: Partial<Estudiante> = {}): Estudiante {
     return {

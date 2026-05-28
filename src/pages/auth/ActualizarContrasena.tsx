@@ -129,7 +129,7 @@ export default function ActualizarContrasena() {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <LockOutlinedIcon sx={{ color: "#5fb878" }} />
+                      <LockOutlinedIcon sx={{ color: "#A3BE54" }} />
                     </InputAdornment>
                   ),
                 }}
@@ -145,7 +145,7 @@ export default function ActualizarContrasena() {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <LockOutlinedIcon sx={{ color: "#5fb878" }} />
+                      <LockOutlinedIcon sx={{ color: "#A3BE54" }} />
                     </InputAdornment>
                   ),
                 }}

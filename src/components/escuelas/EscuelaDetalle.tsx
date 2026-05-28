@@ -13,7 +13,7 @@ function getInitials(nombre?: string | null, apellido?: string | null) {
 function InfoItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
     return (
         <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
-            <Box sx={{ color: "#5fb878", mt: 0.3 }}>{icon}</Box>
+            <Box sx={{ color: "#A3BE54", mt: 0.3 }}>{icon}</Box>
             <Box>
                 <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", fontSize: "0.65rem" }}>
                     {label}
@@ -36,7 +36,7 @@ function PersonCard({ title, people, getName, getSubtitle }: {
         <Box sx={{ border: "1px solid #e8e8e8", borderRadius: 2, overflow: "hidden", height: "100%" }}>
             <Box sx={{ px: 2.5, py: 1.5, bgcolor: "#f5f5f5", borderBottom: "1px solid #e8e8e8", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{title}</Typography>
-                <Box sx={{ bgcolor: "#5fb878", color: "#fff", borderRadius: "12px", px: 1.2, py: 0.2, fontSize: "0.75rem", fontWeight: 700, minWidth: 24, textAlign: "center" }}>
+                <Box sx={{ bgcolor: "#A3BE54", color: "#fff", borderRadius: "12px", px: 1.2, py: 0.2, fontSize: "0.75rem", fontWeight: 700, minWidth: 24, textAlign: "center" }}>
                     {people.length}
                 </Box>
             </Box>
@@ -49,7 +49,7 @@ function PersonCard({ title, people, getName, getSubtitle }: {
                     people.map((p, i) => (
                         <Box key={p.id}>
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2.5, py: 1.5 }}>
-                                <Avatar sx={{ width: 36, height: 36, bgcolor: "#5fb878", fontSize: "0.8rem", fontWeight: 700 }}>
+                                <Avatar sx={{ width: 36, height: 36, bgcolor: "#A3BE54", fontSize: "0.8rem", fontWeight: 700 }}>
                                     {getName(p).split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase()}
                                 </Avatar>
                                 <Box>
@@ -80,7 +80,7 @@ export default function EscuelaDetalle({ escuela, onEdit }: any) {
                         variant="contained"
                         startIcon={<EditIcon />}
                         onClick={onEdit}
-                        sx={{ bgcolor: "#5fb878", borderRadius: 2, px: 3, flexShrink: 0, ml: 2, "&:hover": { bgcolor: "#333" } }}
+                        sx={{ bgcolor: "#A3BE54", borderRadius: 2, px: 3, flexShrink: 0, ml: 2, "&:hover": { bgcolor: "#333" } }}
                     >
                         EDITAR ESCUELA
                     </Button>

@@ -189,8 +189,8 @@ export default function Login({ onLogin }: LoginProps) {
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 2,
                     "& fieldset": { borderColor: "transparent" },
-                    "&:hover fieldset": { borderColor: "#5fb878" },
-                    "&.Mui-focused fieldset": { borderColor: "#5fb878" },
+                    "&:hover fieldset": { borderColor: "#A3BE54" },
+                    "&.Mui-focused fieldset": { borderColor: "#A3BE54" },
                   },
                   "& input:-webkit-autofill": {
                     WebkitBoxShadow: "0 0 0 1000px rgba(255, 255, 255, 0.8) inset",
@@ -223,8 +223,8 @@ export default function Login({ onLogin }: LoginProps) {
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 2,
                     "& fieldset": { borderColor: "transparent" },
-                    "&:hover fieldset": { borderColor: "#5fb878" },
-                    "&.Mui-focused fieldset": { borderColor: "#5fb878" },
+                    "&:hover fieldset": { borderColor: "#A3BE54" },
+                    "&.Mui-focused fieldset": { borderColor: "#A3BE54" },
                   },
                   "& input:-webkit-autofill": {
                     WebkitBoxShadow: "0 0 0 1000px rgba(255, 255, 255, 0.8) inset",

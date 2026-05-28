@@ -113,7 +113,7 @@ export default function SolicitarRecuperoPassword() {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <EmailOutlinedIcon sx={{ color: "#5fb878" }} />
+                      <EmailOutlinedIcon sx={{ color: "#A3BE54" }} />
                     </InputAdornment>
                   ),
                 }}

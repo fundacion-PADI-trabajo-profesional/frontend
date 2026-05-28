@@ -6,6 +6,7 @@ import {
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import EditIcon from "@mui/icons-material/Edit";
 import { type Escuela } from "../../api/escuelas";
 
 interface Props {

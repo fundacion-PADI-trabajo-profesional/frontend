@@ -448,9 +448,13 @@ export default function Estudiantes() {
                 {view === 'success' && (
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 8, textAlign: 'center' }}>
                         <CheckCircleOutlineIcon sx={{ fontSize: 80, color: 'success.main', mb: 3 }} />
-                        <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>¡Estudiante registrado!</Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
+                            {estudianteCreado?.reactivado ? "¡Estudiante reactivado!" : "¡Estudiante registrado!"}
+                        </Typography>
                         <Typography variant="body1" sx={{ color: '#666', mb: 4, maxWidth: 400 }}>
-                            Los datos fueron guardados correctamente. ¿Querés evaluarlo ahora?
+                            {estudianteCreado?.reactivado
+                                ? "El alumno fue reactivado con los nuevos datos. ¿Querés evaluarlo ahora?"
+                                : "Los datos fueron guardados correctamente. ¿Querés evaluarlo ahora?"}
                         </Typography>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%', maxWidth: 300 }}>
                             <Button variant="contained" onClick={handleEvaluarAhora} sx={{ bgcolor: '#000', py: 1.5, borderRadius: 2 }}>

@@ -13,7 +13,6 @@ import CssBaseline from "@mui/material/CssBaseline";
 
 const queryClient = new QueryClient();
 
-// Tema básico para MUI (puedes extenderlo o reemplazar por tu `theme.ts`)
 let theme = createTheme({
   palette: {
     mode: "light",

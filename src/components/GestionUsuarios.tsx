@@ -39,12 +39,14 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import MarkEmailReadIcon from "@mui/icons-material/MarkEmailRead";
 import SearchIcon from "@mui/icons-material/Search";
+import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import {
   adminCreateUser,
   adminCreateUsersBulk,
   adminDeleteUser,
   adminListUsers,
   adminResendInvite,
+  adminUpdateUserRol,
   type CreateUserPayload,
 } from "../api/auth";
 
@@ -85,6 +87,11 @@ const emptyForm: CreateUserPayload = {
 };
 
 export default function GestionUsuarios() {
+  const currentUserId: string | null = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem("padiProfile") ?? "null")?.id ?? null; }
+    catch { return null; }
+  }, []);
+
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -115,6 +122,12 @@ export default function GestionUsuarios() {
   // Reenvío de invitación
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [resendSuccess, setResendSuccess] = useState("");
+
+  // Cambio de rol
+  const [rolChangeTarget, setRolChangeTarget] = useState<Usuario | null>(null);
+  const [rolChangeValue, setRolChangeValue] = useState("");
+  const [rolChangeLoading, setRolChangeLoading] = useState(false);
+  const [rolChangeError, setRolChangeError] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -334,6 +347,31 @@ export default function GestionUsuarios() {
     }
   };
 
+  // ─── CAMBIO DE ROL ─────────────────────────────────────────────────────────
+
+  const openRolChange = (usuario: Usuario) => {
+    setRolChangeTarget(usuario);
+    setRolChangeValue(usuario.rol);
+    setRolChangeError("");
+  };
+
+  const handleConfirmRolChange = async () => {
+    if (!rolChangeTarget) return;
+    setRolChangeLoading(true);
+    setRolChangeError("");
+    try {
+      await adminUpdateUserRol(rolChangeTarget.id, rolChangeValue);
+      setUsuarios((prev) =>
+        prev.map((u) => u.id === rolChangeTarget.id ? { ...u, rol: rolChangeValue } : u)
+      );
+      setRolChangeTarget(null);
+    } catch (err: any) {
+      setRolChangeError(err.response?.data?.message || err.message || "No se pudo cambiar el rol.");
+    } finally {
+      setRolChangeLoading(false);
+    }
+  };
+
   // ─── RENDER ────────────────────────────────────────────────────────────────
 
   return (
@@ -516,6 +554,17 @@ export default function GestionUsuarios() {
                                 )}
                               </IconButton>
                             </span>
+                          </Tooltip>
+                        )}
+                        {u.id !== currentUserId && (
+                          <Tooltip title="Cambiar rol">
+                            <IconButton
+                              size="small"
+                              onClick={() => openRolChange(u)}
+                              sx={{ color: "#1565c0", "&:hover": { bgcolor: "#e3f2fd" } }}
+                            >
+                              <ManageAccountsIcon fontSize="small" />
+                            </IconButton>
                           </Tooltip>
                         )}
                         <Tooltip title="Eliminar usuario">
@@ -868,6 +917,65 @@ export default function GestionUsuarios() {
             sx={{ textTransform: "none", borderRadius: 2 }}
           >
             {deleteLoading ? "Eliminando..." : "Eliminar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── CAMBIO DE ROL ─────────────────────────────────────────────────── */}
+      <Dialog
+        open={!!rolChangeTarget}
+        onClose={() => setRolChangeTarget(null)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 700 }}>
+          <ManageAccountsIcon sx={{ color: "#1565c0" }} />
+          Cambiar rol
+          <IconButton onClick={() => setRolChangeTarget(null)} sx={{ ml: "auto" }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ pt: 3 }}>
+          {rolChangeError && (
+            <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+              {rolChangeError}
+            </Alert>
+          )}
+          <Typography variant="body2" color="#555" sx={{ mb: 2 }}>
+            Usuario:{" "}
+            <strong>
+              {rolChangeTarget?.nombre} {rolChangeTarget?.apellido}
+            </strong>
+          </Typography>
+          <TextField
+            label="Nuevo rol"
+            select
+            value={rolChangeValue}
+            onChange={(e) => setRolChangeValue(e.target.value)}
+            fullWidth
+            size="small"
+          >
+            {ROLES.map((r) => (
+              <MenuItem key={r.value} value={r.value}>
+                {r.label}
+              </MenuItem>
+            ))}
+          </TextField>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button onClick={() => setRolChangeTarget(null)} sx={{ textTransform: "none", color: "#666" }}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleConfirmRolChange}
+            disabled={rolChangeLoading || rolChangeValue === rolChangeTarget?.rol}
+            startIcon={rolChangeLoading ? <CircularProgress size={16} color="inherit" /> : <ManageAccountsIcon />}
+            sx={{ bgcolor: "#1565c0", textTransform: "none", borderRadius: 2, "&:hover": { bgcolor: "#0d47a1" } }}
+          >
+            {rolChangeLoading ? "Guardando..." : "Confirmar cambio"}
           </Button>
         </DialogActions>
       </Dialog>

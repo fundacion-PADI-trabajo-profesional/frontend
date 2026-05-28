@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { type Escuela, getEscuelas } from "../api/escuelas";
-import { type Aula, getAulaEstudiantes} from "../api/aulas";
+import { type Aula, getAulaEstudiantes } from "../api/aulas";
 import { type Estudiante, getEstudiantes, getSalas, type Sala } from "../api/estudiantes";
 import { getDocentes, type Docente } from "../api/docentes";
 import {
@@ -15,11 +15,11 @@ import {
     type Zona,
 } from "../api/zonas";
 import Zonas from "./Zonas";
-import PageHeader from "../components/PageHeader";
-import EscuelasView from "../components/EscuelasView";
-import AulasView from "../components/AulasView";
-import EstudiantesAulaView from "../components/EstudiantesAulaView";
-import SalasView from "../components/SalasView";
+import PageHeader from "../components/common/PageHeader";
+import EscuelasView from "../components/escuelas/EscuelasView";
+import AulasView from "../components/aulas/AulasView";
+import EstudiantesAulaView from "../components/aulas/EstudiantesAulaView";
+import SalasView from "../components/aulas/SalasView";
 type ViewMode = "zonas" | "escuelas" | "salas" | "aulas" | "estudiantes";
 
 export default function PanelControl() {
@@ -89,7 +89,7 @@ export default function PanelControl() {
             navigate("/home");
             return;
         }
-        
+
         loadData().then(() => {
             if (isEquipoPadi) setView("zonas");
             else setView("escuelas");
@@ -147,7 +147,7 @@ export default function PanelControl() {
 
     const openEscuelaSalas = (escuela: Escuela) => {
         setSelectedEscuela(escuela);
-        setSelectedSala(null); 
+        setSelectedSala(null);
         setSelectedAula(null);
         setView("salas");
     };
@@ -184,7 +184,7 @@ export default function PanelControl() {
 
     return (
         <Box sx={{ minHeight: "100vh", bgcolor: "#fff" }}>
-            <PageHeader 
+            <PageHeader
                 title="Panel de control"
                 subtitle={panelSubtitle}
                 backTo="/home"
@@ -201,10 +201,10 @@ export default function PanelControl() {
                         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
                         {!error && view === "zonas" && (
                             <Zonas
-                                zonas={zonas} 
-                                onVerEscuelas={openZonaEscuelas} 
-                                onUpdate={loadData} 
-                                setError={setError} 
+                                zonas={zonas}
+                                onVerEscuelas={openZonaEscuelas}
+                                onUpdate={loadData}
+                                setError={setError}
                             />
                         )}
                         {!error && view === "escuelas" && (
@@ -215,7 +215,7 @@ export default function PanelControl() {
                                     setSelectedZona(null);
                                     setView("zonas");
                                 }}
-                                onVerAulas={openEscuelaSalas} 
+                                onVerAulas={openEscuelaSalas}
                             />
                         )}
                         {!error && view === "salas" && selectedEscuela && (
@@ -223,7 +223,7 @@ export default function PanelControl() {
                                 escuelaId={selectedEscuela.id}
                                 escuelaNombre={selectedEscuela.nombre}
                                 onVolver={() => setView("escuelas")}
-                                onVerAulas={openSalaAulas} 
+                                onVerAulas={openSalaAulas}
                             />
                         )}
                         {!error && view === "aulas" && selectedEscuela && selectedSala && (

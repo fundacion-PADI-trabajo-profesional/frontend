@@ -13,14 +13,14 @@ import "./App.css" //
 import Escuelas from "./pages/Escuelas"
 import AulasPage from "./pages/Aulas"
 import PanelControl from "./pages/PanelControl"
-import ActualizarContrasena from "./pages/ActualizarContrasena"
-import SolicitarRecuperoPassword from "./pages/SolicitarRecuperoPassword"
-import CambiarContrasenaTemporal from "./pages/CambiarContrasenaTemporal"
+import ActualizarContrasena from "./pages/auth/ActualizarContrasena"
+import SolicitarRecuperoPassword from "./pages/auth/SolicitarRecuperoPassword"
+import CambiarContrasenaTemporal from "./pages/auth/CambiarContrasenaTemporal"
 import GestionUsuariosPage from "./pages/GestionUsuariosPage"
-import EstadisticasPadi from "./pages/EstadisticasPadi"
-import EstadisticasZona from "./pages/EstadisticasZona"
-import EstadisticasEscuela from "./pages/EstadisticasEscuela"
-import EstadisticasDocente from "./pages/EstadisticasDocente"
+import EstadisticasPadi from "./pages/estadisticas/EstadisticasPadi"
+import EstadisticasZona from "./pages/estadisticas/EstadisticasZona"
+import EstadisticasEscuela from "./pages/estadisticas/EstadisticasEscuela"
+import EstadisticasDocente from "./pages/estadisticas/EstadisticasDocente"
 
 // Define a type for your user object
 interface User {
@@ -87,7 +87,7 @@ function App() {
 
         {/* Rutas de Gestión (Ahora protegidas) */}
         <Route path="/escuelas" element={currentUser ? <Escuelas /> : <Navigate to="/login" replace />} />
-        
+
         {/* Ruta exclusiva equipo_padi */}
         <Route
           path="/usuarios"

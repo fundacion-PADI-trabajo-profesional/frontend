@@ -4,15 +4,15 @@ import { useState, useEffect } from "react"
 import { Box, Container, Typography, Button, CircularProgress, Alert, Paper, List, ListItem, ListItemText, Stack, Tooltip, FormControl, InputLabel, Select, MenuItem } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import { useNavigate } from "react-router-dom"
-import EstudiantesCompacto from "../components/EstudiantesCompacto"
-import EstudianteForm from "../components/EstudianteForm"
+import EstudiantesCompacto from "../components/estudiantes/EstudiantesCompacto"
+import EstudianteForm from "../components/forms/EstudianteForm"
 import { getEstudiantes, deleteEstudiante, type Estudiante, type EstudianteCreado } from "../api/estudiantes"
 import { getDocenteAulasConEstudiantes, type DocenteAulaConEstudiantes } from "../api/aulas"
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import BulkUploadForm from "../components/BulkUploadForm"
+import BulkUploadForm from "../components/forms/BulkUploadForm"
 import { TextField, InputAdornment } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import SinEscuelaAsignada from "../components/SinEscuelaAsignada";
+import SinEscuelaAsignada from "../components/common/SinEscuelaAsignada";
 
 /**
  * Página principal de Estudiantes.
@@ -487,10 +487,10 @@ export default function Estudiantes() {
                     open={modalMasivoOpen}
                     onCancel={() => setModalMasivoOpen(false)}
                     onSuccess={(data) => {
-                        setModalMasivoOpen(false); 
-                        setCantidadCreados(data.length); 
+                        setModalMasivoOpen(false);
+                        setCantidadCreados(data.length);
                         setView('successBulk');
-                        setRefreshKey(k => k + 1); 
+                        setRefreshKey(k => k + 1);
                     }}
                 />
 

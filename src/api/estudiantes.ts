@@ -81,6 +81,7 @@ export interface EstudianteCreado {
     grado: number | null;
     sala_id: number;
     fecha_creacion: string;
+    reactivado?: boolean;
     persona: {
         id: string;
         dni: string | null;

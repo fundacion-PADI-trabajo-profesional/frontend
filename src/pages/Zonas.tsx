@@ -18,9 +18,9 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { createZona, desvincularEncargado, type Zona } from "../api/zonas";
-import AsignarEncargadoModal from "../components/AsignarEncargadoModal";
-import BotonNuevo from "../components/BotonNuevo";
-import ZonaForm from "../components/ZonaForm";
+import AsignarEncargadoModal from "../components/escuelas/AsignarEncargadoModal";
+import BotonNuevo from "../components/common/BotonNuevo";
+import ZonaForm from "../components/forms/ZonaForm";
 
 interface ZonasProps {
     zonas: Zona[];

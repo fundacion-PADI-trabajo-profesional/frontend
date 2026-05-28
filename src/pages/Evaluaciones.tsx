@@ -7,10 +7,10 @@ import Fab from "@mui/material/Fab";
 import AddIcon from "@mui/icons-material/Add";
 import Tooltip from "@mui/material/Tooltip";
 import { useNavigate, useSearchParams } from "react-router-dom"
-import EvaluacionesList from "../components/EvaluacionesList"
-import EvaluacionForm from "../components/EvaluacionForm"
+import EvaluacionesList from "../components/evaluaciones/EvaluacionesList"
+import EvaluacionForm from "../components/forms/EvaluacionForm"
 import type { EvaluacionInstancia } from "../api/evaluaciones";
-import EvaluacionDetalle from "../components/EvaluacionDetalle"
+import EvaluacionDetalle from "../components/evaluaciones/EvaluacionDetalle"
 
 export default function Evaluaciones() {
   const [profile, setProfile] = useState<any | null>(null)

@@ -3,10 +3,10 @@ import { Container, Box, CircularProgress, Alert } from "@mui/material";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { type Aula } from "../api/aulas";
 import { type Sala } from "../api/estudiantes";
-import SalasView from "../components/SalasView";
-import AulasView from "../components/AulasView";
-import EstudiantesAulaView from "../components/EstudiantesAulaView";
-import PageHeader from "../components/PageHeader";
+import SalasView from "../components/aulas/SalasView";
+import AulasView from "../components/aulas/AulasView";
+import EstudiantesAulaView from "../components/aulas/EstudiantesAulaView";
+import PageHeader from "../components/common/PageHeader";
 
 export default function AulasPage() {
   const navigate = useNavigate();
@@ -70,7 +70,7 @@ export default function AulasPage() {
               <SalasView
                 escuelaId={escuelaId}
                 escuelaNombre={escuelaNombre}
-                onVolver={() => navigate(-1)}
+                onVolver={() => navigate("/home")}
                 onVerAulas={(sala) => setSelectedSala(sala)}
               />
             ) :

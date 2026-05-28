@@ -1,7 +1,7 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Container, Box } from "@mui/material";
-import EscuelasView from "../components/EscuelasView";
-import PageHeader from "../components/PageHeader";
+import EscuelasView from "../components/escuelas/EscuelasView";
+import PageHeader from "../components/common/PageHeader";
 
 export default function EscuelasPage() {
     const navigate = useNavigate();

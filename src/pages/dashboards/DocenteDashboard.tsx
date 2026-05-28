@@ -1,6 +1,6 @@
 import { Grid, Typography, Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import DashboardCard from "../../components/DashboardCard";
+import DashboardCard from "../../components/common/DashboardCard";
 import { useEffect, useState } from "react";
 
 export default function DocenteDashboard() {
@@ -15,7 +15,7 @@ export default function DocenteDashboard() {
         const profile = profileRaw ? JSON.parse(profileRaw) : null;
 
         const nombre = profile?.nombre ?? user?.nombre ?? "Docente";
-        
+
         setNombreDocente(nombre);
     }, []);
 

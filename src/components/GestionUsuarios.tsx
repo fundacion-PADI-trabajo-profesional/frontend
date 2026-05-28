@@ -1,3 +1,14 @@
+/**
+ * @file GestionUsuarios.tsx
+ * @description Componente principal de administración de usuarios del sistema PADI.
+ * Solo accesible para el rol `equipo_padi`.
+ *
+ * Responsabilidades:
+ * - Cargar y mostrar la lista de usuarios con filtros de texto, rol y estado.
+ * - Abrir los modales de creación individual, carga masiva, cambio de rol y eliminación.
+ * - Reenviar invitaciones a usuarios pendientes de activación.
+ * - Actualizar la lista localmente tras cambios de rol (sin recargar desde la API).
+ */
 // src/components/GestionUsuarios.tsx
 import { useState, useCallback, useEffect, useMemo } from "react";
 import {
@@ -35,7 +46,18 @@ import ModalCargaMasiva from "./usuarios/ModalCargaMasiva";
 import ModalConfirmarEliminar from "./usuarios/ModalConfirmarEliminar";
 import ModalCambiarRol from "./usuarios/ModalCambiarRol";
 
+/**
+ * Página de gestión de usuarios del sistema.
+ *
+ * Orquesta la carga de datos, los filtros y la apertura de los modales especializados.
+ * El estado de cada modal se mantiene aquí (qué usuario está seleccionado); la lógica
+ * interna de cada operación vive en su propio componente modal.
+ */
 export default function GestionUsuarios() {
+  /**
+   * ID del usuario autenticado actualmente, leído desde `localStorage`.
+   * Se usa para ocultar el botón de cambio de rol en la propia fila del usuario.
+   */
   const currentUserId: string | null = useMemo(() => {
     try { return JSON.parse(localStorage.getItem("padiProfile") ?? "null")?.id ?? null; }
     catch { return null; }
@@ -60,6 +82,7 @@ export default function GestionUsuarios() {
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [resendSuccess, setResendSuccess] = useState("");
 
+  /** Carga (o recarga) la lista completa de usuarios desde la API. */
   const fetchUsuarios = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -93,6 +116,7 @@ export default function GestionUsuarios() {
   const hasFilters = filterText || filterRol || filterEstado;
   const clearFilters = () => { setFilterText(""); setFilterRol(""); setFilterEstado(""); };
 
+  /** Reenvía el email de invitación a un usuario que todavía no aceptó la suya. */
   const handleResendInvite = async (usuario: Usuario) => {
     setResendingId(usuario.id);
     setResendSuccess("");
@@ -108,10 +132,15 @@ export default function GestionUsuarios() {
     }
   };
 
+  /**
+   * Actualiza el rol de un usuario en el estado local sin recargar desde la API.
+   * Es invocado por `ModalCambiarRol` tras confirmar el cambio exitosamente.
+   */
   const handleRolChanged = (userId: string, newRol: string) => {
     setUsuarios((prev) => prev.map((u) => u.id === userId ? { ...u, rol: newRol } : u));
   };
 
+  /** Recarga la lista completa tras eliminar un usuario. */
   const handleDeleted = () => {
     fetchUsuarios();
   };

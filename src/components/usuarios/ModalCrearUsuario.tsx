@@ -23,11 +23,20 @@ import { ROLES } from "./types";
 const emptyForm: CreateUserPayload = { nombre: "", apellido: "", email: "", rol: "" };
 
 interface Props {
+  /** Controla la visibilidad del diálogo. */
   open: boolean;
+  /** Callback invocado al cerrar sin completar la acción. */
   onClose: () => void;
+  /** Callback invocado tras crear el usuario exitosamente; la lista debe recargarse. */
   onCreated: () => void;
 }
 
+/**
+ * Diálogo modal para crear un usuario individual.
+ *
+ * Maneja su propio estado de formulario, validaciones y llamada a la API.
+ * Al confirmar, invita al usuario vía email y notifica al padre mediante `onCreated`.
+ */
 export default function ModalCrearUsuario({ open, onClose, onCreated }: Props) {
   const [formData, setFormData] = useState<CreateUserPayload>(emptyForm);
   const [formError, setFormError] = useState("");

@@ -32,11 +32,23 @@ import { adminCreateUsersBulk, type CreateUserPayload } from "../../api/auth";
 import { ROLES, rolColor, rolLabel } from "./types";
 
 interface Props {
+  /** Controla la visibilidad del diálogo. */
   open: boolean;
+  /** Callback invocado al cerrar sin completar la importación. */
   onClose: () => void;
+  /** Callback invocado tras crear al menos un usuario exitosamente; la lista debe recargarse. */
   onCreated: () => void;
 }
 
+/**
+ * Diálogo modal para importación masiva de usuarios desde un archivo Excel (.xlsx / .csv).
+ *
+ * Flujo interno:
+ * 1. El usuario selecciona un archivo; se parsea con XLSX y se normalizan las columnas.
+ * 2. Se valida que cada fila tenga nombre, apellido, email y un rol válido.
+ * 3. Se muestra una vista previa con el resultado de la validación.
+ * 4. Al confirmar se llama a `adminCreateUsersBulk` y se presenta el resumen de éxitos/errores.
+ */
 export default function ModalCargaMasiva({ open, onClose, onCreated }: Props) {
   const [excelRows, setExcelRows] = useState<CreateUserPayload[]>([]);
   const [excelError, setExcelError] = useState("");

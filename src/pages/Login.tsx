@@ -67,6 +67,8 @@ export default function Login({ onLogin }: LoginProps) {
         justifyContent: "center",
         position: "relative",
         overflow: "hidden",
+        px: { xs: 2, sm: 3 },
+        py: { xs: 4, md: 0 },
       }}
     >
       {/* IMAGEN DE FONDO */}
@@ -98,17 +100,17 @@ export default function Login({ onLogin }: LoginProps) {
           width: "100%",
           maxWidth: 1000,
           margin: "auto",
-          borderRadius: 4,
+          borderRadius: { xs: 3, md: 4 },
           overflow: "hidden",
           boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
-          flexDirection: { xs: "column", md: "row" },
+          flexDirection: "row",
         }}
       >
-        {/* SECCIÓN IZQUIERDA (LOGO) */}
+        {/* SECCIÓN IZQUIERDA (LOGO) — solo desktop */}
         <Box
           sx={{
             flex: 1,
-            display: "flex",
+            display: { xs: "none", md: "flex" },
             alignItems: "center",
             justifyContent: "center",
             p: 4,
@@ -116,33 +118,40 @@ export default function Login({ onLogin }: LoginProps) {
             backdropFilter: "blur(10px)",
           }}
         >
-          <Box>
-            <img
-              src="/assets/images/logo_sin_fondo.png"
-              alt="Logo PADI Fundación"
-              style={{
-                width: "100%",
-                height: "auto",
-                maxWidth: 300,
-                filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.1))"
-              }}
-            />
-          </Box>
+          <img
+            src="/assets/images/logo_sin_fondo.png"
+            alt="Logo PADI Fundación"
+            style={{
+              width: "100%",
+              height: "auto",
+              maxWidth: 300,
+              filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.1))"
+            }}
+          />
         </Box>
 
-        {/* SECCIÓN DERECHA (FORMULARIO) */}
+        {/* SECCIÓN FORMULARIO */}
         <Box
           sx={{
             flex: 1,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            p: { xs: 4, sm: 6 },
+            p: { xs: 3, sm: 5, md: 6 },
             bgcolor: "rgba(255, 255, 255, 0.65)",
             backdropFilter: "blur(25px)",
           }}
         >
           <Box sx={{ width: "100%", maxWidth: 400 }}>
+
+            {/* LOGO compacto — solo mobile */}
+            <Box sx={{ display: { xs: "flex", md: "none" }, justifyContent: "center", mb: 3 }}>
+              <img
+                src="/assets/images/logo_sin_fondo.png"
+                alt="Logo PADI Fundación"
+                style={{ width: 140, height: "auto" }}
+              />
+            </Box>
 
             <Typography
               variant="h5"
@@ -151,6 +160,7 @@ export default function Login({ onLogin }: LoginProps) {
                 mb: 4,
                 color: "#333",
                 fontWeight: 600,
+                fontSize: { xs: "1.15rem", sm: "1.5rem" },
                 textShadow: "0 1px 1px rgba(255,255,255,0.8)"
               }}
             >
@@ -265,14 +275,14 @@ export default function Login({ onLogin }: LoginProps) {
                   py: 1.5,
                   mt: 2,
                   width: "100%",
-                  maxWidth: "200px", // ACORTADO
-                  mx: "auto",        // CENTRADO
+                  maxWidth: { xs: "100%", sm: "200px" },
+                  mx: "auto",
                   display: "block",
                   bgcolor: "#65944F",
                   color: "white",
                   fontSize: "1rem",
                   fontWeight: 600,
-                  borderRadius: 30, // ESTILO PILL
+                  borderRadius: 30,
                   textTransform: "none",
                   boxShadow: "0 4px 14px 0 rgba(101, 148, 79, 0.39)",
                   transition: "0.3s",

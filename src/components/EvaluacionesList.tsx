@@ -54,6 +54,7 @@ export default function EvaluacionesList({
 
   const [filtros, setFiltros] = useState({
     busqueda: "", // Para DNI o Nombre
+    escuela: "todas",
     sala: "todas",
     comision: "todas",
     tipo: "todos",
@@ -208,8 +209,9 @@ export default function EvaluacionesList({
     const cumpleComision = filtros.comision === "todas" || ev.aulaLabel === filtros.comision;
     const cumpleTipo = filtros.tipo === "todos" || ev.tipoId === filtros.tipo;
     const cumpleEstado = filtros.estado === "todos" || ev.estadoId === filtros.estado;
+    const cumpleEscuela = filtros.escuela === "todas" || ev.escuelaNombre === filtros.escuela;
 
-    return cumpleBusqueda && cumpleSala && cumpleComision && cumpleTipo && cumpleEstado;
+    return cumpleBusqueda && cumpleSala && cumpleComision && cumpleTipo && cumpleEstado && cumpleEscuela;
   });
 
   // Ahora agrupamos las FILTRADAS
@@ -262,6 +264,7 @@ export default function EvaluacionesList({
 
   const salasUnicas = Array.from(new Set(evaluaciones.map(ev => ev.salaNombre).filter(Boolean)));
   const comisionesUnicas = Array.from(new Set(evaluaciones.map(ev => ev.aulaLabel).filter(Boolean)));
+  const escuelasUnicas = Array.from(new Set(evaluaciones.map(ev => ev.escuelaNombre).filter(Boolean))) as string[];
 
   return (
     <>
@@ -278,6 +281,21 @@ export default function EvaluacionesList({
               value={filtros.busqueda}
               onChange={(e) => setFiltros({ ...filtros, busqueda: e.target.value })}
             />
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <TextField
+              select
+              fullWidth
+              label="Escuela"
+              size="small"
+              value={filtros.escuela}
+              onChange={(e) => setFiltros({ ...filtros, escuela: e.target.value })}
+            >
+              <MenuItem value="todas">Todas las escuelas</MenuItem>
+              {escuelasUnicas.map(escuela => (
+                <MenuItem key={escuela} value={escuela}>{escuela}</MenuItem>
+              ))}
+            </TextField>
           </Grid>
           <Grid item xs={6} md={2}>
             <TextField
@@ -344,7 +362,7 @@ export default function EvaluacionesList({
           <Grid item xs={12} md={3}>
             <Button
               variant="text"
-              onClick={() => setFiltros({ busqueda: "", sala: "todas", comision: "todas", tipo: "todos", estado: "todos" })}
+              onClick={() => setFiltros({ busqueda: "", sala: "todas", comision: "todas", tipo: "todos", estado: "todos", escuela: "todas" })}
             >
               Limpiar Filtros
             </Button>

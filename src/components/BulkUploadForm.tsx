@@ -277,10 +277,12 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                 const retroceso = data.retrocesos.find((r: any) => r.dni === est.dni);
                 const promovido = data.promovidos.find((r: any) => r.dni === est.dni);
                 const repitente = data.repitentes.find((r: any) => r.dni === est.dni);
+                const reactivado = data.reactivados?.find((r: any) => r.dni === est.dni);
 
                 if (retroceso) return { ...est, estado: 'retroceso', old_sala_id: retroceso.old_sala_id };
                 if (promovido) return { ...est, estado: 'promovido', old_sala_id: promovido.old_sala_id };
                 if (repitente) return { ...est, estado: 'repite' };
+                if (reactivado) return { ...est, estado: 'reactivado' };
                 return { ...est, estado: 'nuevo' };
             });
 
@@ -352,6 +354,11 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                 {step === 'preview' && stats && !successMessage && (
                     <Alert severity={stats.retrocesos.length > 0 ? "warning" : "info"} icon={stats.retrocesos.length > 0 ? <WarningAmberIcon /> : undefined} sx={{ mb: 3, borderRadius: 2 }}>
                         <strong>Análisis Alumnos:</strong> Se detectaron {stats.nuevos.length} ingresos nuevos, {stats.promovidos.length} pases de año y {stats.repitentes.length} que repiten sala.
+                        {(stats.reactivados?.length ?? 0) > 0 && (
+                            <Box sx={{ mt: 1, color: '#1565c0', fontWeight: 'bold' }}>
+                                {stats.reactivados.length} alumno(s) serán reactivados (estaban dados de baja).
+                            </Box>
+                        )}
                         {stats.retrocesos.length > 0 && (
                             <Box sx={{ mt: 1, color: '#d32f2f', fontWeight: 'bold' }}>
                                 ¡Atención! Hay {stats.retrocesos.length} alumno(s) que figuran retrocediendo de sala. ¿Estás seguro de que esto es correcto?
@@ -391,6 +398,7 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                                                         {row.estado === 'promovido' && <Chip label={`Pasó (De ${row.old_sala_id} a ${row.sala_id})`} size="small" color="primary" variant="outlined" />}
                                                         {row.estado === 'repite' && <Chip label="Mantiene sala" size="small" color="default" />}
                                                         {row.estado === 'retroceso' && <Chip label={`Retrocede (De ${row.old_sala_id} a ${row.sala_id})`} size="small" color="error" />}
+                                                        {row.estado === 'reactivado' && <Chip label="Reactivado" size="small" color="info" />}
                                                     </TableCell>
                                                 )}
                                             </TableRow>

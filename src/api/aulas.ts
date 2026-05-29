@@ -4,10 +4,14 @@ import type { Estudiante } from "./estudiantes";
 
 /** Lee usuario y rol desde padiUser para construir query params autenticados. */
 const getUserData = () => {
-  const stored = localStorage.getItem("padiUser");
-  if (stored) {
-    const user = JSON.parse(stored);
-    return { usuario_id: user.id, rol: user.rol };
+  try {
+    const stored = localStorage.getItem("padiUser");
+    if (stored) {
+      const user = JSON.parse(stored);
+      return { usuario_id: user.id, rol: user.rol };
+    }
+  } catch {
+    // localStorage corrupto — tratar como no autenticado
   }
   return { usuario_id: "", rol: "" };
 };
@@ -141,7 +145,8 @@ export const getAulaEstudiantes = async (aulaId: string): Promise<Estudiante[]> 
 export const asignarEstudianteAula = async (aulaId: string, estudianteId: string) => {
   // Obtenemos datos de sesión para validación de roles en el backend
   const stored = localStorage.getItem("padiUser");
-  const user = stored ? JSON.parse(stored) : null;
+  let user = null;
+  try { user = stored ? JSON.parse(stored) : null; } catch { /* localStorage corrupto */ }
 
   const payload = {
     estudiante_id: estudianteId, // Debe coincidir con el controlador

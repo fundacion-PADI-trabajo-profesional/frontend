@@ -484,20 +484,22 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                             {preguntaActual.consigna || preguntaActual.titulo || "¿Cumple con el criterio?"}
                                         </Typography>
 
-                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                            Criterio de Aprobación: {preguntaActual.aprueba_con}
-                                        </Typography>
+                                        <Box sx={{ mb: 2, p: 1.5, bgcolor: '#f0fdf4', borderRadius: 2, border: '1px solid #bbf7d0' }}>
+                                            <Typography variant="body1" sx={{ fontWeight: 600, color: '#166534', fontSize: '0.95rem' }}>
+                                                ✓ Criterio de Aprobación: {preguntaActual.aprueba_con}
+                                            </Typography>
+                                        </Box>
 
                                         {preguntaActual.detalle && (
                                             <Alert severity="info" sx={{ mb: 2, bgcolor: '#e0f7fa', color: '#006064' }}>
-                                                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                                <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.95rem' }}>
                                                     Nota: {preguntaActual.detalle}
                                                 </Typography>
                                             </Alert>
                                         )}
 
                                         {preguntaActual.materiales && preguntaActual.materiales !== '-' && (
-                                            <Typography variant="body2" sx={{ bgcolor: '#fffbeb', p: 1, borderRadius: 1, color: '#d97706' }}>
+                                            <Typography variant="body2" sx={{ fontWeight: 500, bgcolor: '#fffbeb', p: 1, borderRadius: 1, color: '#d97706', fontSize: '0.95rem' }}>
                                                 🛠️ Materiales: {preguntaActual.materiales}
                                             </Typography>
                                         )}

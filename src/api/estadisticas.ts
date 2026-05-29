@@ -60,7 +60,6 @@ export interface RiesgoResponse {
 }
 
 /** Realiza la lectura y validación de un endpoint de heatmap. */
-/** Realiza la lectura y validación de un endpoint de heatmap. */
 async function fetchHeatmap(url: string): Promise<HeatmapResponse> {
   const res = await fetch(url, { headers: getAuthHeaders() });
   const body: ApiResponse<HeatmapResponse> = await res.json();
@@ -101,7 +100,6 @@ export async function getHeatmapAulas(params: {
   return fetchHeatmap(`${API_URL}/estadisticas/escuela/heatmap-aulas?${qs}`);
 }
 
-/** Realiza la lectura y validación de un endpoint de estudiantes en riesgo. */
 /** Realiza la lectura y validación de un endpoint de estudiantes en riesgo. */
 async function fetchRiesgo(url: string): Promise<RiesgoResponse> {
   const res = await fetch(url, { headers: getAuthHeaders() });
@@ -164,7 +162,6 @@ export interface AreasCriticasResponse {
 }
 
 /** Realiza la lectura y validación de un endpoint de evolución. */
-/** Realiza la lectura y validación de un endpoint de evolución. */
 async function fetchEvolucion(url: string): Promise<EvolucionResponse> {
   const res = await fetch(url, { headers: getAuthHeaders() });
   const body: ApiResponse<EvolucionResponse> = await res.json();
@@ -174,7 +171,6 @@ async function fetchEvolucion(url: string): Promise<EvolucionResponse> {
   return body.data;
 }
 
-/** Realiza la lectura y validación de un endpoint de áreas críticas. */
 /** Realiza la lectura y validación de un endpoint de áreas críticas. */
 async function fetchAreasCriticas(url: string): Promise<AreasCriticasResponse> {
   const res = await fetch(url, { headers: getAuthHeaders() });

@@ -19,6 +19,8 @@ export interface PreguntaBase {
   aprueba_con?: string; // Ej: '2/3'
   puntaje?: number;
   grupopregunta?: string;
+  /** Si es true, el punto se otorga cuando la respuesta es NO (pregunta negativa) */
+  puntaje_invertido?: boolean;
 }
 
 export interface RespuestaPrevia {

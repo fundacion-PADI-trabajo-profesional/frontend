@@ -147,7 +147,7 @@ export default function EvaluacionRevision({ open, onClose, onCorrect, evaluacio
                                                 {getGroupTitleFromQuestions(preguntasDelGrupo, groupNumber)}
                                             </Typography>
                                             <Typography variant="body2" color="text.secondary">
-                                                Se aprueba con {stats.needed}/{stats.total} respuestas “Sí”
+                                                Se aprueba con {stats.needed}/{stats.total} puntos correctos
                                             </Typography>
                                         </Box>
 

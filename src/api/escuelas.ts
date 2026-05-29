@@ -56,9 +56,7 @@ export const getNivelSocioeconomicoLabel = (value?: string) => {
 
 /** Obtiene las escuelas visibles para la sesión actual. */
 export const getEscuelas = async (): Promise<Escuela[]> => {
-    const { usuario_id, rol } = getUserData();
-    const response = await api.get(`/escuelas?usuario_id=${usuario_id}&rol=${rol}`);
-
+    const response = await api.get(`/escuelas`);
     return response.data.data || [];
 };
 

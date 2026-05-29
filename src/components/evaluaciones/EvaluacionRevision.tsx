@@ -34,11 +34,13 @@ export default function EvaluacionRevision({ open, onClose, onCorrect, evaluacio
         }
     }, [open, evaluacionId, areaId]);
 
-    const getAnswerText = (preguntaId: string) => {
+    const getAnswerText = (preguntaId: string, puntajeInvertido?: boolean) => {
         const respuesta = data?.respuestas.find(r => r.pregunta_id === preguntaId);
-        if (respuesta === undefined || respuesta.respuesta === null) return { text: 'No respondida', icon: <CancelIcon color="disabled" /> };
-        if (respuesta.respuesta === 1) return { text: 'Sí', icon: <CheckCircleIcon color="success" /> };
-        return { text: 'No', icon: <CancelIcon color="error" /> };
+        if (respuesta === undefined || respuesta.respuesta === null) return { text: 'No respondida', icon: <CancelIcon color="disabled" />, esCorrecta: false };
+        const esCorrecta = puntajeInvertido ? respuesta.respuesta === 0 : respuesta.respuesta === 1;
+        const text = respuesta.respuesta === 1 ? 'Sí' : 'No';
+        const icon = esCorrecta ? <CheckCircleIcon color="success" /> : <CancelIcon color="error" />;
+        return { text, icon, esCorrecta };
     };
 
     const getGroupTitleFromQuestions = (preguntas: any[], groupNumber: number) => {
@@ -72,7 +74,8 @@ export default function EvaluacionRevision({ open, onClose, onCorrect, evaluacio
             const r = data?.respuestas.find(x => x.pregunta_id === p.id)?.respuesta ?? null;
             if (r !== null && r !== undefined) {
                 answered += 1;
-                if (r === 1) correct += 1;
+                const esCorrecta = p.puntaje_invertido ? r === 0 : r === 1;
+                if (esCorrecta) correct += 1;
             }
         }
 
@@ -182,7 +185,7 @@ export default function EvaluacionRevision({ open, onClose, onCorrect, evaluacio
                                     {/* Preguntas del grupo */}
                                     <List disablePadding>
                                         {preguntasDelGrupo.map((p: any, idx: number) => {
-                                            const { text } = getAnswerText(p.id);
+                                            const { text, esCorrecta } = getAnswerText(p.id, p.puntaje_invertido);
                                             return (
                                                 <React.Fragment key={p.id}>
                                                     <ListItem alignItems="flex-start" sx={{ px: 2, py: 1.25 }}>
@@ -204,11 +207,11 @@ export default function EvaluacionRevision({ open, onClose, onCorrect, evaluacio
                                                                 size="small"
                                                                 sx={{
                                                                     fontWeight: 700,
-                                                                    ...(text === "Sí"
-                                                                        ? { bgcolor: "#ECF7F0", color: "#4F8A5B" }
-                                                                        : text === "No"
-                                                                            ? { bgcolor: "#FDEFF0", color: "#C05A63" }
-                                                                            : { bgcolor: "#F1F3F5", color: "#6C757D" })
+                                                                    ...(text === "No respondida"
+                                                                        ? { bgcolor: "#F1F3F5", color: "#6C757D" }
+                                                                        : esCorrecta
+                                                                            ? { bgcolor: "#ECF7F0", color: "#4F8A5B" }
+                                                                            : { bgcolor: "#FDEFF0", color: "#C05A63" })
                                                                 }}
                                                             />
                                                         </ListItemIcon>

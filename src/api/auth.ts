@@ -122,8 +122,16 @@ export function setupFetchInterceptor() {
 
     if (response.status === 401) {
       const url = typeof input === "string" ? input : (input as Request).url;
-      // Evitar loop infinito en el propio endpoint de refresh
-      if (url.includes("/auth/")) return response;
+      // Evitar loop infinito: bypassear solo los endpoints de auth que no necesitan refresh
+      const AUTH_BYPASS_ENDPOINTS = [
+        "/auth/login",
+        "/auth/register",
+        "/auth/refresh-token",
+        "/auth/reset-password-request",
+        "/auth/update-password",
+      ];
+      const urlPath = new URL(url, window.location.origin).pathname;
+      if (AUTH_BYPASS_ENDPOINTS.includes(urlPath)) return response;
 
       const newToken = await getRefreshedToken();
 
@@ -176,7 +184,7 @@ export const api = {
   },
 
   /** Ejecuta una request POST autenticada y reintenta si recibe 401. */
-  post: async (endpoint: string, body: any) => {
+  post: async <T = unknown>(endpoint: string, body: T) => {
     const response = await fetch(`${API_URL}${endpoint}`, {
       method: "POST",
       headers: getAuthHeaders(),
@@ -192,7 +200,7 @@ export const api = {
   },
 
   /** Ejecuta una request PUT autenticada y reintenta si recibe 401. */
-  put: async (endpoint: string, body: any) => {
+  put: async <T = unknown>(endpoint: string, body: T) => {
     const response = await fetch(`${API_URL}${endpoint}`, {
       method: "PUT",
       headers: getAuthHeaders(),
@@ -208,7 +216,7 @@ export const api = {
   },
 
   /** Ejecuta una request PATCH autenticada y reintenta si recibe 401. */
-  patch: async (endpoint: string, body: any) => {
+  patch: async <T = unknown>(endpoint: string, body: T) => {
     const response = await fetch(`${API_URL}${endpoint}`, {
       method: "PATCH",
       headers: getAuthHeaders(),

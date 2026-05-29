@@ -82,14 +82,15 @@ function SidebarPanel({
                 {preguntas.map((p, idx) => {
                     const answer = respuestas[p.id];
                     const isCurrent = idx === currentIndex;
-                    const isYes = answer === 1;
-                    const isNo = answer === 0;
-                    const isAnswered = isYes || isNo;
+                    const isAnswered = answer === 0 || answer === 1;
+                    // Para preguntas invertidas, NO=correcto; para normales, SÍ=correcto
+                    const isCorrecta = p.puntaje_invertido ? answer === 0 : answer === 1;
+                    const isIncorrecta = p.puntaje_invertido ? answer === 1 : answer === 0;
 
                     return (
                         <Tooltip
                             key={p.id}
-                            title={`P${idx + 1}: ${isYes ? 'Sí ✓' : isNo ? 'No ✗' : 'Sin responder'}`}
+                            title={`P${idx + 1}: ${answer === 1 ? 'Sí' : answer === 0 ? 'No' : 'Sin responder'}${isAnswered ? (isCorrecta ? ' ✓' : ' ✗') : ''}`}
                             placement="top"
                         >
                             <Box
@@ -105,14 +106,14 @@ function SidebarPanel({
                                     fontWeight: 700,
                                     cursor: 'pointer',
                                     border: isCurrent ? '2.5px solid #5c7cfa' : '2px solid transparent',
-                                    bgcolor: isYes ? '#dcfce7' : isNo ? '#fee2e2' : '#f3f4f6',
-                                    color: isCurrent ? '#5c7cfa' : isYes ? '#16a34a' : isNo ? '#ef4444' : '#9ca3af',
+                                    bgcolor: isCorrecta ? '#dcfce7' : isIncorrecta ? '#fee2e2' : '#f3f4f6',
+                                    color: isCurrent ? '#5c7cfa' : isCorrecta ? '#16a34a' : isIncorrecta ? '#ef4444' : '#9ca3af',
                                     boxShadow: isCurrent ? '0 0 0 2px #c7d2fe' : 'none',
                                     transition: 'all 0.15s',
                                     '&:hover': { opacity: 0.8, transform: 'scale(1.05)' }
                                 }}
                             >
-                                {isYes ? '✓' : isNo ? '✗' : idx + 1}
+                                {isCorrecta ? '✓' : isIncorrecta ? '✗' : idx + 1}
                             </Box>
                         </Tooltip>
                     );
@@ -165,9 +166,9 @@ function MobileCircleRow({
                 {preguntas.map((p, idx) => {
                     const answer = respuestas[p.id];
                     const isCurrent = idx === currentIndex;
-                    const isYes = answer === 1;
-                    const isNo = answer === 0;
-                    const isAnswered = isYes || isNo;
+                    const isAnswered = answer === 0 || answer === 1;
+                    const isCorrecta = p.puntaje_invertido ? answer === 0 : answer === 1;
+                    const isIncorrecta = p.puntaje_invertido ? answer === 1 : answer === 0;
 
                     return (
                         <Box
@@ -186,12 +187,12 @@ function MobileCircleRow({
                                 fontWeight: 700,
                                 cursor: 'pointer',
                                 border: isCurrent ? '2.5px solid #5c7cfa' : '2px solid transparent',
-                                bgcolor: isYes ? '#dcfce7' : isNo ? '#fee2e2' : '#f3f4f6',
-                                color: isCurrent ? '#5c7cfa' : isYes ? '#16a34a' : isNo ? '#ef4444' : '#9ca3af',
+                                bgcolor: isCorrecta ? '#dcfce7' : isIncorrecta ? '#fee2e2' : '#f3f4f6',
+                                color: isCurrent ? '#5c7cfa' : isCorrecta ? '#16a34a' : isIncorrecta ? '#ef4444' : '#9ca3af',
                                 boxShadow: isCurrent ? '0 0 0 2px #c7d2fe' : 'none',
                             }}
                         >
-                            {isYes ? '✓' : isNo ? '✗' : idx + 1}
+                            {isCorrecta ? '✓' : isIncorrecta ? '✗' : idx + 1}
                         </Box>
                     );
                 })}
@@ -447,7 +448,7 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                                 </Box>
                                             )}
                                         </Box> */}
-                                        <Box sx={{ mb: 3 }}>
+                                        <Box sx={{ mb: 3, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                                             {preguntaActual.tipoPregunta && (
                                                 <Box component="span" sx={{
                                                     display: 'inline-flex',
@@ -467,15 +468,41 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                                     {preguntaActual.tipoPregunta}
                                                 </Box>
                                             )}
+                                            {preguntaActual.puntaje_invertido && (
+                                                <Box component="span" sx={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: 0.75,
+                                                    px: 2,
+                                                    py: 0.75,
+                                                    borderRadius: 2,
+                                                    fontSize: '0.875rem',
+                                                    fontWeight: 700,
+                                                    letterSpacing: 0.2,
+                                                    bgcolor: '#FEF2F2',
+                                                    color: '#991B1B',
+                                                    border: '1.5px solid #FECACA',
+                                                }}>
+                                                    ⚠️ Aprueba si responde NO
+                                                </Box>
+                                            )}
                                         </Box>
 
                                         {/* Indicador de respuesta actual (modo corrección) */}
                                         {(respuestas[preguntaActual.id] === 1 || respuestas[preguntaActual.id] === 0) && (
                                             <Alert
-                                                severity={respuestas[preguntaActual.id] === 1 ? "success" : "error"}
+                                                severity={
+                                                    preguntaActual.puntaje_invertido
+                                                        ? respuestas[preguntaActual.id] === 0 ? "success" : "warning"
+                                                        : respuestas[preguntaActual.id] === 1 ? "success" : "error"
+                                                }
                                                 sx={{ mb: 2 }}
                                             >
-                                                Respuesta actual: <strong>{respuestas[preguntaActual.id] === 1 ? 'Sí' : 'No'}</strong>. Podés cambiarla.
+                                                Respuesta actual: <strong>{respuestas[preguntaActual.id] === 1 ? '"Sí"' : '"No"'}</strong>
+                                                {preguntaActual.puntaje_invertido && (
+                                                    <> — {respuestas[preguntaActual.id] === 0 ? '✓ suma punto' : '✗ no suma punto'}</>
+                                                )}
+                                                . Podés modificarla.
                                             </Alert>
                                         )}
 

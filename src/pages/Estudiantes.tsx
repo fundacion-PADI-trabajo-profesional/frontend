@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { Box, Container, Typography, Button, CircularProgress, Alert, Paper, List, ListItem, ListItemText, Stack, Tooltip, FormControl, InputLabel, Select, MenuItem } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"

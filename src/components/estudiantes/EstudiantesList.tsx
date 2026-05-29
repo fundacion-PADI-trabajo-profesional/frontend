@@ -1,5 +1,3 @@
-"use client"
-
 import {
     Box, List, ListItem, ListItemText, Typography, Paper, IconButton, Menu, MenuItem, ListItemIcon, Tooltip
 } from "@mui/material"

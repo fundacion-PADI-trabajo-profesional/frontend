@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { Box, Container, CircularProgress, Alert, Typography } from "@mui/material"

@@ -1,5 +1,3 @@
-"use client"
-
 import { Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, Chip, Button } from "@mui/material"
 import type { EvaluacionInstancia } from "../../api/evaluaciones"
 

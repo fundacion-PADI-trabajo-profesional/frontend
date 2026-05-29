@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useState } from "react"
 import { Box, Container, Typography, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, CircularProgress, Alert, Button, Stack, Chip, MenuItem, TextField, InputAdornment, Menu, ListItemIcon } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"

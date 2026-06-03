@@ -510,6 +510,21 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                             {preguntaActual.consigna || preguntaActual.titulo || "¿Cumple con el criterio?"}
                                         </Typography>
 
+                                        {preguntaActual.signed_url && (
+                                            <Box sx={{ mb: 2, textAlign: 'center' }}>
+                                                <img
+                                                    src={preguntaActual.signed_url}
+                                                    alt="Material de la pregunta"
+                                                    style={{
+                                                        maxWidth: '100%',
+                                                        maxHeight: 280,
+                                                        borderRadius: 8,
+                                                        objectFit: 'contain',
+                                                    }}
+                                                />
+                                            </Box>
+                                        )}
+
                                         <Box sx={{ mb: 2, p: 1.5, bgcolor: '#f0fdf4', borderRadius: 2, border: '1px solid #bbf7d0' }}>
                                             <Typography variant="body1" sx={{ fontWeight: 600, color: '#166534', fontSize: '0.95rem' }}>
                                                 ✓ Criterio de Aprobación: {preguntaActual.aprueba_con}

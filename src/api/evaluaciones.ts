@@ -21,6 +21,8 @@ export interface PreguntaBase {
   grupopregunta?: string;
   /** Si es true, el punto se otorga cuando la respuesta es NO (pregunta negativa) */
   puntaje_invertido?: boolean;
+  /** URL firmada temporal generada por el backend para imágenes de Supabase Storage. Null si la pregunta no tiene imagen. */
+  signed_url?: string | null;
 }
 
 export interface RespuestaPrevia {

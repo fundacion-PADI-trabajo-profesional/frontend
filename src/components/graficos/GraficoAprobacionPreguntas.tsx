@@ -10,7 +10,7 @@ import {
   LabelList,
   ReferenceLine,
 } from "recharts";
-import { Box, Typography } from "@mui/material";
+import { Box, Chip, List, ListItem, ListItemText, Typography } from "@mui/material";
 import type { AprobacionPreguntasResponse } from "../../api/estadisticas";
 
 interface Props {
@@ -29,7 +29,9 @@ function truncar(texto: string | null, max = 50): string {
 }
 
 export default function GraficoAprobacionPreguntas({ data }: Props) {
-  const top = data.items.slice(0, 15);
+  const conRespuestas = data.items.filter((i) => i.total > 0);
+  const sinRespuestas = data.items.filter((i) => i.total === 0);
+  const top = conRespuestas.slice(0, 15);
 
   const chartData = top.map((item) => ({
     consigna: truncar(item.consigna),
@@ -42,43 +44,76 @@ export default function GraficoAprobacionPreguntas({ data }: Props) {
     <Box>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         Preguntas ordenadas por menor aprobación · Verde ≥70% · Naranja ≥40% · Rojo &lt;40%
-        {data.items.length > 15 && ` · Mostrando las 15 peores de ${data.items.length}`}
+        {conRespuestas.length > 15 && ` · Mostrando las 15 peores de ${conRespuestas.length}`}
       </Typography>
-      <ResponsiveContainer width="100%" height={Math.max(300, chartData.length * 52)}>
-        <BarChart
-          data={chartData}
-          layout="vertical"
-          margin={{ top: 8, right: 70, left: 8, bottom: 8 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-          <XAxis
-            type="number"
-            domain={[0, 100]}
-            tickFormatter={(v) => `${v}%`}
-            tick={{ fontSize: 12 }}
-          />
-          <YAxis type="category" dataKey="consigna" width={200} tick={{ fontSize: 11 }} />
-          <ReferenceLine x={40} stroke="#FF9800" strokeDasharray="4 4" />
-          <ReferenceLine x={70} stroke="#4CAF50" strokeDasharray="4 4" />
-          <Tooltip
-            formatter={(value, _, props) => [
-              `${value}% (${props.payload.correctos}/${props.payload.total} respuestas)`,
-              "Aprobación",
-            ]}
-          />
-          <Bar dataKey="aprobacion" radius={[0, 4, 4, 0]} maxBarSize={32}>
-            {chartData.map((entry, i) => (
-              <Cell key={i} fill={barColor(entry.aprobacion / 100)} />
-            ))}
-            <LabelList
-              dataKey="aprobacion"
-              position="right"
-              formatter={(v: unknown) => typeof v === "number" ? `${v}%` : ""}
-              style={{ fontSize: 13, fontWeight: 700 }}
+
+      {chartData.length === 0 ? (
+        <Typography color="text.secondary" sx={{ textAlign: "center", py: 4, fontStyle: "italic" }}>
+          No hay respuestas registradas para este período.
+        </Typography>
+      ) : (
+        <ResponsiveContainer width="100%" height={Math.max(300, chartData.length * 52)}>
+          <BarChart
+            data={chartData}
+            layout="vertical"
+            margin={{ top: 8, right: 70, left: 8, bottom: 8 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+            <XAxis
+              type="number"
+              domain={[0, 100]}
+              tickFormatter={(v) => `${v}%`}
+              tick={{ fontSize: 12 }}
             />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+            <YAxis type="category" dataKey="consigna" width={200} tick={{ fontSize: 11 }} />
+            <ReferenceLine x={40} stroke="#FF9800" strokeDasharray="4 4" />
+            <ReferenceLine x={70} stroke="#4CAF50" strokeDasharray="4 4" />
+            <Tooltip
+              formatter={(value, _, props) => [
+                `${value}% (${props.payload.correctos}/${props.payload.total} respuestas)`,
+                "Aprobación",
+              ]}
+            />
+            <Bar dataKey="aprobacion" radius={[0, 4, 4, 0]} maxBarSize={32}>
+              {chartData.map((entry, i) => (
+                <Cell key={i} fill={barColor(entry.aprobacion / 100)} />
+              ))}
+              <LabelList
+                dataKey="aprobacion"
+                position="right"
+                formatter={(v: unknown) => typeof v === "number" ? `${v}%` : ""}
+                style={{ fontSize: 13, fontWeight: 700 }}
+              />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      )}
+
+      {sinRespuestas.length > 0 && (
+        <Box sx={{ mt: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+            <Chip
+              label={`${sinRespuestas.length} pregunta${sinRespuestas.length > 1 ? "s" : ""} sin respuestas`}
+              size="small"
+              color="warning"
+              variant="outlined"
+            />
+            <Typography variant="caption" color="text.secondary">
+              No se registró ninguna respuesta para estas preguntas en el período seleccionado.
+            </Typography>
+          </Box>
+          <List dense disablePadding>
+            {sinRespuestas.map((item) => (
+              <ListItem key={item.pregunta_id} disableGutters sx={{ py: 0.25 }}>
+                <ListItemText
+                  primary={truncar(item.consigna, 80)}
+                  primaryTypographyProps={{ variant: "caption", color: "text.secondary" }}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      )}
     </Box>
   );
 }

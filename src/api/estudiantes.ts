@@ -129,17 +129,18 @@ async function handleApiResponse<T>(response: Response): Promise<T> {
     return data.data
 }
 
-/** Obtiene los estudiantes visibles para la sesión actual. */
-export const getEstudiantes = async (): Promise<Estudiante[]> => {
+/** Obtiene los estudiantes visibles para la sesión actual.
+ *  @param escuelaId - Filtra por escuela (útil para encargado_zona / equipo_padi). */
+export const getEstudiantes = async (escuelaId?: string): Promise<Estudiante[]> => {
     const stored = localStorage.getItem("padiUser");
     const user = stored ? JSON.parse(stored) : null;
 
     const params = new URLSearchParams();
     if (user) {
         params.append("rol", user.rol);
-        if (user.escuela_id) {
-            params.append("escuela_id", user.escuela_id);
-        }
+        // Prioridad: parámetro explícito > escuela del token (director)
+        const esc = escuelaId ?? user.escuela_id ?? null;
+        if (esc) params.append("escuela_id", esc);
     }
 
     const response = await fetch(`${API_URL}/estudiantes?${params.toString()}`, {

@@ -32,8 +32,8 @@ export default function GraficoRendimientoZonas({ data }: Props) {
     const punto: Record<string, string | number | null> = { area: area.nombre };
     for (const fila of filas) {
       const v = fila.valores[area.id];
-      punto[fila.nombre] =
-        v?.porcentaje != null ? Math.round(v.porcentaje * 100) : null;
+      // Usamos fila.id como key para evitar colisiones con nombres repetidos
+      punto[fila.id] = v?.porcentaje != null ? Math.round(v.porcentaje * 100) : null;
     }
     return punto;
   });
@@ -65,7 +65,8 @@ export default function GraficoRendimientoZonas({ data }: Props) {
           {filas.map((fila, i) => (
             <Bar
               key={fila.id}
-              dataKey={fila.nombre}
+              dataKey={fila.id}
+              name={fila.nombre}
               fill={COLORES[i % COLORES.length]}
               radius={[4, 4, 0, 0]}
               maxBarSize={40}

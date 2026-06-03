@@ -69,6 +69,7 @@ export default function EstadisticasEscuela() {
   const [tipo, setTipo] = useState("inicial");
   const [umbral, setUmbral] = useState(0.5);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
+  const [estudiantesError, setEstudiantesError] = useState<string | null>(null);
   const [estudianteId, setEstudianteId] = useState<string | null>(null);
 
   const [escuelas, setEscuelas] = useState<Escuela[]>([]);
@@ -91,9 +92,14 @@ export default function EstadisticasEscuela() {
 
   useEffect(() => {
     if (tab === 6 && escuelaReady) {
-      getEstudiantes().then(setEstudiantes).catch(() => { });
+      // Pasar escuelaId al API para que el servidor filtre directamente
+      const escuelaFiltro = esRolSuperior ? escuelaId : getUserEscuelaId() ?? undefined;
+      setEstudiantesError(null);
+      getEstudiantes(escuelaFiltro)
+        .then(setEstudiantes)
+        .catch((e) => setEstudiantesError((e as Error).message ?? "Error al cargar estudiantes"));
     }
-  }, [tab, escuelaReady]);
+  }, [tab, escuelaReady, escuelaId, esRolSuperior]);
 
   const heatmapQuery = useQuery({
     queryKey: ["estadisticas-escuela-heatmap", periodo, tipo, escuelaParam],
@@ -140,9 +146,9 @@ export default function EstadisticasEscuela() {
   return (
     <Box sx={{ p: 3 }}>
       <PageHeader
-        title="Estadísticas por Aula"
+        title="Estadísticas por Escuela"
         subtitle="Rendimiento por área de las aulas de una escuela"
-        backTo="/home"
+        backTo={rol === "equipo_padi" ? "/estadisticas/padi" : rol === "encargado_zona" ? "/estadisticas/zona" : "/home"}
       />
 
       {rol === "director" && !getUserEscuelaId() ? (
@@ -175,19 +181,26 @@ export default function EstadisticasEscuela() {
                 <InputLabel>Tipo</InputLabel>
                 <Select value={tipo} label="Tipo" onChange={(e) => setTipo(String(e.target.value))}>
                   <MenuItem value="inicial">Inicial</MenuItem>
-                  <MenuItem value="final">Final</MenuItem>
+                  <MenuItem value="cierre">Cierre</MenuItem>
                 </Select>
               </FormControl>
             )}
 
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={() => navigate("/estadisticas/docente")}
-              sx={{ ml: "auto" }}
-            >
-              Ver estadísticas de aula →
-            </Button>
+            <Box sx={{ ml: "auto", display: "flex", gap: 1 }}>
+              {rol === "equipo_padi" && (
+                <Button size="small" variant="outlined" onClick={() => navigate("/estadisticas/padi")}>
+                  ← PADI
+                </Button>
+              )}
+              {rol === "encargado_zona" && (
+                <Button size="small" variant="outlined" onClick={() => navigate("/estadisticas/zona")}>
+                  ← Zona
+                </Button>
+              )}
+              <Button size="small" variant="outlined" onClick={() => navigate("/estadisticas/docente")}>
+                Ver por aula →
+              </Button>
+            </Box>
           </Box>
 
           <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }} variant="scrollable" scrollButtons="auto">
@@ -258,6 +271,7 @@ export default function EstadisticasEscuela() {
 
           {tab === 6 && (
             <Box>
+              {estudiantesError && <Alert severity="error" sx={{ mb: 2 }}>{estudiantesError}</Alert>}
               <Autocomplete
                 options={estudiantes}
                 getOptionLabel={(e) =>

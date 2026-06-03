@@ -86,7 +86,7 @@ export default function EstadisticasZona() {
             <InputLabel>Tipo</InputLabel>
             <Select value={tipo} label="Tipo" onChange={(e) => setTipo(String(e.target.value))}>
               <MenuItem value="inicial">Inicial</MenuItem>
-              <MenuItem value="final">Final</MenuItem>
+              <MenuItem value="cierre">Cierre</MenuItem>
             </Select>
           </FormControl>
         )}

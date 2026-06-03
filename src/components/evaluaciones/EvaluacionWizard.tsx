@@ -206,6 +206,7 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
     const [step, setStep] = useState<WizardStep>("INTRO")
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
+    const [saveError, setSaveError] = useState<string | null>(null)
     const [allPreviouslyAnswered, setAllPreviouslyAnswered] = useState(false)
 
     const [preguntas, setPreguntas] = useState<PreguntaBase[]>([])
@@ -280,7 +281,7 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
             }
         } catch (e) {
             console.error("Error al guardar la respuesta:", e);
-            alert("Fallo al guardar la respuesta. Revisá tu conexión.");
+            setSaveError("Fallo al guardar la respuesta. Revisá tu conexión.");
         } finally {
             setSaving(false);
         }
@@ -346,6 +347,12 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                     </Button>
                 )}
             </Box>
+
+            {saveError && (
+                <Alert severity="error" onClose={() => setSaveError(null)} sx={{ mx: 2, mt: 1 }}>
+                    {saveError}
+                </Alert>
+            )}
 
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>

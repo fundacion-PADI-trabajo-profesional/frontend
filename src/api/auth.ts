@@ -334,6 +334,7 @@ export interface CreateUserPayload {
   apellido: string;
   email: string;
   rol: string;
+  escuela_id?: string;
 }
 
 /**

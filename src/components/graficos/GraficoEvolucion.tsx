@@ -16,10 +16,10 @@ interface Props {
   data: EvolucionResponse;
 }
 
-function CustomTooltip({ active, payload, label }: any) {
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ dataKey: string; value: number | null }>; label?: string }) {
   if (!active || !payload?.length) return null;
-  const ini = payload.find((p: any) => p.dataKey === "Inicial");
-  const fin = payload.find((p: any) => p.dataKey === "Final");
+  const ini = payload.find((p) => p.dataKey === "Inicial");
+  const fin = payload.find((p) => p.dataKey === "Final");
   const iniVal = ini?.value ?? null;
   const finVal = fin?.value ?? null;
   const delta = iniVal != null && finVal != null ? finVal - iniVal : null;

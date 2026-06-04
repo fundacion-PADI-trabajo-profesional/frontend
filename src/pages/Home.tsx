@@ -14,8 +14,8 @@ interface HomeProps {
 }
 
 export default function Home({ onLogout }: HomeProps) {
-  const [user, setUser] = useState<any | null>(null);
-  const [profile, setProfile] = useState<any | null>(null);
+  const [user, setUser] = useState<{ id?: string; email?: string; [key: string]: unknown } | null>(null);
+  const [profile, setProfile] = useState<{ nome?: string; nombre?: string; apellido?: string; rol: string; escuela?: { nombre?: string }; id?: string } | null>(null);
   const [loadingUser, setLoadingUser] = useState<boolean>(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [zonaNombre, setZonaNombre] = useState<string | null>(null);
@@ -55,7 +55,7 @@ export default function Home({ onLogout }: HomeProps) {
     }
   }, [navigate]);
 
-  const handleProfileUpdate = async (updatedProfile: any) => {
+  const handleProfileUpdate = async (updatedProfile: typeof profile) => {
     setProfile(updatedProfile);
     localStorage.setItem("padiProfile", JSON.stringify(updatedProfile));
   };

@@ -71,8 +71,8 @@ export default function ModalCrearUsuario({ open, onClose, onCreated }: Props) {
       setFormSuccess(`Usuario ${formData.nombre} ${formData.apellido} creado. Se envió un correo con la invitación.`);
       setFormData(emptyForm);
       onCreated();
-    } catch (err: any) {
-      setFormError(err.message || "No se pudo crear el usuario.");
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : "No se pudo crear el usuario.");
     } finally {
       setFormLoading(false);
     }

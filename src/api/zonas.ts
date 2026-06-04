@@ -27,6 +27,17 @@ export interface Zona {
     }
 }
 
+export interface EscuelaSinZona {
+    id: string;
+    nombre: string;
+    direccion?: string | null;
+}
+
+export interface EncargadoSinZona {
+    id: string;
+    usuario: { nombre: string; apellido: string; email: string };
+}
+
 export interface EncargadoZonaOption {
     id: string
     usuario: {
@@ -80,12 +91,12 @@ export async function createZona(nombre: string): Promise<Zona> {
 }
 
 /** Obtiene las escuelas que todavía no tienen zona asignada. */
-export async function getEscuelasSinZona(): Promise<any[]> {
+export async function getEscuelasSinZona(): Promise<EscuelaSinZona[]> {
     const { rol } = getUserData();
     const res = await fetch(`${API_URL}/escuelas-sin-zona?rol=${rol}`, {
         headers: getAuthHeaders(),
     })
-    const body: ApiResponse<any[]> = await res.json()
+    const body: ApiResponse<EscuelaSinZona[]> = await res.json()
     if (!res.ok || !body.success) {
         throw new Error(body.error?.description || body.message || "Error al cargar escuelas disponibles")
     }
@@ -93,12 +104,12 @@ export async function getEscuelasSinZona(): Promise<any[]> {
 }
 
 /** Obtiene el detalle de una zona por ID. */
-export async function getZonaById(id: string): Promise<any> {
+export async function getZonaById(id: string): Promise<Zona> {
     const { rol } = getUserData();
     const res = await fetch(`${API_URL}/zonas/${id}?rol=${rol}`, {
         headers: getAuthHeaders(),
     })
-    const body: ApiResponse<any> = await res.json()
+    const body: ApiResponse<Zona> = await res.json()
     if (!res.ok || !body.success) {
         throw new Error(body.error?.description || body.message || "Error al cargar detalle")
     }
@@ -106,7 +117,7 @@ export async function getZonaById(id: string): Promise<any> {
 }
 
 /** Asigna una escuela a una zona. */
-export async function asignarEscuela(zonaId: string, escuelaId: string): Promise<any> {
+export async function asignarEscuela(zonaId: string, escuelaId: string): Promise<null> {
     const { usuario_id, rol } = getUserData();
 
     const res = await fetch(`${API_URL}/zonas/${zonaId}/asignar-escuela`, {
@@ -115,7 +126,7 @@ export async function asignarEscuela(zonaId: string, escuelaId: string): Promise
         body: JSON.stringify({ escuelaId, usuario_id, rol }),
     });
 
-    const body: ApiResponse<any> = await res.json();
+    const body: ApiResponse<null> = await res.json();
 
     if (!res.ok || !body.success) {
         throw new Error(body.error?.description || body.message || "Error al asignar la escuela a la zona");
@@ -125,14 +136,14 @@ export async function asignarEscuela(zonaId: string, escuelaId: string): Promise
 }
 
 /** Quita una escuela de su zona actual. */
-export async function desvincularEscuela(escuelaId: string): Promise<any> {
+export async function desvincularEscuela(escuelaId: string): Promise<null> {
     const { rol } = getUserData();
     const res = await fetch(`${API_URL}/escuelas/${escuelaId}/quitar-escuela`, {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify({ rol }),
     });
-    const body: ApiResponse<any> = await res.json();
+    const body: ApiResponse<null> = await res.json();
     if (!res.ok || !body.success) {
         throw new Error(body.message || "Error al desvincular escuela");
     }
@@ -155,12 +166,12 @@ export async function updateZona(id: string, nombre: string): Promise<Zona> {
 }
 
 /** Obtiene los encargados que no tienen zona asignada. */
-export async function getEncargadosSinZona(): Promise<any[]> {
+export async function getEncargadosSinZona(): Promise<EncargadoSinZona[]> {
     const { rol } = getUserData();
     const res = await fetch(`${API_URL}/encargados-sin-zona?rol=${rol}`, {
         headers: getAuthHeaders(),
     })
-    const body: ApiResponse<any[]> = await res.json()
+    const body: ApiResponse<EncargadoSinZona[]> = await res.json()
     if (!res.ok || !body.success) throw new Error(body.message || "Error al cargar encargados");
     return body.data || []
 }
@@ -177,27 +188,27 @@ export async function getEncargadosZonaOptions(): Promise<EncargadoZonaOption[]>
 }
 
 /** Asigna un encargado a una zona. */
-export async function asignarEncargadoAZona(zonaId: string, encargadoId: string): Promise<any> {
+export async function asignarEncargadoAZona(zonaId: string, encargadoId: string): Promise<null> {
     const { usuario_id, rol } = getUserData();
     const res = await fetch(`${API_URL}/zonas/${zonaId}/asignar-encargado`, {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify({ encargadoId, usuario_id, rol }),
     });
-    const body: ApiResponse<any> = await res.json();
+    const body: ApiResponse<null> = await res.json();
     if (!res.ok || !body.success) throw new Error(body.message || "Error al asignar encargado");
     return body.data;
 }
 
 /** Desvincula un encargado de su zona. */
-export async function desvincularEncargado(encargadoId: string): Promise<any> {
+export async function desvincularEncargado(encargadoId: string): Promise<null> {
     const { rol } = getUserData();
     const res = await fetch(`${API_URL}/encargados/${encargadoId}/quitar-zona`, {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify({ rol }),
     });
-    const body: ApiResponse<any> = await res.json();
+    const body: ApiResponse<null> = await res.json();
     if (!res.ok || !body.success) throw new Error(body.message || "Error al desvincular encargado");
     return body.data;
 }

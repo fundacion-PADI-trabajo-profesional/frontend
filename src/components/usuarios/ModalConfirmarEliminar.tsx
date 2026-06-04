@@ -36,7 +36,7 @@ export default function ModalConfirmarEliminar({ usuario, onClose, onDeleted }: 
       await adminDeleteUser(usuario.id);
       onDeleted();
       onClose();
-    } catch (err: any) {
+    } catch {
       onClose();
     } finally {
       setLoading(false);

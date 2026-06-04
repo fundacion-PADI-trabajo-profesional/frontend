@@ -63,7 +63,7 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
         try {
             const data = await getDirectivosDisponibles();
             setDirectivosDisponibles(data);
-        } catch (err) { console.error("Error cargando directivos"); }
+        } catch { console.error("Error cargando directivos"); }
     };
 
     const handleAgregarDirectivo = () => {
@@ -101,7 +101,7 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
 
             setNotification({ open: true, message: "¡Institución actualizada!", severity: "success" });
             setTimeout(() => onSuccess(), 1000);
-        } catch (err: any) {
+        } catch {
             setNotification({ open: true, message: "Error al actualizar", severity: "error" });
         } finally { setLoading(false); }
     };
@@ -115,10 +115,10 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
                 severity: "success"
             });
             setTimeout(() => onSuccess(), 2000);
-        } catch (err: any) {
+        } catch (err: unknown) {
             setNotification({
                 open: true,
-                message: err.message || "Error al eliminar la escuela",
+                message: err instanceof Error ? err.message : "Error al eliminar la escuela",
                 severity: "error"
             });
         }

@@ -20,18 +20,11 @@ import EstadisticasZona from "./pages/estadisticas/EstadisticasZona"
 import EstadisticasEscuela from "./pages/estadisticas/EstadisticasEscuela"
 import EstadisticasDocente from "./pages/estadisticas/EstadisticasDocente"
 
-// Define a type for your user object
-interface User {
-  id: string
-  email: string
-  nombre: string
-  apellido: string
-  rol: "docente" | "director" | "encargado_zona" | "equipo_padi"
-}
+import type { PadiUser } from "./api/auth"
 
 function App() {
   // State holds the full user object or null if not logged in
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+  const [currentUser, setCurrentUser] = useState<PadiUser | null>(() => {
     const storedUser = localStorage.getItem("padiUser")
     try {
       return storedUser ? JSON.parse(storedUser) : null
@@ -49,12 +42,10 @@ function App() {
     }
   }, [currentUser])
 
-  // This function will be passed to Login.tsx
-  const handleLogin = (user: User) => {
+  const handleLogin = (user: PadiUser) => {
     setCurrentUser(user)
   }
 
-  // This function will be passed to Home.tsx
   const handleLogout = () => {
     localStorage.removeItem("token")
     localStorage.removeItem("refreshToken")

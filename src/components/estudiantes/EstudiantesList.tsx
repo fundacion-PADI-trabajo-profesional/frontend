@@ -36,8 +36,8 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
     const [salaFiltro] = useState<string>("todas")
 
     // Datos de selectores
-    const [_listaEscuelas, setListaEscuelas] = useState<Escuela[]>([])
-    const [_listaSalas, setListaSalas] = useState<Sala[]>([])
+    const [, setListaEscuelas] = useState<Escuela[]>([])
+    const [, setListaSalas] = useState<Sala[]>([])
 
     // UI States
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
@@ -69,7 +69,7 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
                     const escuelasData = await getEscuelas()
                     setListaEscuelas(escuelasData)
                 }
-            } catch (err) {
+            } catch {
                 console.log("No se cargaron escuelas por falta de permisos o error")
             }
         }

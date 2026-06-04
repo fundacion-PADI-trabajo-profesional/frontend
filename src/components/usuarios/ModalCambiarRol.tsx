@@ -58,8 +58,9 @@ export default function ModalCambiarRol({ usuario, onClose, onRolChanged }: Prop
       await adminUpdateUserRol(usuario.id, rolValue);
       onRolChanged(usuario.id, rolValue);
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || "No se pudo cambiar el rol.");
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } }; message?: string };
+      setError(e.response?.data?.message || e.message || "No se pudo cambiar el rol.");
     } finally {
       setLoading(false);
     }

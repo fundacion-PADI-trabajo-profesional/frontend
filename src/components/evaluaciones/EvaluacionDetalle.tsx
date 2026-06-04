@@ -101,8 +101,8 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
             setLoading(true)
             const res = await getEvaluacionInstanciaById(evaluacionId)
             setData(res)
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Error al cargar la evaluación")
         } finally {
             setLoading(false)
         }
@@ -110,6 +110,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
 
     useEffect(() => {
         loadEvaluationData()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [evaluacionId])
 
 

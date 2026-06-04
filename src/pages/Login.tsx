@@ -10,10 +10,10 @@ import {
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useNavigate } from "react-router-dom";
-import { login } from "../api/auth";
+import { login, type PadiUser } from "../api/auth";
 
 interface LoginProps {
-  onLogin: (user: any) => void;
+  onLogin: (user: PadiUser) => void;
 }
 
 export default function Login({ onLogin }: LoginProps) {
@@ -51,8 +51,8 @@ export default function Login({ onLogin }: LoginProps) {
 
       const combined = { ...user, ...(profile || {}) };
       onLogin(combined);
-    } catch (err: any) {
-      setError(err.message || "Credenciales inválidas. Por favor, intente de nuevo.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Credenciales inválidas. Por favor, intente de nuevo.");
     } finally {
       setIsLoading(false);
     }

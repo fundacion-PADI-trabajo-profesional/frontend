@@ -43,7 +43,7 @@ export default function EvaluacionRevision({ open, onClose, onCorrect, evaluacio
         return { text, icon, esCorrecta };
     };
 
-    const getGroupTitleFromQuestions = (preguntas: any[], groupNumber: number) => {
+    const getGroupTitleFromQuestions = (preguntas: { titulo?: string }[], groupNumber: number) => {
         // Todas las preguntas del grupo comparten el mismo título
         return preguntas?.[0]?.titulo ?? `Grupo ${groupNumber}`;
     };
@@ -64,7 +64,7 @@ export default function EvaluacionRevision({ open, onClose, onCorrect, evaluacio
     }, [data]);
 
     // Stats por grupo (mayoría: ceil(total/2))
-    const getGroupStats = (preguntas: any[]) => {
+    const getGroupStats = (preguntas: { id: string; puntaje_invertido?: boolean }[]) => {
         const total = preguntas.length;
 
         let answered = 0;
@@ -184,7 +184,7 @@ export default function EvaluacionRevision({ open, onClose, onCorrect, evaluacio
 
                                     {/* Preguntas del grupo */}
                                     <List disablePadding>
-                                        {preguntasDelGrupo.map((p: any, idx: number) => {
+                                        {preguntasDelGrupo.map((p, idx: number) => {
                                             const { text, esCorrecta } = getAnswerText(p.id, p.puntaje_invertido);
                                             return (
                                                 <React.Fragment key={p.id}>

@@ -24,7 +24,7 @@ interface Props {
   data: CoberturaResponse;
 }
 
-function PieLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) {
+function PieLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent }: { cx: number; cy: number; midAngle: number; innerRadius: number; outerRadius: number; percent: number }) {
   if (percent < 0.05) return null;
   const RADIAN = Math.PI / 180;
   const radius = innerRadius + (outerRadius - innerRadius) * 0.55;

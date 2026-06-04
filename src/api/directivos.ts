@@ -61,7 +61,7 @@ export async function asignarEscuelaADirectivo(directivoId: string, escuelaId: s
         headers: getAuthHeaders(),
         body: JSON.stringify({ escuela_id: escuelaId, usuario_id, rol }),
     });
-    const body: ApiResponse<any> = await res.json();
+    const body: ApiResponse<null> = await res.json();
     if (!res.ok || !body.success) {
         throw new Error(body.error?.description || body.message || "Error al asignar escuela");
     }

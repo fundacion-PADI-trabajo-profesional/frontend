@@ -50,7 +50,7 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem("padiUser") || "{}");
         setUserRole(user.rol);
-        loadZonas();
+        if (user.rol === "equipo_padi") loadZonas();
         loadDirectivosDisponibles();
     }, []);
 
@@ -141,10 +141,14 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
                             onChange={(e) => setFormData({ ...formData, nombre: e.target.value })} />
                     </Grid>
                     <Grid item xs={12} sm={6}>
-                        <TextField select fullWidth label="Zona" value={formData.zona_id}
-                            onChange={(e) => setFormData({ ...formData, zona_id: e.target.value })}>
-                            {zonas.map(z => <MenuItem key={z.id} value={z.id}>{z.nombre}</MenuItem>)}
-                        </TextField>
+                        {userRole === "equipo_padi" ? (
+                            <TextField select fullWidth label="Zona" value={formData.zona_id}
+                                onChange={(e) => setFormData({ ...formData, zona_id: e.target.value })}>
+                                {zonas.map(z => <MenuItem key={z.id} value={z.id}>{z.nombre}</MenuItem>)}
+                            </TextField>
+                        ) : (
+                            <TextField fullWidth label="Zona" value={escuela.zona?.nombre || "Sin zona asignada"} disabled />
+                        )}
                     </Grid>
                     <Grid item xs={12} sm={6}>
                         <TextField fullWidth label="Dirección" value={formData.direccion}

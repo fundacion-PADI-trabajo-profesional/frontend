@@ -525,6 +525,7 @@ export default function DocentesPage() {
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         onSuccess={loadData}
+        escuelas={currentRole === "encargado_zona" ? escuelas : undefined}
       />
 
       {confirmDialog && (

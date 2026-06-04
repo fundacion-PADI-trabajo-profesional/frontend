@@ -10,6 +10,7 @@ import {
   DialogTitle,
   Divider,
   IconButton,
+  MenuItem,
   TextField,
   Typography,
 } from "@mui/material";
@@ -17,11 +18,13 @@ import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { adminCreateUser } from "../../api/auth";
+import type { Escuela } from "../../api/escuelas";
 
 interface DocenteFormProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  escuelas?: Escuela[];
 }
 
 const emptyForm = {
@@ -30,14 +33,16 @@ const emptyForm = {
   email: "",
 };
 
-export default function DocenteForm({ open, onClose, onSuccess }: DocenteFormProps) {
+export default function DocenteForm({ open, onClose, onSuccess, escuelas }: DocenteFormProps) {
   const [formData, setFormData] = useState(emptyForm);
+  const [escuelaId, setEscuelaId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const handleClose = () => {
     setFormData(emptyForm);
+    setEscuelaId("");
     setError("");
     setSuccess("");
     onClose();
@@ -65,6 +70,7 @@ export default function DocenteForm({ open, onClose, onSuccess }: DocenteFormPro
         apellido: formData.apellido,
         email: formData.email,
         rol: "docente",
+        ...(escuelaId ? { escuela_id: escuelaId } : {}),
       });
 
       setSuccess(`Docente ${formData.nombre} ${formData.apellido} creado. Se envió un correo con la invitación.`);
@@ -140,6 +146,24 @@ export default function DocenteForm({ open, onClose, onSuccess }: DocenteFormPro
           sx={{ mb: 1 }}
           disabled={loading}
         />
+
+        {escuelas && escuelas.length > 0 && (
+          <TextField
+            select
+            fullWidth
+            size="small"
+            label="Asignar a escuela (opcional)"
+            value={escuelaId}
+            onChange={(e) => setEscuelaId(e.target.value)}
+            sx={{ mt: 2, mb: 1 }}
+            disabled={loading}
+          >
+            <MenuItem value="">Sin asignar por ahora</MenuItem>
+            {escuelas.map((e) => (
+              <MenuItem key={e.id} value={e.id}>{e.nombre}</MenuItem>
+            ))}
+          </TextField>
+        )}
 
         <Typography variant="caption" color="#888" sx={{ display: "block", mt: 1 }}>
           El docente recibirá un email con un enlace para establecer su contraseña e ingresar al sistema.

@@ -7,7 +7,11 @@ import {
     Alert,
     TextField,
     Stack,
-    Paper
+    Paper,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -32,6 +36,9 @@ export default function AulasView({ escuelaId, salaSeleccionada, onVerEstudiante
     const [mode, setMode] = useState<"list" | "form">("list");
     const [editing, setEditing] = useState<Aula | null>(null);
     const [selectedAulaForDocentes, setSelectedAulaForDocentes] = useState<Aula | null>(null);
+    const [aulaAEliminar, setAulaAEliminar] = useState<Aula | null>(null);
+    const [deleting, setDeleting] = useState(false);
+    const [formError, setFormError] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({
         comision: "",
@@ -62,9 +69,10 @@ export default function AulasView({ escuelaId, salaSeleccionada, onVerEstudiante
 
     const handleSubmit = async () => {
         if (!formData.comision || !formData.turno) {
-            alert("Por favor, completá todos los campos.");
+            setFormError("Por favor, completá todos los campos.");
             return;
         }
+        setFormError(null);
 
         try {
             if (editing) {
@@ -83,17 +91,26 @@ export default function AulasView({ escuelaId, salaSeleccionada, onVerEstudiante
             setEditing(null);
             fetchData();
         } catch (e: any) {
-            alert("Error al guardar la comisión: " + e.message);
+            setFormError("Error al guardar la comisión: " + e.message);
         }
     };
 
-    const handleDelete = async (aula: Aula) => {
-        if (!window.confirm(`¿Seguro que querés eliminar la comisión "${aula.comision}"?`)) return;
+    const handleDelete = (aula: Aula) => {
+        setAulaAEliminar(aula);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!aulaAEliminar) return;
+        setDeleting(true);
         try {
-            await deleteAula(aula.id);
+            await deleteAula(aulaAEliminar.id);
+            setAulaAEliminar(null);
             fetchData();
         } catch (e: any) {
-            alert("Error al eliminar: " + e.message);
+            setError("Error al eliminar: " + e.message);
+            setAulaAEliminar(null);
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -166,6 +183,7 @@ export default function AulasView({ escuelaId, salaSeleccionada, onVerEstudiante
                     </Typography>
 
                     <Stack spacing={3}>
+                        {formError && <Alert severity="error">{formError}</Alert>}
                         <TextField
                             fullWidth
                             label="Nombre de la Comisión (Ej: Azul, A, etc.)"
@@ -209,6 +227,31 @@ export default function AulasView({ escuelaId, salaSeleccionada, onVerEstudiante
                 open={!!selectedAulaForDocentes}
                 onClose={() => setSelectedAulaForDocentes(null)}
             />
+
+            {/* Dialog de confirmación de eliminación */}
+            <Dialog open={!!aulaAEliminar} onClose={() => setAulaAEliminar(null)} maxWidth="xs" PaperProps={{ sx: { borderRadius: 3 } }}>
+                <DialogTitle fontWeight={700}>¿Eliminar comisión?</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        ¿Estás seguro que querés eliminar la comisión{" "}
+                        <strong>"{aulaAEliminar?.comision}"</strong>? Esta acción no se puede deshacer.
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button onClick={() => setAulaAEliminar(null)} sx={{ textTransform: "none", color: "#666" }}>
+                        Cancelar
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="error"
+                        onClick={handleConfirmDelete}
+                        disabled={deleting}
+                        sx={{ textTransform: "none", borderRadius: 2 }}
+                    >
+                        {deleting ? "Eliminando..." : "Eliminar"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }

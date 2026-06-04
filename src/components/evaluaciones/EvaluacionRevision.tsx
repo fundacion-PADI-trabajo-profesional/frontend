@@ -88,7 +88,15 @@ export default function EvaluacionRevision({ open, onClose, onCorrect, evaluacio
 
     if (!open) return null;
 
-    const puntajePorcentual = (score / total) * 100;
+    // Recalcular aciertos localmente respetando puntaje_invertido
+    const aciertosCalculados = grouped.reduce((acc, [, preguntas]) => {
+        const stats = getGroupStats(preguntas);
+        return acc + (stats.aprobado ? 1 : 0);
+    }, 0);
+    const totalGrupos = grouped.length || total;
+    const scoreEfectivo = data ? aciertosCalculados : score;
+    const totalEfectivo = data ? totalGrupos : total;
+    const puntajePorcentual = totalEfectivo > 0 ? (scoreEfectivo / totalEfectivo) * 100 : 0;
 
     return (
         <Dialog fullScreen open={open} onClose={onClose}>
@@ -118,7 +126,7 @@ export default function EvaluacionRevision({ open, onClose, onCorrect, evaluacio
                         Estado Final: {statusId === 'A' ? 'Aprobada' : statusId === 'D' ? 'Desaprobada' : 'Completada'}
                     </Typography>
                     <Typography variant="body2">
-                        Aciertos: {score} de {total} ({puntajePorcentual.toFixed(1)}%)
+                        Aciertos: {scoreEfectivo} de {totalEfectivo} ({puntajePorcentual.toFixed(1)}%)
                     </Typography>
                 </Alert>
 

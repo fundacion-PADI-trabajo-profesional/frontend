@@ -254,7 +254,7 @@ export default function GestionUsuarios() {
                 <TableCell sx={{ fontWeight: 700 }}>Email</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Rol</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Estado</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 90 }} align="center">Acc.</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: 90 }} align="center">Acciones</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

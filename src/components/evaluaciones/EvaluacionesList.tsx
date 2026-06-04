@@ -44,7 +44,7 @@ export default function EvaluacionesList({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [noEscuela, setNoEscuela] = useState(false)
-  const [profile, setProfile] = useState<any>(null)
+  const [profile, setProfile] = useState<{ id?: string; rol?: string; escuela_id?: string } | null>(null)
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
   const [evaluacionToDelete, setEvaluacionToDelete] = useState<string | null>(null)
@@ -75,6 +75,7 @@ export default function EvaluacionesList({
     if (profile) {
       loadEvaluaciones()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile, docenteId])
 
   const loadEvaluaciones = async () => {
@@ -103,8 +104,8 @@ export default function EvaluacionesList({
       }
 
       setEvaluaciones(data);
-    } catch (err: any) {
-      setError(err.message || "Error al cargar las evaluaciones");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al cargar las evaluaciones");
     } finally {
       setLoading(false);
     }
@@ -132,8 +133,8 @@ export default function EvaluacionesList({
       setEvaluaciones(evaluaciones.filter((e) => e.id !== evaluacionToDelete))
       setOpenDeleteDialog(false);
       setEvaluacionToDelete(null);
-    } catch (err: any) {
-      alert(err.message || "Error al eliminar la evaluación")
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Error al eliminar la evaluación")
     } finally {
       setDeleting(false);
     }
@@ -213,7 +214,7 @@ export default function EvaluacionesList({
   });
 
   // Ahora agrupamos las FILTRADAS
-  const evaluacionesAgrupadas = evaluacionesFiltradas.reduce((acc: any, curr) => {
+  const evaluacionesAgrupadas = evaluacionesFiltradas.reduce((acc: Record<string, Record<string, Record<string, EvaluacionInstancia[]>>>, curr) => {
     const escuela = curr.escuelaNombre || "Sin Escuela";
     const sala = curr.salaNombre || `Sala de ${curr.salaId}`;
     const aula = curr.aulaLabel || "Sin Comisión";
@@ -402,7 +403,7 @@ export default function EvaluacionesList({
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {evaluacionesAgrupadas[escuela][sala][aula].map((evaluacion: any) => (
+                        {evaluacionesAgrupadas[escuela][sala][aula].map((evaluacion) => (
                           <TableRow
                             key={evaluacion.id}
                             hover
@@ -423,7 +424,7 @@ export default function EvaluacionesList({
                             </TableCell>
                             <TableCell align="center">
                               {(() => {
-                                const aprobadas = evaluacion.areas?.filter((a: any) => a.estadoId === ESTADO_APROBADA).length ?? 0;
+                                const aprobadas = evaluacion.areas?.filter((a) => a.estadoId === ESTADO_APROBADA).length ?? 0;
                                 return evaluacion.estadoId === ESTADO_NO_INICIADA ? "-" : `${aprobadas}/${TOTAL_AREAS_EVALUACION}`;
                               })()}
                             </TableCell>

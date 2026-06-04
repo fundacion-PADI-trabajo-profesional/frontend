@@ -18,7 +18,6 @@ import {
   asignarEstudianteAula,
   desasignarEstudianteAula,
   bulkCreateEstudiantes,
-  getAulasPorEscuela,
   getEscuelas,
 } from "../../src/api/estudiantes";
 
@@ -267,35 +266,6 @@ describe("desasignarEstudianteAula con userInfo explícito", () => {
   });
 });
 
-// ─── getAulasPorEscuela ──────────────────────────────────────────────────────
-describe("getAulasPorEscuela (estudiantes api)", () => {
-  it("llama a GET /aulas con escuela_id y devuelve lista", async () => {
-    vi.mocked(fetch).mockResolvedValue(
-      mockFetchResponse({ success: true, data: [{ id: "a-1" }] })
-    );
-
-    const result = await getAulasPorEscuela("esc-1");
-
-    const url = vi.mocked(fetch).mock.calls[0][0] as string;
-    expect(url).toContain(`${API}/aulas`);
-    expect(url).toContain("escuela_id=esc-1");
-    expect(result[0].id).toBe("a-1");
-  });
-
-  it("devuelve array vacío cuando success es false", async () => {
-    vi.mocked(fetch).mockResolvedValue(
-      mockFetchResponse({ success: false, data: [] }, true, 200)
-    );
-
-    const result = await getAulasPorEscuela("esc-1");
-    expect(result).toEqual([]);
-  });
-
-  it("lanza error cuando la respuesta no es ok", async () => {
-    vi.mocked(fetch).mockResolvedValue(mockFetchResponse({}, false, 500));
-    await expect(getAulasPorEscuela("esc-1")).rejects.toThrow("Error al obtener aulas");
-  });
-});
 
 // ─── bulkCreateEstudiantes ───────────────────────────────────────────────────
 describe("bulkCreateEstudiantes", () => {

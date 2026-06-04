@@ -94,8 +94,8 @@ export default function CambiarContrasenaTemporal() {
       await updatePasswordUser(tokens.access, tokens.refresh, newPassword);
       setSuccess(true);
       setTimeout(() => navigate("/login"), 3000);
-    } catch (err: any) {
-      setError(err.message || "No se pudo activar la cuenta. Intentá de nuevo o pedí una nueva invitación.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "No se pudo activar la cuenta. Intentá de nuevo o pedí una nueva invitación.");
     } finally {
       setIsLoading(false);
     }

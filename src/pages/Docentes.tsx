@@ -72,8 +72,8 @@ export default function DocentesPage() {
       ])
       setItems(docentesData)
       setEscuelas(escuelasData)
-    } catch (e: any) {
-      setError(e.message || "Error al cargar docentes")
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Error al cargar docentes")
     } finally {
       setLoading(false)
     }
@@ -113,8 +113,8 @@ export default function DocentesPage() {
       await asignarDocenteAEscuela(selectedDocente.id, selectedEscuelaId)
       await loadData()
       handleCloseAsignarColegio()
-    } catch (e: any) {
-      setError(e.message || "Error al asignar colegio")
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Error al asignar colegio")
     } finally {
       setSaving(false)
     }
@@ -131,8 +131,8 @@ export default function DocentesPage() {
     try {
       const todasLasAulas = await getAulas()
       setAulasDisponibles(filtrarAulasDisponibles(todasLasAulas, docente))
-    } catch (e: any) {
-      setError(e.message || "Error al cargar aulas")
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Error al cargar aulas")
       setSelectedDocenteParaAula(null)
     } finally {
       setLoadingAulas(false)
@@ -152,8 +152,8 @@ export default function DocentesPage() {
       await asignarDocenteAula(selectedAulaId, selectedDocenteParaAula.id)
       await loadData()
       handleCloseAsignarAula()
-    } catch (e: any) {
-      setError(e.message || "Error al asignar aula")
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Error al asignar aula")
     } finally {
       setSaving(false)
     }
@@ -168,8 +168,8 @@ export default function DocentesPage() {
           setSaving(true)
           await desasignarDocenteAula(aulaId, docenteId)
           await loadData()
-        } catch (e: any) {
-          setError(e.message || "Error al desasignar aula")
+        } catch (e: unknown) {
+          setError(e instanceof Error ? e.message : "Error al desasignar aula")
         } finally {
           setSaving(false)
         }
@@ -186,8 +186,8 @@ export default function DocentesPage() {
           setSaving(true)
           await desasignarDocenteDeEscuela(docenteId, escuelaId)
           await loadData()
-        } catch (e: any) {
-          setError(e.message || "Error al desasignar colegio")
+        } catch (e: unknown) {
+          setError(e instanceof Error ? e.message : "Error al desasignar colegio")
         } finally {
           setSaving(false)
         }
@@ -230,7 +230,7 @@ export default function DocentesPage() {
           <BuscadorPadi
             placeholder="Buscar docente por nombre o apellido..."
             value={busqueda}
-            onChange={(e: any) => setBusqueda(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBusqueda(e.target.value)}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">

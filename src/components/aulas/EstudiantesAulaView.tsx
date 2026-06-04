@@ -50,8 +50,8 @@ export default function EstudiantesAulaView({ aula, onVolver, escuelaNombreProp 
         try {
             const todos = await getEstudiantes();
             setTodosLosEstudiantes(todos);
-        } catch (e: any) {
-            setError(e.message || "Error al cargar los estudiantes.");
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "Error al cargar los estudiantes.");
         } finally {
             setLoading(false);
         }
@@ -80,8 +80,8 @@ export default function EstudiantesAulaView({ aula, onVolver, escuelaNombreProp 
             setSelectedEstudianteId("");
             setSnackbar({ open: true, message: "Estudiante asignado correctamente", severity: "success" });
             fetchData();
-        } catch (err: any) {
-            setSnackbar({ open: true, message: err.message || "Error al asignar estudiante", severity: "error" });
+        } catch (err: unknown) {
+            setSnackbar({ open: true, message: err instanceof Error ? err.message : "Error al asignar estudiante", severity: "error" });
         }
     };
 
@@ -98,8 +98,8 @@ export default function EstudiantesAulaView({ aula, onVolver, escuelaNombreProp 
             await desasignarEstudianteAula(aula.id, estudianteAQuitar);
             setSnackbar({ open: true, message: "Estudiante quitado de la comisión", severity: "success" });
             fetchData();
-        } catch (err: any) {
-            setSnackbar({ open: true, message: err.message || "Error al quitar estudiante", severity: "error" });
+        } catch (err: unknown) {
+            setSnackbar({ open: true, message: err instanceof Error ? err.message : "Error al quitar estudiante", severity: "error" });
         } finally {
             setEstudianteAQuitar(null);
         }

@@ -30,7 +30,7 @@ import { filtrarAulasParaEstudiante } from "../../utils/docentes-aulas";
 
 interface EstudianteFormProps {
     onCancel: () => void
-    onSuccess: (estudiante: any) => void
+    onSuccess: (estudiante: Estudiante | import("../../api/estudiantes").EstudianteCreado) => void
     estudianteAEditar?: Estudiante | null // Prop para detectar si estamos editando
     aulaContext?: {
         aula_id: string
@@ -143,7 +143,7 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
                         escuela_id: user.escuela_id // Institución automática
                     }))
                 }
-            } catch (err: any) {
+            } catch {
                 setError("Error al cargar los datos necesarios.")
             } finally {
                 setLoading(false)
@@ -172,6 +172,7 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
         if (!aulaContext) {
             fetchAulas();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formData.escuela_id, aulaContext]);
 
     const validate = () => {
@@ -188,7 +189,7 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
         return Object.keys(newErrors).length === 0
     }
 
-    const handleChange = (e: any) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
         const { name, value } = e.target
         setFormData((prev) => ({ ...prev, [name]: value }))
         if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }))
@@ -219,8 +220,8 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
                 })
                 onSuccess(nuevo)
             }
-        } catch (err: any) {
-            setError(err.message || "Error al procesar la solicitud")
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Error al procesar la solicitud")
         } finally {
             setLoading(false)
         }

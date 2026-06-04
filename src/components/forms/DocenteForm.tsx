@@ -80,8 +80,8 @@ export default function DocenteForm({ open, onClose, onSuccess, escuelas }: Doce
         handleClose();
       }, 2000);
 
-    } catch (err: any) {
-      setError(err.message || "No se pudo crear el docente.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "No se pudo crear el docente.");
     } finally {
       setLoading(false);
     }

@@ -57,8 +57,8 @@ export default function ActualizarContrasena() {
       await updatePasswordUser(tokens.access, tokens.refresh, password);
       setSuccess("¡Contraseña actualizada con éxito! Redirigiendo al login...");
       setTimeout(() => navigate("/login"), 3000);
-    } catch (err: any) {
-      setError(err.message || "Ocurrió un error al actualizar la contraseña.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Ocurrió un error al actualizar la contraseña.");
     } finally {
       setIsLoading(false);
     }

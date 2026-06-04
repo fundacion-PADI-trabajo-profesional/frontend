@@ -21,11 +21,11 @@ import PlaceIcon from "@mui/icons-material/Place";
 import EmailIcon from "@mui/icons-material/Email";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import SaveIcon from "@mui/icons-material/Save";
-import { updateProfileData, requestPasswordReset } from "../api/auth";
+import { updateProfileData, requestPasswordReset, type PadiProfile } from "../api/auth";
 import { getCurrentEncargado } from "../api/encargados-zona";
 
 const modalStyle = {
-  position: "absolute" as "absolute",
+  position: "absolute" as const,
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
@@ -57,9 +57,9 @@ const ROLE_MAP: Record<string, { label: string; icon: string }> = {
 interface PerfilProps {
   open: boolean;
   onClose: () => void;
-  user: any;
-  profile: any;
-  onUpdateSuccess?: (newData: any) => Promise<void>;
+  user: { id: string; email?: string; [key: string]: unknown };
+  profile: PadiProfile;
+  onUpdateSuccess?: (newData: PadiProfile) => Promise<void>;
 }
 
 export default function Perfil({ open, onClose, user, profile, onUpdateSuccess }: PerfilProps) {
@@ -102,8 +102,8 @@ export default function Perfil({ open, onClose, user, profile, onUpdateSuccess }
       setError(null);
       await requestPasswordReset(user.email);
       setResetSent(true);
-    } catch (err: any) {
-      setError(err.message || "Error al solicitar el cambio de contraseña");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al solicitar el cambio de contraseña");
     } finally {
       setLoading(false);
     }
@@ -123,8 +123,8 @@ export default function Perfil({ open, onClose, user, profile, onUpdateSuccess }
       }
       
       setIsEditing(false);
-    } catch (err: any) {
-      setError(err.message || "Error al actualizar los datos");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al actualizar los datos");
     } finally {
       setLoading(false);
     }

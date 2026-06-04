@@ -142,7 +142,7 @@ describe("AulasView", () => {
                 isEquipoPadi: true,
                 onVerEstudiantes: vi.fn(),
                 onVolver: vi.fn(),
-            } as any)
+            })
         );
 
         expect(html).toContain("progressbar");

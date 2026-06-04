@@ -66,8 +66,8 @@ export default function Estudiantes() {
                 setEstudiantes(data);
                 setAulasDocente([]);
             }
-        } catch (err: any) {
-            setError(err.message || "Error al cargar los estudiantes")
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Error al cargar los estudiantes")
         } finally {
             setLoading(false)
         }

@@ -51,9 +51,6 @@ export default function Zonas({ zonas, onVerEscuelas, onUpdate, setError }: Zona
             await createZona(data.nombre.trim());
             setZonaDialogOpen(false);
             await onUpdate();
-        } catch (e: any) {
-            // Lanzamos el error para que lo ataje el catch de ZonaForm y lo muestre en el TextField
-            throw e;
         } finally {
             setSavingZona(false);
         }
@@ -75,8 +72,8 @@ export default function Zonas({ zonas, onVerEscuelas, onUpdate, setError }: Zona
         try {
             await desvincularEncargado(encargadoToRemove.id);
             await onUpdate();
-        } catch (e: any) {
-            setError(e.message || "Error al quitar encargado");
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "Error al quitar encargado");
         } finally {
             setConfirmDeleteOpen(false);
             setEncargadoToRemove(null);

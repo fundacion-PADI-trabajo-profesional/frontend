@@ -89,8 +89,8 @@ export default function GestionUsuarios() {
     try {
       const data = await adminListUsers();
       setUsuarios(data);
-    } catch (err: any) {
-      setError(err.message || "No se pudo cargar la lista de usuarios.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "No se pudo cargar la lista de usuarios.");
     } finally {
       setLoading(false);
     }
@@ -125,8 +125,8 @@ export default function GestionUsuarios() {
       await adminResendInvite(usuario.id);
       setResendSuccess(`Invitación reenviada a ${usuario.email}.`);
       setTimeout(() => setResendSuccess(""), 5000);
-    } catch (err: any) {
-      setError(err.message || "No se pudo reenviar la invitación.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "No se pudo reenviar la invitación.");
     } finally {
       setResendingId(null);
     }

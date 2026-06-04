@@ -90,8 +90,40 @@ export interface CreateEvaluacionPayload {
   fecha_creacion: string
 }
 
+// Tipo interno para la respuesta cruda del backend (sin exportar)
+interface RawEvaluacionBackend {
+  id: string;
+  estudiante_id: string;
+  profesor_id: string;
+  sala_id: number;
+  aula_id?: string | null;
+  tipo_id: string;
+  estado_id: string;
+  puntaje: number | null;
+  fecha_creacion?: string;
+  estudiantes?: {
+    id?: string;
+    fecha_baja?: string | null;
+    personas?: { nombre?: string | null; primer_apellido?: string | null; dni?: string | null; fecha_nacimiento?: string | null };
+    escuela?: { nombre?: string | null };
+    generos?: { descripcion?: string | null };
+  };
+  aulas?: { comision?: string | null; turno?: string | null };
+  salas?: { nombre?: string | null };
+  evaluaciones_estudiante_area?: Array<{
+    id: string;
+    area_id: string;
+    estado_id?: string | null;
+    puntaje?: number | null;
+    totalPreguntas?: number;
+    aciertos_individuales?: number;
+    areas?: { nombre?: string; descripcion?: string };
+    estados_evaluacion?: { descripcion?: string };
+  }>;
+}
+
 /** Convierte la respuesta cruda del backend a un formato camelCase para el frontend. */
-function mapToCamelCase(data: any): EvaluacionInstancia {
+function mapToCamelCase(data: RawEvaluacionBackend): EvaluacionInstancia {
   const nombre = data?.estudiantes?.personas?.nombre ?? "";
   const apellido = data?.estudiantes?.personas?.primer_apellido ?? "";
 
@@ -103,7 +135,7 @@ function mapToCamelCase(data: any): EvaluacionInstancia {
   let areasMapped: AreaDetalle[] = [];
 
   if (data.evaluaciones_estudiante_area) {
-    areasMapped = data.evaluaciones_estudiante_area.map((item: any) => {
+    areasMapped = data.evaluaciones_estudiante_area.map((item) => {
       const estadoArea = (item.estado_id ?? ESTADO_NO_INICIADA).toString().toUpperCase();
 
       return {
@@ -111,9 +143,11 @@ function mapToCamelCase(data: any): EvaluacionInstancia {
         instanciaId: item.id,
         nombre: item.areas?.nombre || "",
         descripcion: item.areas?.descripcion || "",
+        orden: 0,
         estadoId: estadoArea,
         estadoDescripcion: item.estados_evaluacion?.descripcion || "",
-        puntaje: item.puntaje,
+        puntaje: item.puntaje ?? null,
+        observacion: null,
         totalPreguntas: item.totalPreguntas ?? 0,
         aciertosIndividuales: item.aciertos_individuales ?? 0,
       };
@@ -197,7 +231,7 @@ export async function getEvaluacionInstanciaById(id: string): Promise<Evaluacion
 
   if (!res.ok) throw new Error(json?.message || "Error al cargar la evaluación")
 
-  return mapToCamelCase(json.data)
+  return mapToCamelCase(json.data as RawEvaluacionBackend)
 }
 
 /** Obtiene evaluaciones filtradas por escuela, rol o profesor. */
@@ -217,7 +251,7 @@ export async function getEvaluacionesInstancias(filters?: {
   if (!res.ok) throw new Error("Error al cargar las evaluaciones");
 
   const resData = await res.json();
-  return (resData.data || []).map(mapToCamelCase);
+  return (resData.data as RawEvaluacionBackend[] || []).map(mapToCamelCase);
 }
 
 /** Crea una nueva instancia de evaluación. */
@@ -242,7 +276,7 @@ export async function crearEvaluacionInstancia(
   const responseData = await res.json();
   if (!res.ok) throw new Error(responseData.message || "Error al crear la evaluación");
 
-  return mapToCamelCase(responseData.data);
+  return mapToCamelCase(responseData.data as RawEvaluacionBackend);
 }
 
 /** Obtiene las evaluaciones de un estudiante con paginación opcional. */
@@ -278,7 +312,7 @@ export async function getEvaluacionesInstanciasByProfesor(
   })
   if (!res.ok) throw new Error("Error al cargar evaluaciones del docente")
   const resData = await res.json()
-  return (resData.data || []).map(mapToCamelCase)
+  return (resData.data as RawEvaluacionBackend[] || []).map(mapToCamelCase)
 }
 
 /** Actualiza una instancia de evaluación existente. */
@@ -296,7 +330,7 @@ export async function actualizarEvaluacionInstancia(
     const errorDescription = responseData.error?.description || responseData.message
     throw new Error(errorDescription || "Error al actualizar la evaluación")
   }
-  return mapToCamelCase(responseData.data)
+  return mapToCamelCase(responseData.data as RawEvaluacionBackend)
 }
 
 /** Elimina una instancia de evaluación agregando contexto de usuario en query params. */

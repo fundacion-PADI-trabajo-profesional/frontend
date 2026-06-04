@@ -53,7 +53,7 @@ export default function ModalCargaMasiva({ open, onClose, onCreated }: Props) {
   const [excelRows, setExcelRows] = useState<CreateUserPayload[]>([]);
   const [excelError, setExcelError] = useState("");
   const [bulkLoading, setBulkLoading] = useState(false);
-  const [bulkResult, setBulkResult] = useState<{ creados: any[]; errores: any[] } | null>(null);
+  const [bulkResult, setBulkResult] = useState<{ creados: { email: string }[]; errores: { email: string; error: string }[] } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -77,7 +77,7 @@ export default function ModalCargaMasiva({ open, onClose, onCreated }: Props) {
         const data = evt.target?.result;
         const workbook = XLSX.read(data, { type: "binary" });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        const rows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
         if (rows.length === 0) {
           setExcelError("El archivo no tiene filas de datos.");
@@ -129,8 +129,8 @@ export default function ModalCargaMasiva({ open, onClose, onCreated }: Props) {
       const result = await adminCreateUsersBulk(excelRows);
       setBulkResult(result);
       if (result.creados.length > 0) onCreated();
-    } catch (err: any) {
-      setExcelError(err.message || "Error al procesar la importación.");
+    } catch (err: unknown) {
+      setExcelError(err instanceof Error ? err.message : "Error al procesar la importación.");
     } finally {
       setBulkLoading(false);
     }
@@ -275,7 +275,7 @@ export default function ModalCargaMasiva({ open, onClose, onCreated }: Props) {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {bulkResult.errores.map((e: any, i: number) => (
+                      {bulkResult.errores.map((e, i: number) => (
                         <TableRow key={i}>
                           <TableCell sx={{ color: "#555" }}>{e.email}</TableCell>
                           <TableCell sx={{ color: "#c62828" }}>{e.error}</TableCell>

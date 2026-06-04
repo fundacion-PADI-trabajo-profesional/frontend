@@ -4,7 +4,7 @@ import { Encargado} from "../../api/encargados-zona";
 import { getZonas, type Zona } from "../../api/zonas";
 
 interface Props {
-    onSubmit: (data: any) => Promise<void>;
+    onSubmit: (data: { nombre: string; apellido: string; email: string; zona_id: string; password: string }) => Promise<void>;
     onCancel: () => void;
     loading: boolean;
     initialValues?: Encargado | null;
@@ -27,7 +27,7 @@ export default function EncargadoForm({ onSubmit, onCancel, loading, initialValu
             try {
                 const data = await getZonas();
                 setZonas(data);
-            } catch (err) {
+            } catch {
                 setError("No se pudieron cargar las zonas.");
             } finally {
                 setLoadingZonas(false);
@@ -54,8 +54,8 @@ export default function EncargadoForm({ onSubmit, onCancel, loading, initialValu
             // Pasamos un string vacío o random en el front solo para cumplir con el DTO si es necesario, 
             // pero lo ideal es que el DTO del front ya no pida password.
             await onSubmit({ ...formData, password: "" });
-        } catch (err: any) {
-            setError(err.message || "Ocurrió un error al procesar la solicitud");
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Ocurrió un error al procesar la solicitud");
         }
     };
 

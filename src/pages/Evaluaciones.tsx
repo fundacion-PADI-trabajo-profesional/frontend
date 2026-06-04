@@ -11,7 +11,7 @@ import type { EvaluacionInstancia } from "../api/evaluaciones";
 import EvaluacionDetalle from "../components/evaluaciones/EvaluacionDetalle"
 
 export default function Evaluaciones() {
-  const [profile, setProfile] = useState<any | null>(null)
+  const [profile, setProfile] = useState<{ id?: string; rol?: string; escuela?: { nombre?: string } } | null>(null)
   const [refreshKey, setRefreshKey] = useState(0);
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()

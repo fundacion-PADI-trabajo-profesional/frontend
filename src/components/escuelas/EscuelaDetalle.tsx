@@ -21,7 +21,7 @@ function InfoItem({ icon, label, value }: { icon: React.ReactNode; label: string
     );
 }
 
-function PersonCard<T>({ title, people, getName, getSubtitle }: {
+function PersonCard<T extends { id: string | number }>({ title, people, getName, getSubtitle }: {
     title: string;
     people: T[];
     getName: (p: T) => string;

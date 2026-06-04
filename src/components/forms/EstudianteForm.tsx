@@ -14,6 +14,7 @@ import {
     FormHelperText,
     IconButton,
 } from "@mui/material"
+import { type SelectChangeEvent } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import {
     createEstudiante,
@@ -189,8 +190,9 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
         return Object.keys(newErrors).length === 0
     }
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent) => {
         const { name, value } = e.target
+        if (!name) return
         setFormData((prev) => ({ ...prev, [name]: value }))
         if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }))
     }

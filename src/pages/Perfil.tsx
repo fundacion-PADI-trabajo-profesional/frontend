@@ -88,7 +88,7 @@ export default function Perfil({ open, onClose, user, profile, onUpdateSuccess }
 
   useEffect(() => {
     if (profile?.rol === "encargado_zona" && open) {
-      getCurrentEncargado(profile.id)
+      getCurrentEncargado(profile.id ?? "")
         .then(data => setZonaEncargado(data.zona ?? null))
         .catch(() => setZonaEncargado(null));
     }
@@ -100,7 +100,7 @@ export default function Perfil({ open, onClose, user, profile, onUpdateSuccess }
     try {
       setLoading(true);
       setError(null);
-      await requestPasswordReset(user.email);
+      await requestPasswordReset(user.email ?? "");
       setResetSent(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error al solicitar el cambio de contraseña");

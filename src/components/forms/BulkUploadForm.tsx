@@ -282,17 +282,17 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
             setStats(data);
 
             // Mapeamos los estados a las filas para mostrarlos en la tabla
-            const enrichedRows = excelRows.map(est => {
-                const retroceso = data.retrocesos.find((r) => r.dni === est.dni);
-                const promovido = data.promovidos.find((r) => r.dni === est.dni);
-                const repitente = data.repitentes.find((r) => r.dni === est.dni);
-                const reactivado = data.reactivados?.find((r) => r.dni === est.dni);
+            const enrichedRows: EstudianteBulkRow[] = excelRows.map(est => {
+                const retroceso = data.retrocesos.find((r: { dni: string; old_sala_id: number | null }) => r.dni === est.dni);
+                const promovido = data.promovidos.find((r: { dni: string; old_sala_id: number | null }) => r.dni === est.dni);
+                const repitente = data.repitentes.find((r: { dni: string }) => r.dni === est.dni);
+                const reactivado = data.reactivados?.find((r: { dni: string }) => r.dni === est.dni);
 
-                if (retroceso) return { ...est, estado: 'retroceso', old_sala_id: retroceso.old_sala_id };
-                if (promovido) return { ...est, estado: 'promovido', old_sala_id: promovido.old_sala_id };
-                if (repitente) return { ...est, estado: 'repite' };
-                if (reactivado) return { ...est, estado: 'reactivado' };
-                return { ...est, estado: 'nuevo' };
+                if (retroceso) return { ...est, estado: 'retroceso' as const, old_sala_id: retroceso.old_sala_id };
+                if (promovido) return { ...est, estado: 'promovido' as const, old_sala_id: promovido.old_sala_id };
+                if (repitente) return { ...est, estado: 'repite' as const };
+                if (reactivado) return { ...est, estado: 'reactivado' as const };
+                return { ...est, estado: 'nuevo' as const };
             });
 
             setExcelRows(enrichedRows);
@@ -367,7 +367,7 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                         <strong>Análisis Alumnos:</strong> Se detectaron {stats.nuevos.length} ingresos nuevos, {stats.promovidos.length} pases de año y {stats.repitentes.length} que repiten sala.
                         {(stats.reactivados?.length ?? 0) > 0 && (
                             <Box sx={{ mt: 1, color: '#1565c0', fontWeight: 'bold' }}>
-                                {stats.reactivados.length} alumno(s) serán reactivados (estaban dados de baja).
+                                {stats.reactivados?.length} alumno(s) serán reactivados (estaban dados de baja).
                             </Box>
                         )}
                         {stats.retrocesos.length > 0 && (
@@ -446,10 +446,10 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                         disabled={bulkLoading || !!excelError}
                         startIcon={bulkLoading ? <CircularProgress size={16} color="inherit" /> : <CheckCircleIcon />}
                         sx={{
-                            bgcolor: stats?.retrocesos?.length > 0 ? "#d32f2f" : "#65944F",
+                            bgcolor: (stats?.retrocesos?.length ?? 0) > 0 ? "#d32f2f" : "#65944F",
                             textTransform: "none",
                             borderRadius: 2,
-                            "&:hover": { bgcolor: stats?.retrocesos?.length > 0 ? "#b71c1c" : "#558040" }
+                            "&:hover": { bgcolor: (stats?.retrocesos?.length ?? 0) > 0 ? "#b71c1c" : "#558040" }
                         }}
                     >
                         {bulkLoading ? "Guardando..." : "Confirmar Importación"}

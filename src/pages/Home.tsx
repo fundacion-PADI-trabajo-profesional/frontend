@@ -8,14 +8,15 @@ import DocenteDashboard from "./dashboards/DocenteDashboard";
 import DirectivoDashboard from "./dashboards/DirectivoDashboard";
 import AdminDashboard from "./dashboards/AdminDashboard";
 import { getCurrentEncargado } from "../api/encargados-zona";
+import { type PadiProfile } from "../api/auth";
 
 interface HomeProps {
   onLogout: () => void;
 }
 
 export default function Home({ onLogout }: HomeProps) {
-  const [user, setUser] = useState<{ id?: string; email?: string; [key: string]: unknown } | null>(null);
-  const [profile, setProfile] = useState<{ nome?: string; nombre?: string; apellido?: string; rol: string; escuela?: { nombre?: string }; id?: string } | null>(null);
+  const [user, setUser] = useState<{ id: string; email?: string; [key: string]: unknown } | null>(null);
+  const [profile, setProfile] = useState<PadiProfile | null>(null);
   const [loadingUser, setLoadingUser] = useState<boolean>(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [zonaNombre, setZonaNombre] = useState<string | null>(null);
@@ -42,7 +43,7 @@ export default function Home({ onLogout }: HomeProps) {
 
   useEffect(() => {
     if (profile?.rol === "encargado_zona") {
-      getCurrentEncargado(profile.id)
+      getCurrentEncargado(profile.id ?? "")
         .then(data => setZonaNombre(data.zona?.nombre ?? null))
         .catch(() => setZonaNombre(null));
     }
@@ -55,7 +56,7 @@ export default function Home({ onLogout }: HomeProps) {
     }
   }, [navigate]);
 
-  const handleProfileUpdate = async (updatedProfile: typeof profile) => {
+  const handleProfileUpdate = async (updatedProfile: PadiProfile) => {
     setProfile(updatedProfile);
     localStorage.setItem("padiProfile", JSON.stringify(updatedProfile));
   };

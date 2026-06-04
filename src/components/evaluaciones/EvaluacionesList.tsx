@@ -410,7 +410,7 @@ export default function EvaluacionesList({
                             sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                           >
                             <TableCell sx={{ fontWeight: 500, color: "#666" }}>
-                              {evaluacion.estudiante.dni}
+                              {evaluacion.estudiante?.dni}
                             </TableCell>
 
                             <TableCell>{evaluacion.estudianteNombre}</TableCell>
@@ -448,7 +448,7 @@ export default function EvaluacionesList({
                                 </Button>
 
                                 {/* Botón Eliminar (Tachito) */}
-                                {permissions.deleteEvaluacion(profile?.rol) && (
+                                {permissions.deleteEvaluacion(profile?.rol ?? "") && (
                                   <Button
                                     size="small"
                                     variant="outlined"

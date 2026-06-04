@@ -117,7 +117,7 @@ export default function Estudiantes() {
         navigate("/estudiantes", { replace: true });
     }
 
-    const handleSuccess = (nuevoEstudiante: EstudianteCreado) => {
+    const handleSuccess = (nuevoEstudiante: Estudiante | EstudianteCreado) => {
         if (userRole === "docente") {
             setView("list");
             setRefreshKey(prev => prev + 1);
@@ -130,7 +130,7 @@ export default function Estudiantes() {
             setRefreshKey(prev => prev + 1);
         } else {
             // Si es creación nueva, mostramos pantalla de éxito
-            setEstudianteCreado(nuevoEstudiante);
+            setEstudianteCreado(nuevoEstudiante as EstudianteCreado);
             setView("success");
             setRefreshKey(prev => prev + 1);
         }

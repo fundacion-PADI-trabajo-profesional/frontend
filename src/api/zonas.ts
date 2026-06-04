@@ -200,6 +200,20 @@ export async function asignarEncargadoAZona(zonaId: string, encargadoId: string)
     return body.data;
 }
 
+/** Elimina una zona del sistema (desvincula encargados y escuelas automáticamente). */
+export async function deleteZona(id: string): Promise<null> {
+    const { rol } = getUserData();
+    const res = await fetch(`${API_URL}/zonas/${id}?rol=${rol}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+    });
+    const body: ApiResponse<null> = await res.json();
+    if (!res.ok || !body.success) {
+        throw new Error(body.error?.description || body.message || "Error al eliminar la zona");
+    }
+    return body.data;
+}
+
 /** Desvincula un encargado de su zona. */
 export async function desvincularEncargado(encargadoId: string): Promise<null> {
     const { rol } = getUserData();

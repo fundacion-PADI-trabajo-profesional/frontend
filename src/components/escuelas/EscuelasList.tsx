@@ -8,6 +8,7 @@ import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import { type Escuela } from "../../api/escuelas";
+import { formatDirectores } from "../../utils/escuelas";
 
 interface Props {
     escuelas: Escuela[];
@@ -31,11 +32,8 @@ export default function EscuelasList({ escuelas, onView, onDetalle, onEditar }: 
         setMenuEscuela(null);
     };
 
-    const escuelaDirectorName = (escuela: Escuela) => {
-        if (!escuela.directivos?.length) return "Sin director asignado";
-        const d = escuela.directivos[0];
-        return `${d.nombre} ${d.apellido}`;
-    };
+    // Una escuela puede tener varios directores: los listamos a todos, no solo el primero.
+    const escuelaDirectorName = (escuela: Escuela) => formatDirectores(escuela.directivos);
 
     return (
         <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
@@ -43,7 +41,7 @@ export default function EscuelasList({ escuelas, onView, onDetalle, onEditar }: 
                 <TableHead sx={{ bgcolor: "#f8f9fa" }}>
                     <TableRow>
                         <TableCell align="center" sx={{ fontWeight: "bold" }}>Escuela</TableCell>
-                        <TableCell align="center" sx={{ fontWeight: "bold" }}>Director</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: "bold" }}>Director/es</TableCell>
                         <TableCell align="center" sx={{ fontWeight: "bold" }}>Acciones</TableCell>
                     </TableRow>
                 </TableHead>

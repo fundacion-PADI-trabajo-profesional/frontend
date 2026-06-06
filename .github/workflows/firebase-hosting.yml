@@ -35,6 +35,8 @@ jobs:
 
       - name: Compilar
         run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
       - name: Deploy a Firebase Hosting en production
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}

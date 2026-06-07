@@ -1,4 +1,3 @@
-import React from "react";
 import { Box, Typography, Paper } from "@mui/material";
 
 interface DashboardCardProps {
@@ -10,10 +9,6 @@ interface DashboardCardProps {
 }
 
 export default function DashboardCard({ title, description, icon, onClick, color = "#5c7cfa" }: DashboardCardProps) {
-    const styledIcon = React.isValidElement(icon)
-        ? React.cloneElement(icon as React.ReactElement, { sx: { fontSize: "2.5rem", color } })
-        : icon;
-
     return (
         <Paper
             elevation={0}
@@ -43,8 +38,9 @@ export default function DashboardCard({ title, description, icon, onClick, color
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                "& .MuiSvgIcon-root": { fontSize: "2.5rem", color },
             }}>
-                {styledIcon}
+                {icon}
             </Box>
             <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
                 {title}

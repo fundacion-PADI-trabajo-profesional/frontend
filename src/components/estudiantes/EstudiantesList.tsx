@@ -169,9 +169,6 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
             {/* Listado Agrupado */}
             {salasOrdenadas.map((salaNombre) => (
                 <Box key={salaNombre} sx={{ mb: 4 }}>
-                    {/* <Typography variant="subtitle2" sx={{ color: "#666", mb: 1, fontWeight: 700, textTransform: "uppercase" }}>
-                        {salaNombre}
-                    </Typography> */}
                     <Paper elevation={0} sx={{ border: "1px solid #eee", borderRadius: 3, overflow: "hidden" }}>
                         <List disablePadding>
                             {agrupados[salaNombre].map((est, index) => (

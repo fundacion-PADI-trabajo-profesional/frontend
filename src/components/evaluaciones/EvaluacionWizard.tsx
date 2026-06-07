@@ -449,17 +449,6 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                 <Card sx={{ flex: 1, borderRadius: 4, display: 'flex', flexDirection: 'column', mb: 2 }}>
                                     <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 4 }}>
 
-                                        {/* <Box sx={{ mb: 2 }}>
-                                            {preguntaActual.tipoPregunta && (
-                                                <Box component="span" sx={{
-                                                    px: 1.5, py: 0.5, borderRadius: 1, fontSize: '0.75rem', fontWeight: 700,
-                                                    bgcolor: preguntaActual.tipoPregunta === 'Evaluable' ? '#DBEAFE' : '#FFFBEB',
-                                                    color: preguntaActual.tipoPregunta === 'Evaluable' ? '#2563EB' : '#D97706',
-                                                }}>
-                                                    {preguntaActual.tipoPregunta}
-                                                </Box>
-                                            )}
-                                        </Box> */}
                                         <Box sx={{ mb: 3, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                                             {preguntaActual.tipoPregunta && (
                                                 <Box component="span" sx={{

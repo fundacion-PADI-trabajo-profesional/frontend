@@ -46,9 +46,6 @@ export default function AsignarEscuelaModal({ open, onClose, zonaId, onSuccess }
     const handleAsignar = async (escuelaId: string) => {
         setAssigning(escuelaId);
         try {
-            // const stored = localStorage.getItem("padiUser");
-            // const rol = stored ? JSON.parse(stored).rol : "";
-
             await asignarEscuela(zonaId, escuelaId);
             onSuccess(); // Refresca la tabla de la página principal
             onClose();   // Cierra el modal

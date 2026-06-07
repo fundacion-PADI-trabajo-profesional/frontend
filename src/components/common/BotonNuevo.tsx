@@ -1,10 +1,13 @@
 import { Button, type ButtonProps } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 
+/** Props del botón de alta. Extiende MUI ButtonProps para pasar cualquier prop nativo. */
 interface BotonNuevoProps extends ButtonProps {
+    /** Texto que se muestra junto al ícono de suma. */
     texto: string;
 }
 
+/** Botón de acción primaria con estilo PADI (verde, ícono +). Usado para dar de alta recursos. */
 export default function BotonNuevo({ texto, ...props }: BotonNuevoProps) {
     return (
         <Button

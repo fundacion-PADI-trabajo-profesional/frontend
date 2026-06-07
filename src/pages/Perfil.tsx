@@ -83,7 +83,7 @@ export default function Perfil({ open, onClose, user, profile, onUpdateSuccess }
 
   // Datos jerárquicos solicitados: Usuario -> Escuela -> Zona
   const nombreEscuela = profile?.escuela?.nombre || profile?.escuelas?.[0]?.nombre || "Escuela no asignada";
-  // const nombreZona = profile?.escuela?.zona?.nombre || profile?.escuelas?.[0]?.zona || "Zona no definida";
+
 
   const [zonaEncargado, setZonaEncargado] = useState<{ id: string; nombre: string } | null | undefined>(undefined);
 

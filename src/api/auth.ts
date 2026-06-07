@@ -152,7 +152,7 @@ export function setupFetchInterceptor() {
         "/auth/update-password",
       ];
       const urlPath = new URL(url, window.location.origin).pathname;
-      if (AUTH_BYPASS_ENDPOINTS.includes(urlPath)) return response;
+      if (AUTH_BYPASS_ENDPOINTS.some(endpoint => urlPath === endpoint || urlPath.endsWith(endpoint))) return response;
 
       const newToken = await getRefreshedToken();
 
@@ -279,9 +279,9 @@ export async function login(email: string, password: string) {
     body: JSON.stringify({ email, password }),
   });
 
-  const data = await response.json();
+  const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(data.message || "Credenciales inválidas");
+    throw new Error(data.message || "Credenciales inválidas. Por favor, vuelva a intentarlo.");
   }
 
   return {

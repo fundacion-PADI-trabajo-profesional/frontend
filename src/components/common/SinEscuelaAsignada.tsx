@@ -1,6 +1,7 @@
 import { Box, Paper, Typography } from "@mui/material";
 import SchoolIcon from "@mui/icons-material/School";
 
+/** Pantalla de estado vacío para usuarios que aún no tienen escuela asignada. */
 export default function SinEscuelaAsignada() {
     return (
         <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>

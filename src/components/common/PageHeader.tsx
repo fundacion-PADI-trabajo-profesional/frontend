@@ -3,16 +3,28 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import { useNavigate } from "react-router-dom"
 import { ReactNode } from "react";
 
+/** Props del encabezado de página. */
 interface PageHeaderProps {
+  /** Ruta a la que navega el botón "Volver". Si se omite, usa `navigate(-1)`. */
   backTo?: string
+  /** Etiqueta del botón de retroceso. Por defecto `"Volver"`. */
   backLabel?: string
+  /** Título principal de la página. */
   title: string
+  /** Subtítulo o descripción opcional debajo del título. */
   subtitle?: ReactNode;
+  /** Callback personalizado para el botón de retroceso. Tiene precedencia sobre `backTo`. */
   onBack?: () => void
+  /** Callback para el botón de alta. Si se omite, el botón no se renderiza. */
   onAdd?: () => void
+  /** Etiqueta del botón de alta. Por defecto `"Agregar"`. */
   addLabel?: string
 }
 
+/**
+ * Encabezado estándar de página con botón de retroceso, título, subtítulo opcional
+ * y botón de alta. Usado en todas las vistas de gestión del sistema.
+ */
 export default function PageHeader({
   backTo,
   backLabel = "Volver",

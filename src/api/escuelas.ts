@@ -43,6 +43,7 @@ export interface CreateEscuelaDto {
     nivel_socioeconomico?: string;
 }
 
+/** Opciones de nivel socioeconómico disponibles para los formularios de escuela. */
 export const NIVELES_SOCIOECONOMICOS = [
     { value: "alto", label: "Alto" },
     { value: "medio", label: "Medio" },
@@ -50,6 +51,7 @@ export const NIVELES_SOCIOECONOMICOS = [
     { value: "sin_definir", label: "Sin Definir" },
 ];
 
+/** Devuelve la etiqueta legible de un nivel socioeconómico. Retorna `"Sin Definir"` si el valor no existe. */
 export const getNivelSocioeconomicoLabel = (value?: string) => {
     return NIVELES_SOCIOECONOMICOS.find(n => n.value === value)?.label ?? "Sin Definir";
 };

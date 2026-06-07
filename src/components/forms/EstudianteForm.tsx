@@ -182,7 +182,6 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
         if (!formData.dni) newErrors.dni = "El DNI es obligatorio"
         if (!formData.nombre) newErrors.nombre = "El nombre es obligatorio"
         if (!formData.apellido) newErrors.apellido = "El apellido es obligatorio"
-        //if (!formData.fecha_nacimiento) newErrors.fecha_nacimiento = "La fecha de nacimiento es obligatoria"
         if (!formData.genero_id) newErrors.genero_id = "Seleccione un género"
         if (!formData.sala_id) newErrors.sala_id = "Seleccione una sala"
         if (!formData.escuela_id) newErrors.escuela_id = "Seleccione una institución"

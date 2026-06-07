@@ -20,6 +20,11 @@ import CloseIcon from "@mui/icons-material/Close"
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline"
 import HighlightOffIcon from "@mui/icons-material/HighlightOff"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
+import CheckIcon from "@mui/icons-material/Check"
+import AssignmentIcon from "@mui/icons-material/Assignment"
+import VisibilityIcon from "@mui/icons-material/Visibility"
+import WarningAmberIcon from "@mui/icons-material/WarningAmber"
+import BuildIcon from "@mui/icons-material/Build"
 import React from "react"
 
 import {
@@ -113,7 +118,7 @@ function SidebarPanel({
                                     '&:hover': { opacity: 0.8, transform: 'scale(1.05)' }
                                 }}
                             >
-                                {isCorrecta ? '✓' : isIncorrecta ? '✗' : idx + 1}
+                                {isCorrecta ? <CheckIcon sx={{ fontSize: '1rem' }} /> : isIncorrecta ? <CloseIcon sx={{ fontSize: '1rem' }} /> : idx + 1}
                             </Box>
                         </Tooltip>
                     );
@@ -192,7 +197,7 @@ function MobileCircleRow({
                                 boxShadow: isCurrent ? '0 0 0 2px #c7d2fe' : 'none',
                             }}
                         >
-                            {isCorrecta ? '✓' : isIncorrecta ? '✗' : idx + 1}
+                            {isCorrecta ? <CheckIcon sx={{ fontSize: '1rem' }} /> : isIncorrecta ? <CloseIcon sx={{ fontSize: '1rem' }} /> : idx + 1}
                         </Box>
                     );
                 })}
@@ -381,8 +386,8 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
 
                             {materialesNecesarios.length > 0 && (
                                 <Box sx={{ mb: 4, p: 2, bgcolor: '#eef2ff', borderRadius: 2, borderLeft: '4px solid #5c7cfa' }}>
-                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#373a40', mb: 1 }}>
-                                        📋 Materiales necesarios para esta sala y área:
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#373a40', mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                        <AssignmentIcon sx={{ fontSize: '1rem' }} /> Materiales necesarios para esta sala y área:
                                     </Typography>
                                     <ul style={{ margin: 0, paddingLeft: '20px', color: '#495057' }}>
                                         {materialesNecesarios.map((material, idx) => (
@@ -471,7 +476,7 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                                     color: preguntaActual.tipoPregunta === 'Evaluable' ? '#1D4ED8' : '#B45309',
                                                     border: `1.5px solid ${preguntaActual.tipoPregunta === 'Evaluable' ? '#93C5FD' : '#FCD34D'}`,
                                                 }}>
-                                                    {preguntaActual.tipoPregunta === 'Evaluable' ? '📋' : '👁️'}
+                                                    {preguntaActual.tipoPregunta === 'Evaluable' ? <AssignmentIcon sx={{ fontSize: '1rem' }} /> : <VisibilityIcon sx={{ fontSize: '1rem' }} />}
                                                     {preguntaActual.tipoPregunta}
                                                 </Box>
                                             )}
@@ -490,7 +495,7 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                                     color: '#991B1B',
                                                     border: '1.5px solid #FECACA',
                                                 }}>
-                                                    ⚠️ Aprueba si responde NO
+                                                    <WarningAmberIcon sx={{ fontSize: '1rem' }} /> Aprueba si responde NO
                                                 </Box>
                                             )}
                                         </Box>
@@ -507,7 +512,7 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                             >
                                                 Respuesta actual: <strong>{respuestas[preguntaActual.id] === 1 ? '"Sí"' : '"No"'}</strong>
                                                 {preguntaActual.puntaje_invertido && (
-                                                    <> — {respuestas[preguntaActual.id] === 0 ? '✓ suma punto' : '✗ no suma punto'}</>
+                                                    <> — {respuestas[preguntaActual.id] === 0 ? <><CheckIcon sx={{ fontSize: '1rem', verticalAlign: 'middle' }} /> suma punto</> : <><CloseIcon sx={{ fontSize: '1rem', verticalAlign: 'middle' }} /> no suma punto</>}</>
                                                 )}
                                                 . Podés modificarla.
                                             </Alert>
@@ -533,8 +538,8 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                         )}
 
                                         <Box sx={{ mb: 2, p: 1.5, bgcolor: '#f0fdf4', borderRadius: 2, border: '1px solid #bbf7d0' }}>
-                                            <Typography variant="body1" sx={{ fontWeight: 600, color: '#166534', fontSize: '0.95rem' }}>
-                                                ✓ Criterio de Aprobación: {preguntaActual.aprueba_con}
+                                            <Typography variant="body1" sx={{ fontWeight: 600, color: '#166534', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                <CheckIcon sx={{ fontSize: '1rem' }} /> Criterio de Aprobación: {preguntaActual.aprueba_con}
                                             </Typography>
                                         </Box>
 
@@ -547,8 +552,8 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                         )}
 
                                         {preguntaActual.materiales && preguntaActual.materiales !== '-' && (
-                                            <Typography variant="body2" sx={{ fontWeight: 500, bgcolor: '#fffbeb', p: 1, borderRadius: 1, color: '#d97706', fontSize: '0.95rem' }}>
-                                                🛠️ Materiales: {preguntaActual.materiales}
+                                            <Typography variant="body2" sx={{ fontWeight: 500, bgcolor: '#fffbeb', p: 1, borderRadius: 1, color: '#d97706', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                <BuildIcon sx={{ fontSize: '1rem' }} /> Materiales: {preguntaActual.materiales}
                                             </Typography>
                                         )}
                                     </CardContent>

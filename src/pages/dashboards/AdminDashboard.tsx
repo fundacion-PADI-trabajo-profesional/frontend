@@ -1,6 +1,14 @@
 import { Grid, Typography, Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import DashboardCard from "../../components/common/DashboardCard";
+import AssignmentIcon from "@mui/icons-material/Assignment";
+import BackpackIcon from "@mui/icons-material/Backpack";
+import ExploreIcon from "@mui/icons-material/Explore";
+import SchoolIcon from "@mui/icons-material/School";
+import PersonIcon from "@mui/icons-material/Person";
+import GroupIcon from "@mui/icons-material/Group";
+import AssessmentIcon from "@mui/icons-material/Assessment";
+import BuildIcon from "@mui/icons-material/Build";
 
 interface Props {
     rol: string;
@@ -14,8 +22,8 @@ export default function AdminDashboard({ rol }: Props) {
 
     return (
         <Box>
-            <Typography variant="h4" sx={{ mb: 1, fontWeight: 700, color: "#2c3e50" }}>
-                {titulo} 🛠️
+            <Typography variant="h4" sx={{ mb: 1, fontWeight: 700, color: "#2c3e50", display: "flex", alignItems: "center", gap: 1 }}>
+                {titulo} <BuildIcon sx={{ fontSize: "2rem" }} />
             </Typography>
             <Typography variant="body1" sx={{ mb: 4, color: "#666" }}>
                 Administración y alta de recursos.
@@ -27,7 +35,7 @@ export default function AdminDashboard({ rol }: Props) {
                         <DashboardCard
                             title="Evaluaciones PADI"
                             description="Gestión de evaluaciones del sistema con filtros por escuela, alumno y estado."
-                            icon="📋"
+                            icon={<AssignmentIcon />}
                             color="#A3BE54"
                             onClick={() => navigate("/evaluaciones")}
                         />
@@ -39,7 +47,7 @@ export default function AdminDashboard({ rol }: Props) {
                         <DashboardCard
                             title="Evaluaciones PADI"
                             description="Gestión de evaluaciones del sistema con filtros por escuela, alumno y estado."
-                            icon="📋"
+                            icon={<AssignmentIcon />}
                             color="#A3BE54"
                             onClick={() => navigate("/evaluaciones")}
                         />
@@ -50,7 +58,7 @@ export default function AdminDashboard({ rol }: Props) {
                     <DashboardCard
                         title="Estudiantes"
                         description="Alta, edición y consulta de la base de datos de estudiantes."
-                        icon="🎒"
+                        icon={<BackpackIcon />}
                         color="#2196F3"
                         onClick={() => navigate("/estudiantes")}
                     />
@@ -61,7 +69,7 @@ export default function AdminDashboard({ rol }: Props) {
                         <DashboardCard
                             title="Panel de control"
                             description="Gestión centralizada de zonas y encargados, con acceso directo a escuelas, aulas y evaluaciones."
-                            icon="🧭"
+                            icon={<ExploreIcon />}
                             color="#4CAF50"
                             onClick={() => navigate("/panel-control")}
                         />
@@ -73,7 +81,7 @@ export default function AdminDashboard({ rol }: Props) {
                         <DashboardCard
                             title="Escuelas"
                             description="Alta y edición de instituciones educativas, con gestión de aulas y asignación de directivos y docentes."
-                            icon="🏫"
+                            icon={<SchoolIcon />}
                             color="#FF9800"
                             onClick={() => navigate("/escuelas")}
                         />
@@ -85,7 +93,7 @@ export default function AdminDashboard({ rol }: Props) {
                         <DashboardCard
                             title="Panel de control"
                             description="Escuelas, directores, aulas, estudiantes y evaluaciones de tu zona."
-                            icon="🧭"
+                            icon={<ExploreIcon />}
                             color="#FF9800"
                             onClick={() => navigate("/panel-control")}
                         />
@@ -96,7 +104,7 @@ export default function AdminDashboard({ rol }: Props) {
                     <DashboardCard
                         title="Docentes"
                         description="Alta de docentes en escuelas y aulas."
-                        icon="👩‍🏫"
+                        icon={<PersonIcon />}
                         color="#E91E63"
                         onClick={() => navigate("/docentes")}
                     />
@@ -107,7 +115,7 @@ export default function AdminDashboard({ rol }: Props) {
                         <DashboardCard
                             title="Usuarios"
                             description="Gestión de usuarios del sistema PADI"
-                            icon="👥"
+                            icon={<GroupIcon />}
                             color="#7B1FA2"
                             onClick={() => navigate("/usuarios")}
                         />
@@ -119,7 +127,7 @@ export default function AdminDashboard({ rol }: Props) {
                         <DashboardCard
                             title="Estadísticas"
                             description="Análisis de rendimiento estudiantil por zona, área crítica, cobertura y nivel socioeconómico."
-                            icon="📊"
+                            icon={<AssessmentIcon />}
                             color="#A3BE54"
                             onClick={() => navigate("/estadisticas/padi")}
                         />
@@ -131,7 +139,7 @@ export default function AdminDashboard({ rol }: Props) {
                         <DashboardCard
                             title="Estadísticas"
                             description="Análisis de rendimiento estudiantil por zona, área crítica, cobertura y nivel socioeconómico."
-                            icon="📊"
+                            icon={<AssessmentIcon />}
                             color="#A3BE54"
                             onClick={() => navigate("/estadisticas/zona")}
                         />

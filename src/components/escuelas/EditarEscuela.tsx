@@ -7,6 +7,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { updateEscuela, deleteEscuela, Escuela, asignarDirectivo, desasignarDirectivo, getDirectivosDisponibles, NIVELES_SOCIOECONOMICOS } from "../../api/escuelas";
 import { getZonas, Zona } from "../../api/zonas";
 import { Directivo } from "../../api/directivos";
@@ -220,7 +221,7 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
             </Paper>
 
             <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>
-                <DialogTitle sx={{ fontWeight: 600 }}>⚠️ DESVINCULAR ESCUELA</DialogTitle>
+                <DialogTitle sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 0.5 }}><WarningAmberIcon color="warning" /> DESVINCULAR ESCUELA</DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ whiteSpace: 'pre-line' }}>
                         {"La escuela quedará inactiva y desaparecerá de la gestión, pero sus datos históricos se conservan para métricas.\n\nSe liberarán automáticamente:\n• Todos los estudiantes (quedarán sin escuela asignada)\n• Todos los directivos (quedarán disponibles para otras escuelas)\n• Todos los docentes (quedarán disponibles para otras escuelas)\n\nEn los reportes comparativos figurará como \"(Desvinculada)\".\n\n¿Está seguro de continuar?"}

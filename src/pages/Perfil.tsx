@@ -1,5 +1,4 @@
-// src/pages/Perfil.tsx
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   Box,
@@ -21,6 +20,8 @@ import PlaceIcon from "@mui/icons-material/Place";
 import EmailIcon from "@mui/icons-material/Email";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import SaveIcon from "@mui/icons-material/Save";
+import PersonIcon from "@mui/icons-material/Person";
+import HandshakeIcon from "@mui/icons-material/Handshake";
 import { updateProfileData, requestPasswordReset, type PadiProfile } from "../api/auth";
 import { getCurrentEncargado } from "../api/encargados-zona";
 
@@ -47,17 +48,17 @@ const PADI_COLORS = {
   naranja: "#fd7e14"
 };
 
-const ROLE_MAP: Record<string, { label: string; icon: string }> = {
-  docente: { label: "Docente", icon: "👩‍🏫" },
-  equipo_padi: { label: "Equipo PADI", icon: "🤝" },
-  director: { label: "Director/a", icon: "🎓" },
-  encargado_zona: { label: "Encargado de Zona", icon: "📍" },
+const ROLE_MAP: Record<string, { label: string; icon: React.ReactElement }> = {
+  docente: { label: "Docente", icon: <PersonIcon fontSize="small" /> },
+  equipo_padi: { label: "Equipo PADI", icon: <HandshakeIcon fontSize="small" /> },
+  director: { label: "Director/a", icon: <SchoolIcon fontSize="small" /> },
+  encargado_zona: { label: "Encargado de Zona", icon: <PlaceIcon fontSize="small" /> },
 };
 
 interface PerfilProps {
   open: boolean;
   onClose: () => void;
-  user: { id: string; email?: string; [key: string]: unknown };
+  user: { id: string; email?: string;[key: string]: unknown };
   profile: PadiProfile;
   onUpdateSuccess?: (newData: PadiProfile) => Promise<void>;
 }
@@ -78,7 +79,7 @@ export default function Perfil({ open, onClose, user, profile, onUpdateSuccess }
     setApellido(profile?.apellido || "");
   }, [profile]);
 
-  const rolData = ROLE_MAP[profile?.rol] || { label: profile?.rol, icon: "👤" };
+  const rolData = ROLE_MAP[profile?.rol] || { label: profile?.rol, icon: <PersonOutlineIcon fontSize="small" /> };
 
   // Datos jerárquicos solicitados: Usuario -> Escuela -> Zona
   const nombreEscuela = profile?.escuela?.nombre || profile?.escuelas?.[0]?.nombre || "Escuela no asignada";
@@ -121,7 +122,7 @@ export default function Perfil({ open, onClose, user, profile, onUpdateSuccess }
       if (onUpdateSuccess && response.profile) {
         await onUpdateSuccess(response.profile);
       }
-      
+
       setIsEditing(false);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error al actualizar los datos");
@@ -171,12 +172,14 @@ export default function Perfil({ open, onClose, user, profile, onUpdateSuccess }
           </Typography>
 
           <Chip
-            label={`${rolData.icon} ${rolData.label}`}
+            icon={rolData.icon}
+            label={rolData.label}
             sx={{
               bgcolor: 'rgba(255,255,255,0.95)',
               color: PADI_COLORS.gris,
               fontWeight: 700,
-              px: 1
+              px: 1,
+              '& .MuiChip-icon': { color: PADI_COLORS.gris }
             }}
           />
         </Box>
@@ -308,21 +311,6 @@ export default function Perfil({ open, onClose, user, profile, onUpdateSuccess }
               </Box>
 
               <Divider />
-
-              {/* Zona Geográfica
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={{ p: 1, borderRadius: 2, bgcolor: '#eefaf0' }}>
-                  <PublicIcon sx={{ color: PADI_COLORS.verde }} />
-                </Box>
-                <Box>
-                  <Typography variant="caption" sx={{ color: PADI_COLORS.gris, fontWeight: 700, textTransform: 'uppercase' }}>
-                    Zona Geográfica
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 600, color: '#444' }}>
-                    📍 {nombreZona}
-                  </Typography>
-                </Box>
-              </Box> */}
 
               {/* Zona o Institución según rol */}
               {profile?.rol === "encargado_zona" ? (

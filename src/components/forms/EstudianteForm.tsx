@@ -16,6 +16,7 @@ import {
 } from "@mui/material"
 import { type SelectChangeEvent } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
+import LocationOnIcon from "@mui/icons-material/LocationOn"
 import {
     createEstudiante,
     updateEstudiante, // Asegúrate de tener esta función en tu api/estudiantes.ts
@@ -344,8 +345,8 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
                 ) : (
                     /* VISTA DOCENTE */
                     <Grid item xs={12}>
-                        <Typography variant="body2" sx={{ color: 'text.secondary', bgcolor: '#f8f9fa', p: 2, borderRadius: 2, border: '1px dashed #dee2e6' }}>
-                            📍 Institución y Aula configuradas automáticamente.
+                        <Typography variant="body2" sx={{ color: 'text.secondary', bgcolor: '#f8f9fa', p: 2, borderRadius: 2, border: '1px dashed #dee2e6', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <LocationOnIcon sx={{ fontSize: '1rem' }} /> Institución y Aula configuradas automáticamente.
                         </Typography>
                     </Grid>
                 )}

@@ -19,6 +19,7 @@ import PsychologyIcon from '@mui/icons-material/Psychology';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
+import SchoolIcon from '@mui/icons-material/School';
 
 import { getEvaluacionInstanciaById, type EvaluacionInstancia } from "../../api/evaluaciones"
 import EvaluacionWizard from "./EvaluacionWizard"
@@ -246,7 +247,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                             }}
                         >
                             <Chip
-                                icon={<span>🏫</span>}
+                                icon={<SchoolIcon />}
                                 label={evaluacion.estudiante?.escuelaNombre || "Escuela no asignada"}
                                 sx={{
                                     bgcolor: "#d4edf5",

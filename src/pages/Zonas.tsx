@@ -20,6 +20,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { createZona, deleteZona, desvincularEncargado, type Zona } from "../api/zonas";
 import AsignarEncargadoModal from "../components/escuelas/AsignarEncargadoModal";
 import BotonNuevo from "../components/common/BotonNuevo";
@@ -233,8 +234,8 @@ export default function Zonas({ zonas, onVerEscuelas, onUpdate, setError }: Zona
 
             {/* Modal de Confirmación para Eliminar Zona */}
             <Dialog open={confirmDeleteZonaOpen} onClose={() => !deletingZona && setConfirmDeleteZonaOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle sx={{ fontWeight: "bold", color: "error.main" }}>
-                    ⚠️ Eliminar zona
+                <DialogTitle sx={{ fontWeight: "bold", color: "error.main", display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <WarningAmberIcon /> Eliminar zona
                 </DialogTitle>
                 <DialogContent>
                     <Typography sx={{ mb: 2 }}>

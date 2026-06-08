@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
     Box,
     TextField,
@@ -54,6 +54,7 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
     const [escuelas, setEscuelas] = useState<Escuela[]>([])
 
     const [aulasDisponibles, setAulasDisponibles] = useState<Aula[]>([]);
+    const originalEscuelaId = useRef<string>("");
 
     const [formData, setFormData] = useState({
         dni: "",
@@ -119,6 +120,7 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
                     }
 
                     // MODO EDICIÓN
+                    originalEscuelaId.current = estudianteAEditar.escuela.escuela_id || "";
                     setFormData({
                         dni: estudianteAEditar.personas.dni || "",
                         nombre: estudianteAEditar.personas.nombre || "",
@@ -160,8 +162,13 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
                 try {
                     const data = await getAulasPorEscuela(formData.escuela_id);
                     setAulasDisponibles(data);
-                    // Si el aula seleccionada previamente no pertenece a la nueva escuela, la limpiamos
-                    setFormData(prev => ({ ...prev, aula_id: estudianteAEditar?.aula_asignada?.id || "" }));
+                    const aulaOriginal = estudianteAEditar?.aula_asignada?.id || "";
+                    const isOriginalSchool = formData.escuela_id === originalEscuelaId.current;
+                    const aulaEnEscuela = data.some(a => a.id === aulaOriginal);
+                    setFormData(prev => ({
+                        ...prev,
+                        aula_id: (isOriginalSchool && aulaEnEscuela) ? aulaOriginal : "",
+                    }));
                 } catch (err) {
                     console.error("Error cargando aulas:", err);
                 }

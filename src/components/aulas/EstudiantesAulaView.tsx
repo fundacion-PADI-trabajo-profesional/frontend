@@ -7,7 +7,7 @@ import {
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
 import {
-    asignarEstudianteAula, desasignarEstudianteAula, type Aula
+    asignarEstudianteAula, desasignarEstudianteAula, getAulaEstudiantes, type Aula
 } from "../../api/aulas";
 
 import { getEstudiantes, type Estudiante } from "../../api/estudiantes";
@@ -21,6 +21,7 @@ interface Props {
 export default function EstudiantesAulaView({ aula, onVolver, escuelaNombreProp }: Props) {
     const navigate = useNavigate();
 
+    const [estudiantesAulaActual, setEstudiantesAulaActual] = useState<Estudiante[]>([]);
     const [todosLosEstudiantes, setTodosLosEstudiantes] = useState<Estudiante[]>([]);
     const [selectedEstudianteId, setSelectedEstudianteId] = useState("");
     const [loading, setLoading] = useState(true);
@@ -48,7 +49,11 @@ export default function EstudiantesAulaView({ aula, onVolver, escuelaNombreProp 
         setLoading(true);
         setError(null);
         try {
-            const todos = await getEstudiantes();
+            const [asignados, todos] = await Promise.all([
+                getAulaEstudiantes(aula.id),
+                getEstudiantes(),
+            ]);
+            setEstudiantesAulaActual(asignados);
             setTodosLosEstudiantes(todos);
         } catch (e: unknown) {
             setError(e instanceof Error ? e.message : "Error al cargar los estudiantes.");
@@ -61,16 +66,14 @@ export default function EstudiantesAulaView({ aula, onVolver, escuelaNombreProp 
         if (aula) fetchData();
     }, [aula]);
 
-    const estudiantesAula = todosLosEstudiantes.filter(
-        (e) => e.aula_asignada?.id === aula.id || e.aula_id === aula.id
-    );
+    const estudiantesAula = estudiantesAulaActual;
 
+    const asignadosIds = new Set(estudiantesAulaActual.map((e) => e.id));
     const estudiantesDisponibles = todosLosEstudiantes.filter((e) => {
         const mismaEscuela = e.escuela?.escuela_id === aula.escuela_id;
         const mismaSala = e.sala_id === aula.sala_id;
-        const noEstaEnEstaAula = e.aula_asignada?.id !== aula.id && e.aula_id !== aula.id;
-
-        return mismaEscuela && mismaSala && noEstaEnEstaAula;
+        const noEstaAsignado = !asignadosIds.has(e.id);
+        return mismaEscuela && mismaSala && noEstaAsignado;
     });
 
     const handleAsignar = async () => {

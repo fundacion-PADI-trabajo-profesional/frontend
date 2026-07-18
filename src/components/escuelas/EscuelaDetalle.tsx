@@ -3,12 +3,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PlaceIcon from "@mui/icons-material/Place";
 import EqualizerIcon from "@mui/icons-material/Equalizer";
-import PersonIcon from "@mui/icons-material/Person";
 import { getNivelSocioeconomicoLabel } from "../../api/escuelas";
-
-function getInitials(nombre?: string | null, apellido?: string | null) {
-    return `${nombre?.[0] ?? ""}${apellido?.[0] ?? ""}`.toUpperCase() || "?";
-}
 
 function InfoItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
     return (

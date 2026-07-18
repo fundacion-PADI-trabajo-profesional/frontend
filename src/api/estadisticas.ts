@@ -452,3 +452,58 @@ export const getRendimientoPorNivelSocioeconomico = (p: { periodo: number; tipo:
     `${API_URL}/estadisticas/padi/rendimiento-por-nivel-socioeconomico?periodo=${p.periodo}&tipo=${p.tipo}`,
     "Error al cargar rendimiento por nivel socioeconómico"
   );
+
+// ─── Export de evaluaciones a Excel ──────────────────────────────────────────
+
+export interface ReglaExport {
+  sala: string;
+  area_id: string;
+  aprueba_con: number | null;
+  puntaje_total: number | null;
+}
+
+export interface AreaFilaExport {
+  area_id: string;
+  aprobadas: number | null;
+  total: number | null;
+  aprueba_con: number | null;
+  estado: string | null;
+  observacion: string | null;
+}
+
+export interface FilaExport {
+  zona: string | null;
+  escuela: string;
+  sala: string;
+  aula: string | null;
+  apellido: string;
+  nombre: string;
+  dni: string | null;
+  tipo: string;
+  estado: string;
+  fecha: string | null;
+  areas_aprobadas: number | null;
+  areas: AreaFilaExport[];
+}
+
+export interface ExportEvaluacionesData {
+  periodo: number;
+  areas: AreaInfo[];
+  reglas: ReglaExport[];
+  filas: FilaExport[];
+}
+
+/** Obtiene el dataset completo de evaluaciones de un período para exportar a Excel. */
+export async function getExportEvaluaciones(params: {
+  periodo: number;
+}): Promise<ExportEvaluacionesData> {
+  const res = await fetch(
+    `${API_URL}/estadisticas/padi/export-evaluaciones?periodo=${params.periodo}`,
+    { headers: getAuthHeaders() }
+  );
+  const body: ApiResponse<ExportEvaluacionesData> = await res.json();
+  if (!res.ok || !body.success) {
+    throw new Error(body.error?.description || body.message || "Error al exportar evaluaciones");
+  }
+  return body.data;
+}

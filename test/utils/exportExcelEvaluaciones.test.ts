@@ -203,3 +203,98 @@ describe("buildWorkbookEvaluaciones — hoja Criterios", () => {
     expect((ws.getRow(3).values as any[]).slice(1, 4)).toEqual(["Sala 5", "Lenguaje", "—"]);
   });
 });
+
+describe("buildWorkbookEvaluaciones — hoja Control", () => {
+  it("escribe título, filtros con defaults y validaciones de datos", async () => {
+    const wb = await buildWorkbookEvaluaciones(mkData([mkFila()]));
+    const ws = wb.getWorksheet("Control")!;
+
+    expect(ws.getCell("A1").value).toBe("Panel de control — Evaluaciones 2025");
+    expect(ws.getCell("A3").value).toBe("Escuela");
+    expect(ws.getCell("B3").value).toBe("Todas");
+    expect(ws.getCell("B6").value).toBe("Inicial");
+    expect(ws.getCell("B7").value).toBe("Todas");
+
+    // validación tipo lista referenciando columnas ocultas de la misma hoja
+    expect(ws.getCell("B3").dataValidation).toMatchObject({ type: "list" });
+    expect((ws.getCell("B3").dataValidation as any).formulae[0]).toMatch(/^\$L\$2:\$L\$\d+$/);
+    expect((ws.getCell("B7").dataValidation as any).formulae[0]).toMatch(/^\$P\$2:\$P\$\d+$/);
+  });
+
+  it("escribe las listas de opciones en columnas ocultas (buckets como texto)", async () => {
+    const wb = await buildWorkbookEvaluaciones(mkData([mkFila(), mkFila({ escuela: "Otra" })]));
+    const ws = wb.getWorksheet("Control")!;
+
+    expect(ws.getCell("L2").value).toBe("Todas");
+    expect(ws.getCell("L3").value).toBe("Esc. 12");
+    expect(ws.getCell("L4").value).toBe("Otra");
+    expect(ws.getCell("O2").value).toBe("Inicial");
+    expect(ws.getCell("O3").value).toBe("Cierre");
+    // 2 áreas → Todas, 2, 1, 0, En progreso, Sin evaluar
+    expect(
+      ["P2", "P3", "P4", "P5", "P6", "P7"].map((c) => ws.getCell(c).value)
+    ).toEqual(["Todas", "2", "1", "0", "En progreso", "Sin evaluar"]);
+    for (const col of ["L", "M", "N", "O", "P"]) {
+      expect(ws.getColumn(col).hidden, `columna ${col}`).toBe(true);
+    }
+  });
+
+  it("escribe los contadores con SUM y SUMPRODUCT sobre flags y bucket", async () => {
+    const wb = await buildWorkbookEvaluaciones(mkData([mkFila()]));
+    const ws = wb.getWorksheet("Control")!;
+
+    expect(ws.getCell("D3").value).toBe("Filas");
+    expect((ws.getCell("E3").value as any).formula).toBe("SUM(Datos!$X$2:$X$2)");
+    // 2 áreas → D4="2 áreas aprobadas" .. D6="0 áreas aprobadas", D7 En progreso, D8 Sin evaluar
+    expect(ws.getCell("D4").value).toBe("2 áreas aprobadas");
+    expect((ws.getCell("E4").value as any).formula).toBe(
+      'SUMPRODUCT(Datos!$W$2:$W$2*(Datos!$T$2:$T$2="2"))'
+    );
+    expect(ws.getCell("D7").value).toBe("En progreso");
+    expect((ws.getCell("E8").value as any).formula).toBe(
+      'SUMPRODUCT(Datos!$W$2:$W$2*(Datos!$T$2:$T$2="Sin evaluar"))'
+    );
+  });
+
+  it("escribe el encabezado y las filas de fórmula de la lista", async () => {
+    const wb = await buildWorkbookEvaluaciones(mkData([mkFila(), mkFila({ escuela: "Otra" })]));
+    const ws = wb.getWorksheet("Control")!;
+
+    expect((ws.getRow(12).values as any[]).slice(1, 8)).toEqual([
+      "Escuela", "Aula", "Alumno", "Motricidad", "Lenguaje", "Áreas aprob.", "Estado",
+    ]);
+
+    const escuela = (ws.getCell("A13").value as any).formula as string;
+    const alumno = (ws.getCell("C13").value as any).formula as string;
+    const simbolo = (ws.getCell("D13").value as any).formula as string;
+    const aprob = (ws.getCell("F13").value as any).formula as string;
+
+    // extracción clásica INDEX/MATCH sobre rank, con coerción &"" contra el 0 de celdas vacías
+    expect(escuela).toBe(
+      'IFERROR(INDEX(Datos!$B$2:$B$3,MATCH(ROW()-12,Datos!$Y$2:$Y$3,0))&"","")'
+    );
+    expect(alumno).toContain('&", "&');
+    expect(simbolo).toContain("Datos!$U$2:$U$3");
+    expect(aprob).toContain("Datos!$K$2:$K$3");
+    expect(aprob).toContain('&"","")');
+
+    // una fila de fórmula por fila de datos
+    expect((ws.getCell("A14").value as any).formula).toBeTruthy();
+    expect(ws.getCell("A15").value).toBeNull();
+  });
+
+  it("agrega formato condicional para los símbolos", async () => {
+    const wb = await buildWorkbookEvaluaciones(mkData([mkFila()]));
+    const ws = wb.getWorksheet("Control")!;
+    // ExcelJS expone las reglas registradas vía el modelo interno
+    const cf = (ws as any).conditionalFormattings ?? (ws.model as any).conditionalFormattings;
+    expect(cf?.length).toBeGreaterThan(0);
+  });
+
+  it("dataset vacío: sin filas de lista y contadores sobre el rango mínimo", async () => {
+    const wb = await buildWorkbookEvaluaciones(mkData([]));
+    const ws = wb.getWorksheet("Control")!;
+    expect((ws.getCell("E3").value as any).formula).toBe("SUM(Datos!$X$2:$X$2)");
+    expect(ws.getCell("A13").value).toBeNull();
+  });
+});

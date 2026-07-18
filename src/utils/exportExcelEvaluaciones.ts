@@ -231,5 +231,161 @@ export async function buildWorkbookEvaluaciones(data: ExportEvaluacionesData): P
 
 // ─── Hoja Control ────────────────────────────────────────────────────────────
 
-// Task 5 implementa el contenido; por ahora la hoja queda vacía.
-function fillControl(_ws: Worksheet, _data: ExportEvaluacionesData, _ly: Layout) {}
+/**
+ * Hoja Control: 5 dropdowns (B3..B7), contadores (D3:E…) y lista extraída con
+ * INDEX/MATCH sobre la columna rank de Datos. Las listas de opciones viven en
+ * columnas ocultas L..P de esta misma hoja (sin named ranges ni INDIRECT).
+ * Nota: L..P asume hasta 6 áreas (la lista visible llega hasta la columna
+ * 5 + numAreas); con más áreas habría que desplazar las listas.
+ */
+function fillControl(ws: Worksheet, data: ExportEvaluacionesData, ly: Layout) {
+  const N1 = ly.lastDataRow;
+
+  ws.getCell("A1").value = `Panel de control — Evaluaciones ${data.periodo}`;
+  ws.getCell("A1").font = { bold: true, size: 14 };
+
+  // ── Listas de opciones (columnas ocultas) ──
+  const uniq = (vals: string[]) =>
+    Array.from(new Set(vals)).sort((a, b) => a.localeCompare(b, "es"));
+  const escuelas = ["Todas", ...uniq(data.filas.map((f) => f.escuela).filter(Boolean))];
+  const salas = ["Todas", ...uniq(data.filas.map((f) => f.sala).filter(Boolean))];
+  const aulas = ["Todas", ...uniq(data.filas.map((f) => f.aula ?? "").filter(Boolean))];
+  const tipos = ["Inicial", "Cierre"];
+  const buckets = [
+    "Todas",
+    ...Array.from({ length: ly.numAreas + 1 }, (_, i) => String(ly.numAreas - i)),
+    "En progreso",
+    "Sin evaluar",
+  ];
+
+  const listas: Array<[string, string[]]> = [
+    ["L", escuelas],
+    ["M", salas],
+    ["N", aulas],
+    ["O", tipos],
+    ["P", buckets],
+  ];
+  for (const [col, values] of listas) {
+    values.forEach((v, i) => {
+      ws.getCell(`${col}${i + 2}`).value = v; // strings → celdas de texto (los buckets deben matchear la columna Bucket)
+    });
+    ws.getColumn(col).hidden = true;
+  }
+
+  // ── Filtros ──
+  const filtros: Array<[string, string, string[], string]> = [
+    ["Escuela", "L", escuelas, "Todas"],
+    ["Sala", "M", salas, "Todas"],
+    ["Aula", "N", aulas, "Todas"],
+    ["Tipo", "O", tipos, "Inicial"],
+    ["Áreas aprobadas", "P", buckets, "Todas"],
+  ];
+  filtros.forEach(([label, listCol, values, def], i) => {
+    const r = 3 + i;
+    ws.getCell(`A${r}`).value = label;
+    ws.getCell(`A${r}`).font = { bold: true };
+    const dd = ws.getCell(`B${r}`);
+    dd.value = def;
+    dd.dataValidation = {
+      type: "list",
+      allowBlank: false,
+      formulae: [`$${listCol}$2:$${listCol}$${values.length + 1}`],
+    };
+  });
+
+  // ── Contadores ──
+  const fBase = `Datos!$${ly.flagBaseCol}$2:$${ly.flagBaseCol}$${N1}`;
+  const fFull = `Datos!$${ly.flagFullCol}$2:$${ly.flagFullCol}$${N1}`;
+  const bRange = `Datos!$${ly.bucketCol}$2:$${ly.bucketCol}$${N1}`;
+
+  const contadores: Array<[string, string]> = [
+    ["Filas", `SUM(${fFull})`],
+    ...Array.from({ length: ly.numAreas + 1 }, (_, i) => {
+      const k = ly.numAreas - i;
+      return [
+        `${k} área${k === 1 ? "" : "s"} aprobada${k === 1 ? "" : "s"}`,
+        `SUMPRODUCT(${fBase}*(${bRange}="${k}"))`,
+      ] as [string, string];
+    }),
+    ["En progreso", `SUMPRODUCT(${fBase}*(${bRange}="En progreso"))`],
+    ["Sin evaluar", `SUMPRODUCT(${fBase}*(${bRange}="Sin evaluar"))`],
+  ];
+  contadores.forEach(([label, formula], i) => {
+    ws.getCell(`D${3 + i}`).value = label;
+    ws.getCell(`D${3 + i}`).font = { bold: true };
+    ws.getCell(`E${3 + i}`).value = { formula };
+  });
+
+  // ── Lista ──
+  const headerLista = [
+    "Escuela",
+    "Aula",
+    "Alumno",
+    ...data.areas.map((a) => a.nombre),
+    "Áreas aprob.",
+    "Estado",
+  ];
+  headerLista.forEach((h, i) => {
+    const c = ws.getCell(12, i + 1);
+    c.value = h;
+    c.font = { bold: true };
+  });
+
+  // INDEX/MATCH clásico; &"" evita que las celdas vacías de Datos se muestren como 0.
+  const m = (col: string) =>
+    `INDEX(Datos!$${col}$2:$${col}$${N1},MATCH(ROW()-12,Datos!$${ly.rankCol}$2:$${ly.rankCol}$${N1},0))`;
+
+  for (let i = 0; i < data.filas.length; i++) {
+    const r = 13 + i;
+    const formulas = [
+      `IFERROR(${m("B")}&"","")`,
+      `IFERROR(${m("D")}&"","")`,
+      `IFERROR(${m("E")}&", "&${m("F")},"")`,
+      ...ly.simboloCols.map((sc) => `IFERROR(${m(sc)}&"","")`),
+      `IFERROR(${m("K")}&"","")`,
+      `IFERROR(${m("I")}&"","")`,
+    ];
+    formulas.forEach((formula, j) => {
+      ws.getCell(r, j + 1).value = { formula };
+    });
+  }
+
+  // ── Formato condicional sobre los símbolos ──
+  if (data.filas.length > 0) {
+    ws.addConditionalFormatting({
+      ref: `D13:${colLetter(3 + ly.numAreas)}${12 + data.filas.length}`,
+      rules: [
+        {
+          type: "cellIs",
+          operator: "equal",
+          formulae: ['"✔"'],
+          priority: 1,
+          style: {
+            font: { color: { argb: "FF006100" } },
+            fill: { type: "pattern", pattern: "solid", bgColor: { argb: "FFC6EFCE" } },
+          },
+        },
+        {
+          type: "cellIs",
+          operator: "equal",
+          formulae: ['"✘"'],
+          priority: 2,
+          style: {
+            font: { color: { argb: "FF9C0006" } },
+            fill: { type: "pattern", pattern: "solid", bgColor: { argb: "FFFFC7CE" } },
+          },
+        },
+      ],
+    });
+  }
+
+  // ── Anchos ──
+  [28, 16, 30].forEach((w, i) => {
+    ws.getColumn(i + 1).width = w;
+  });
+  data.areas.forEach((_, j) => {
+    ws.getColumn(4 + j).width = 12;
+  });
+  ws.getColumn(4 + ly.numAreas).width = 12;
+  ws.getColumn(5 + ly.numAreas).width = 14;
+}

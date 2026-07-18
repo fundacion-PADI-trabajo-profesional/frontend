@@ -297,4 +297,15 @@ describe("buildWorkbookEvaluaciones — hoja Control", () => {
     expect((ws.getCell("E3").value as any).formula).toBe("SUM(Datos!$X$2:$X$2)");
     expect(ws.getCell("A13").value).toBeNull();
   });
+
+  it("lanza error explícito con más de 6 áreas (colisión con columnas ocultas)", async () => {
+    const muchasAreas = Array.from({ length: 7 }, (_, i) => ({
+      id: `A${i}`, nombre: `Área ${i}`, orden: i + 1,
+    }));
+    const data: ExportEvaluacionesData = {
+      ...mkData([]),
+      areas: muchasAreas,
+    };
+    await expect(buildWorkbookEvaluaciones(data)).rejects.toThrow(/hasta 6 áreas/);
+  });
 });

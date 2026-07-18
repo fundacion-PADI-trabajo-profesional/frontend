@@ -239,6 +239,12 @@ export async function buildWorkbookEvaluaciones(data: ExportEvaluacionesData): P
  * 5 + numAreas); con más áreas habría que desplazar las listas.
  */
 function fillControl(ws: Worksheet, data: ExportEvaluacionesData, ly: Layout) {
+  if (ly.numAreas > 6) {
+    throw new Error(
+      "El panel de control soporta hasta 6 áreas: las listas de opciones (columnas L..P) colisionarían con la lista visible."
+    );
+  }
+
   const N1 = ly.lastDataRow;
 
   ws.getCell("A1").value = `Panel de control — Evaluaciones ${data.periodo}`;

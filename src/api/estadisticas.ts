@@ -497,13 +497,8 @@ export interface ExportEvaluacionesData {
 export async function getExportEvaluaciones(params: {
   periodo: number;
 }): Promise<ExportEvaluacionesData> {
-  const res = await fetch(
+  return fetchSimple<ExportEvaluacionesData>(
     `${API_URL}/estadisticas/padi/export-evaluaciones?periodo=${params.periodo}`,
-    { headers: getAuthHeaders() }
+    "Error al exportar evaluaciones"
   );
-  const body: ApiResponse<ExportEvaluacionesData> = await res.json();
-  if (!res.ok || !body.success) {
-    throw new Error(body.error?.description || body.message || "Error al exportar evaluaciones");
-  }
-  return body.data;
 }

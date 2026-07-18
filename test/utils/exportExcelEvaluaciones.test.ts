@@ -118,6 +118,9 @@ describe("buildWorkbookEvaluaciones — hoja Datos", () => {
     expect(ws.getCell("H2").value).toBe("Inicial");
     expect(ws.getCell("I2").value).toBe("Aprobada");
     expect(ws.getCell("J2").value).toBeInstanceOf(Date);
+    // Assertion 1: Date value (timezone-independent)
+    const d = new Date("2025-04-12T15:00:00.000Z");
+    expect(ws.getCell("J2").value).toEqual(new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())));
     expect(ws.getCell("K2").value).toBe(1);
     expect(ws.getCell("L2").value).toBe("8/10"); // MOT pautas
     expect(ws.getCell("M2").value).toBe(7);      // MOT mín
@@ -127,6 +130,12 @@ describe("buildWorkbookEvaluaciones — hoja Datos", () => {
     expect(ws.getCell("T2").value).toBe("1");    // bucket estático (texto)
     expect(ws.getCell("U2").value).toBe("✔");    // símbolo MOT
     expect(ws.getCell("V2").value).toBe("✘");    // símbolo LEN
+    // Assertion 2: Estado fill (green for Aprobada)
+    expect(ws.getCell("I2").fill).toMatchObject({ type: "pattern", pattern: "solid", fgColor: { argb: "FFC6EFCE" } });
+    // Assertion 3a: Per-área Desaprobada fill (red for LEN with estado "D", Estado cell is R2)
+    expect(ws.getCell("R2").fill).toMatchObject({ type: "pattern", pattern: "solid", fgColor: { argb: "FFFFC7CE" } });
+    // Assertion 3b: numFmt for date column
+    expect(ws.getColumn(10).numFmt).toBe("dd/mm/yyyy");
   });
 
   it("fila sin_evaluar: celdas vacías y bucket correcto", async () => {

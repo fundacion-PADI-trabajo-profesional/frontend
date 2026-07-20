@@ -36,8 +36,8 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
     const [salaFiltro] = useState<string>("todas")
 
     // Datos de selectores
-    const [_listaEscuelas, setListaEscuelas] = useState<Escuela[]>([])
-    const [_listaSalas, setListaSalas] = useState<Sala[]>([])
+    const [, setListaEscuelas] = useState<Escuela[]>([])
+    const [, setListaSalas] = useState<Sala[]>([])
 
     // UI States
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
@@ -69,7 +69,7 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
                     const escuelasData = await getEscuelas()
                     setListaEscuelas(escuelasData)
                 }
-            } catch (err) {
+            } catch {
                 console.log("No se cargaron escuelas por falta de permisos o error")
             }
         }
@@ -169,9 +169,6 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
             {/* Listado Agrupado */}
             {salasOrdenadas.map((salaNombre) => (
                 <Box key={salaNombre} sx={{ mb: 4 }}>
-                    {/* <Typography variant="subtitle2" sx={{ color: "#666", mb: 1, fontWeight: 700, textTransform: "uppercase" }}>
-                        {salaNombre}
-                    </Typography> */}
                     <Paper elevation={0} sx={{ border: "1px solid #eee", borderRadius: 3, overflow: "hidden" }}>
                         <List disablePadding>
                             {agrupados[salaNombre].map((est, index) => (

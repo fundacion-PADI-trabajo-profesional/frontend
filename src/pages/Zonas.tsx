@@ -7,6 +7,7 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    IconButton,
     Paper,
     Table,
     TableBody,
@@ -14,10 +15,13 @@ import {
     TableContainer,
     TableHead,
     TableRow,
+    Tooltip,
     Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { createZona, desvincularEncargado, type Zona } from "../api/zonas";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import { createZona, deleteZona, desvincularEncargado, type Zona } from "../api/zonas";
 import AsignarEncargadoModal from "../components/escuelas/AsignarEncargadoModal";
 import BotonNuevo from "../components/common/BotonNuevo";
 import ZonaForm from "../components/forms/ZonaForm";
@@ -40,6 +44,10 @@ export default function Zonas({ zonas, onVerEscuelas, onUpdate, setError }: Zona
     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
     const [encargadoToRemove, setEncargadoToRemove] = useState<{ id: string; nombre: string } | null>(null);
 
+    const [confirmDeleteZonaOpen, setConfirmDeleteZonaOpen] = useState(false);
+    const [zonaToDelete, setZonaToDelete] = useState<Zona | null>(null);
+    const [deletingZona, setDeletingZona] = useState(false);
+
     const openCreateZonaDialog = () => {
         setZonaDialogOpen(true);
     };
@@ -51,9 +59,6 @@ export default function Zonas({ zonas, onVerEscuelas, onUpdate, setError }: Zona
             await createZona(data.nombre.trim());
             setZonaDialogOpen(false);
             await onUpdate();
-        } catch (e: any) {
-            // Lanzamos el error para que lo ataje el catch de ZonaForm y lo muestre en el TextField
-            throw e;
         } finally {
             setSavingZona(false);
         }
@@ -69,14 +74,35 @@ export default function Zonas({ zonas, onVerEscuelas, onUpdate, setError }: Zona
         setConfirmDeleteOpen(true);
     };
 
+    const handleDeleteZonaClick = (zona: Zona) => {
+        setZonaToDelete(zona);
+        setConfirmDeleteZonaOpen(true);
+    };
+
+    const confirmDeleteZona = async () => {
+        if (!zonaToDelete) return;
+        setDeletingZona(true);
+        setError(null);
+        try {
+            await deleteZona(zonaToDelete.id);
+            await onUpdate();
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "Error al eliminar zona");
+        } finally {
+            setDeletingZona(false);
+            setConfirmDeleteZonaOpen(false);
+            setZonaToDelete(null);
+        }
+    };
+
     const confirmRemoveEncargado = async () => {
         if (!encargadoToRemove) return;
         setError(null);
         try {
             await desvincularEncargado(encargadoToRemove.id);
             await onUpdate();
-        } catch (e: any) {
-            setError(e.message || "Error al quitar encargado");
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "Error al quitar encargado");
         } finally {
             setConfirmDeleteOpen(false);
             setEncargadoToRemove(null);
@@ -97,14 +123,15 @@ export default function Zonas({ zonas, onVerEscuelas, onUpdate, setError }: Zona
                         <TableRow>
                             <TableCell sx={{ fontWeight: "bold", width: "20%" }}>Zona</TableCell>
                             <TableCell sx={{ fontWeight: "bold", width: "35%" }}>Encargados</TableCell>
-                            <TableCell sx={{ fontWeight: "bold", width: "25%" }} align="center">Gestión</TableCell>
-                            <TableCell sx={{ fontWeight: "bold", width: "25%" }} align="center">Mas Acciones</TableCell>
+                            <TableCell sx={{ fontWeight: "bold", width: "22%" }} align="center">Gestión</TableCell>
+                            <TableCell sx={{ fontWeight: "bold", width: "18%" }} align="center">Más Acciones</TableCell>
+                            <TableCell sx={{ width: "5%" }} />
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {zonas.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={4} align="center" sx={{ py: 5 }}>
+                                <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
                                     No hay zonas registradas.
                                 </TableCell>
                             </TableRow>
@@ -148,7 +175,7 @@ export default function Zonas({ zonas, onVerEscuelas, onUpdate, setError }: Zona
                                             <Button
                                                 size="small"
                                                 variant="outlined"
-                                                sx={{ textTransform: "none", mr: 1 }}
+                                                sx={{ textTransform: "none" }}
                                                 onClick={() => openEncargadoModal(zona)}
                                             >
                                                 Asignar encargado
@@ -163,6 +190,17 @@ export default function Zonas({ zonas, onVerEscuelas, onUpdate, setError }: Zona
                                             >
                                                 Ver escuelas ({zona._count?.escuelas || 0})
                                             </Button>
+                                        </TableCell>
+                                        <TableCell align="center">
+                                            <Tooltip title="Eliminar zona">
+                                                <IconButton
+                                                    size="small"
+                                                    color="error"
+                                                    onClick={() => handleDeleteZonaClick(zona)}
+                                                >
+                                                    <DeleteOutlineIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
                                         </TableCell>
                                     </TableRow>
                                 );
@@ -193,6 +231,49 @@ export default function Zonas({ zonas, onVerEscuelas, onUpdate, setError }: Zona
                     onSuccess={onUpdate}
                 />
             )}
+
+            {/* Modal de Confirmación para Eliminar Zona */}
+            <Dialog open={confirmDeleteZonaOpen} onClose={() => !deletingZona && setConfirmDeleteZonaOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle sx={{ fontWeight: "bold", color: "error.main", display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <WarningAmberIcon /> Eliminar zona
+                </DialogTitle>
+                <DialogContent>
+                    <Typography sx={{ mb: 2 }}>
+                        ¿Estás seguro que querés eliminar la zona <strong>"{zonaToDelete?.nombre}"</strong>? Esta acción no se puede deshacer.
+                    </Typography>
+                    {((zonaToDelete?._count?.escuelas ?? 0) > 0 || (zonaToDelete?._count?.encargados ?? 0) > 0) && (
+                        <Box sx={{ bgcolor: "error.50", border: "1px solid", borderColor: "error.200", borderRadius: 1, p: 2 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                                Al eliminar esta zona también se desvinculará:
+                            </Typography>
+                            {(zonaToDelete?._count?.escuelas ?? 0) > 0 && (
+                                <Typography variant="body2">
+                                    • <strong>{zonaToDelete?._count?.escuelas}</strong> escuela{(zonaToDelete?._count?.escuelas ?? 0) !== 1 ? "s" : ""} asignada{(zonaToDelete?._count?.escuelas ?? 0) !== 1 ? "s" : ""} (quedarán sin zona)
+                                </Typography>
+                            )}
+                            {(zonaToDelete?._count?.encargados ?? 0) > 0 && (
+                                <Typography variant="body2">
+                                    • <strong>{zonaToDelete?._count?.encargados}</strong> encargado{(zonaToDelete?._count?.encargados ?? 0) !== 1 ? "s" : ""} asignado{(zonaToDelete?._count?.encargados ?? 0) !== 1 ? "s" : ""} (quedarán sin zona)
+                                </Typography>
+                            )}
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ p: 2, gap: 1 }}>
+                    <Button onClick={() => setConfirmDeleteZonaOpen(false)} color="inherit" disabled={deletingZona}>
+                        Cancelar
+                    </Button>
+                    <Button
+                        onClick={confirmDeleteZona}
+                        variant="contained"
+                        color="error"
+                        disabled={deletingZona}
+                        sx={{ textTransform: "none", fontWeight: "bold" }}
+                    >
+                        {deletingZona ? "Eliminando..." : "Sí, eliminar zona"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             {/* Modal de Confirmación para Quitar Encargado */}
             <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)} maxWidth="xs" fullWidth>

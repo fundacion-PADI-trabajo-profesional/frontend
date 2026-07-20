@@ -184,7 +184,7 @@ export const getSalas = async (): Promise<Sala[]> => {
 }
 
 /** Actualiza un estudiante existente por ID. Lee usuario y rol desde padiUser para construir query params autenticados. */
-export async function updateEstudiante(id: string, data: any): Promise<Estudiante> {
+export async function updateEstudiante(id: string, data: Partial<EstudianteFormData> & { sala_id?: number }): Promise<Estudiante> {
     const res = await fetch(`${API_URL}/estudiantes/${id}`, {
         method: "PUT",
         headers: getAuthHeaders(),
@@ -261,16 +261,6 @@ export async function desasignarEstudianteAula(
     }
 }
 
-/** Obtiene las aulas de una escuela específica. */
-export async function getAulasPorEscuela(escuelaId: string): Promise<any[]> {
-    const response = await fetch(`${API_URL}/aulas?escuela_id=${escuelaId}`, {
-        headers: getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error("Error al obtener aulas");
-    const result = await response.json();
-    return result.success ? result.data : [];
-}
-
 /** Elimina un estudiante por ID. */
 export async function deleteEstudiante(id: string): Promise<void> {
     const response = await fetch(`${API_URL}/estudiantes/${id}`, {
@@ -283,8 +273,22 @@ export async function deleteEstudiante(id: string): Promise<void> {
     }
 }
 
+export interface EstudianteBulkRow {
+    dni: string | null;
+    nombre: string | null;
+    apellido: string | null;
+    fecha_nacimiento: string | null;
+    genero_id: string | null;
+    sala_id: number | null;
+    escuela_id: string | null;
+    colegio_aula_label: string | null;
+    aula_id: string | null;
+    estado?: "nuevo" | "promovido" | "repite" | "retroceso" | "reactivado";
+    old_sala_id?: number | null;
+}
+
 /** Crea estudiantes en lote y soporta modo dry-run. */
-export async function bulkCreateEstudiantes(data: { estudiantes: any[], dryRun?: boolean }) {
+export async function bulkCreateEstudiantes(data: { estudiantes: EstudianteBulkRow[], dryRun?: boolean }) {
     const user = JSON.parse(localStorage.getItem("padiUser") || "{}");
 
     const payload = {

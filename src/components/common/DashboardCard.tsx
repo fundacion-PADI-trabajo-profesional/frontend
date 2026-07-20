@@ -3,9 +3,9 @@ import { Box, Typography, Paper } from "@mui/material";
 interface DashboardCardProps {
     title: string;
     description: string;
-    icon: string; // Emoji o componente Icon
+    icon: React.ReactNode;
     onClick: () => void;
-    color?: string; // Color de acento
+    color?: string;
 }
 
 export default function DashboardCard({ title, description, icon, onClick, color = "#5c7cfa" }: DashboardCardProps) {
@@ -31,12 +31,14 @@ export default function DashboardCard({ title, description, icon, onClick, color
             }}
         >
             <Box sx={{
-                fontSize: "2.5rem",
                 mb: 2,
-                bgcolor: `${color}15`, // Color con opacidad baja para el fondo del icono
+                bgcolor: `${color}15`,
                 p: 1.5,
                 borderRadius: 2,
-                lineHeight: 1
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                "& .MuiSvgIcon-root": { fontSize: "2.5rem", color },
             }}>
                 {icon}
             </Box>

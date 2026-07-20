@@ -14,23 +14,31 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
-import { bulkCreateEstudiantes } from '../../api/estudiantes';
+import { bulkCreateEstudiantes, type EstudianteBulkRow } from '../../api/estudiantes';
 import { getEscuelas } from '../../api/escuelas';
 import { getAulas, type Aula } from '../../api/aulas';
 
+interface BulkDryRunResult {
+    nuevos: { dni: string }[];
+    promovidos: { dni: string; old_sala_id: number | null }[];
+    repitentes: { dni: string }[];
+    retrocesos: { dni: string; old_sala_id: number | null }[];
+    reactivados?: { dni: string }[];
+}
+
 interface BulkUploadProps {
     open: boolean;
-    onSuccess: (creados: any[]) => void;
+    onSuccess: (creados: EstudianteBulkRow[]) => void;
     onCancel: () => void;
 }
 
 export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUploadProps) {
     const [bulkLoading, setBulkLoading] = useState(false);
-    const [excelRows, setExcelRows] = useState<any[]>([]);
+    const [excelRows, setExcelRows] = useState<EstudianteBulkRow[]>([]);
     const [excelError, setExcelError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [step, setStep] = useState<'upload' | 'preview'>('upload');
-    const [stats, setStats] = useState<any>(null);
+    const [stats, setStats] = useState<BulkDryRunResult | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const resetState = () => {
@@ -174,7 +182,8 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                 const ws = wb.Sheets[wb.SheetNames[0]];
                 const data = XLSX.utils.sheet_to_json(ws, { raw: false, defval: null });
 
-                const validRows = data.filter((row: any) => row["DNI"] || row["Nombre"] || row["Apellido"]);
+                const rawRows = data as Record<string, unknown>[];
+                const validRows = rawRows.filter((row) => row["DNI"] || row["Nombre"] || row["Apellido"]);
 
                 const [escuelas, todasLasAulas] = await Promise.all([
                     getEscuelas(),
@@ -182,27 +191,27 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                 ]);
 
                 // schoolOnlyMap: escuela nombre → escuela_id
-                const schoolOnlyMap = new Map(escuelas.map((e: any) => [e.nombre, String(e.id)]));
+                const schoolOnlyMap = new Map(escuelas.map((e) => [e.nombre, String(e.id)]));
 
                 // schoolAulaMap: "Escuela - Comision - Turno" → { escuela_id, aula_id }
                 const schoolAulaMap = new Map<string, { escuela_id: string; aula_id: string }>();
                 for (const aula of todasLasAulas) {
-                    const escuela = escuelas.find((e: any) => String(e.id) === String(aula.escuela_id));
+                    const escuela = escuelas.find((e) => String(e.id) === String(aula.escuela_id));
                     if (escuela) {
                         const label = `${escuela.nombre} - ${aula.comision} - ${aula.turno}`;
                         schoolAulaMap.set(label, { escuela_id: String(aula.escuela_id), aula_id: aula.id });
                     }
                 }
 
-                const estudiantes = validRows.map((row: any) => {
-                    let fecha = row["Fecha Nacimiento"];
+                const estudiantes = validRows.map((row) => {
+                    const fecha = row["Fecha Nacimiento"];
                     let finalDate = null;
 
                     if (fecha) {
                         if (fecha instanceof Date && !isNaN(fecha.getTime())) {
                             finalDate = fecha.toISOString();
                         } else if (typeof fecha === 'string') {
-                            const parts = fecha.split(/[\/\-]/);
+                            const parts = fecha.split(/[/-]/);
                             if (parts.length === 3) {
                                 const day = parseInt(parts[0], 10);
                                 const month = parseInt(parts[1], 10) - 1;
@@ -248,7 +257,7 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                 setStep('upload');
                 if (fileInputRef.current) fileInputRef.current.value = '';
 
-            } catch (err: any) {
+            } catch {
                 setExcelError("Error al leer el archivo Excel. Asegurate de que sea el formato correcto.");
             }
         };
@@ -273,23 +282,24 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
             setStats(data);
 
             // Mapeamos los estados a las filas para mostrarlos en la tabla
-            const enrichedRows = excelRows.map(est => {
-                const retroceso = data.retrocesos.find((r: any) => r.dni === est.dni);
-                const promovido = data.promovidos.find((r: any) => r.dni === est.dni);
-                const repitente = data.repitentes.find((r: any) => r.dni === est.dni);
-                const reactivado = data.reactivados?.find((r: any) => r.dni === est.dni);
+            const enrichedRows: EstudianteBulkRow[] = excelRows.map(est => {
+                const retroceso = data.retrocesos.find((r: { dni: string; old_sala_id: number | null }) => r.dni === est.dni);
+                const promovido = data.promovidos.find((r: { dni: string; old_sala_id: number | null }) => r.dni === est.dni);
+                const repitente = data.repitentes.find((r: { dni: string }) => r.dni === est.dni);
+                const reactivado = data.reactivados?.find((r: { dni: string }) => r.dni === est.dni);
 
-                if (retroceso) return { ...est, estado: 'retroceso', old_sala_id: retroceso.old_sala_id };
-                if (promovido) return { ...est, estado: 'promovido', old_sala_id: promovido.old_sala_id };
-                if (repitente) return { ...est, estado: 'repite' };
-                if (reactivado) return { ...est, estado: 'reactivado' };
-                return { ...est, estado: 'nuevo' };
+                if (retroceso) return { ...est, estado: 'retroceso' as const, old_sala_id: retroceso.old_sala_id };
+                if (promovido) return { ...est, estado: 'promovido' as const, old_sala_id: promovido.old_sala_id };
+                if (repitente) return { ...est, estado: 'repite' as const };
+                if (reactivado) return { ...est, estado: 'reactivado' as const };
+                return { ...est, estado: 'nuevo' as const };
             });
 
             setExcelRows(enrichedRows);
             setStep('preview');
-        } catch (err: any) {
-            setExcelError(err.response?.data?.message || "Error al analizar los datos");
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            setExcelError(msg || "Error al analizar los datos");
         } finally {
             setBulkLoading(false);
         }
@@ -309,8 +319,9 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                 resetState();
             }, 1500);
 
-        } catch (err: any) {
-            setExcelError(err.response?.data?.message || "Error interno al guardar estudiantes");
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            setExcelError(msg || "Error interno al guardar estudiantes");
         } finally {
             setBulkLoading(false);
         }
@@ -356,7 +367,7 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                         <strong>Análisis Alumnos:</strong> Se detectaron {stats.nuevos.length} ingresos nuevos, {stats.promovidos.length} pases de año y {stats.repitentes.length} que repiten sala.
                         {(stats.reactivados?.length ?? 0) > 0 && (
                             <Box sx={{ mt: 1, color: '#1565c0', fontWeight: 'bold' }}>
-                                {stats.reactivados.length} alumno(s) serán reactivados (estaban dados de baja).
+                                {stats.reactivados?.length} alumno(s) serán reactivados (estaban dados de baja).
                             </Box>
                         )}
                         {stats.retrocesos.length > 0 && (
@@ -435,10 +446,10 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                         disabled={bulkLoading || !!excelError}
                         startIcon={bulkLoading ? <CircularProgress size={16} color="inherit" /> : <CheckCircleIcon />}
                         sx={{
-                            bgcolor: stats?.retrocesos?.length > 0 ? "#d32f2f" : "#65944F",
+                            bgcolor: (stats?.retrocesos?.length ?? 0) > 0 ? "#d32f2f" : "#65944F",
                             textTransform: "none",
                             borderRadius: 2,
-                            "&:hover": { bgcolor: stats?.retrocesos?.length > 0 ? "#b71c1c" : "#558040" }
+                            "&:hover": { bgcolor: (stats?.retrocesos?.length ?? 0) > 0 ? "#b71c1c" : "#558040" }
                         }}
                     >
                         {bulkLoading ? "Guardando..." : "Confirmar Importación"}

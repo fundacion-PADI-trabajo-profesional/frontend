@@ -43,7 +43,7 @@ export default function EvaluacionRevision({ open, onClose, onCorrect, evaluacio
         return { text, icon, esCorrecta };
     };
 
-    const getGroupTitleFromQuestions = (preguntas: any[], groupNumber: number) => {
+    const getGroupTitleFromQuestions = (preguntas: { titulo?: string }[], groupNumber: number) => {
         // Todas las preguntas del grupo comparten el mismo título
         return preguntas?.[0]?.titulo ?? `Grupo ${groupNumber}`;
     };
@@ -64,7 +64,7 @@ export default function EvaluacionRevision({ open, onClose, onCorrect, evaluacio
     }, [data]);
 
     // Stats por grupo (mayoría: ceil(total/2))
-    const getGroupStats = (preguntas: any[]) => {
+    const getGroupStats = (preguntas: { id: string; puntaje_invertido?: boolean }[]) => {
         const total = preguntas.length;
 
         let answered = 0;
@@ -88,7 +88,15 @@ export default function EvaluacionRevision({ open, onClose, onCorrect, evaluacio
 
     if (!open) return null;
 
-    const puntajePorcentual = (score / total) * 100;
+    // Recalcular aciertos localmente respetando puntaje_invertido
+    const aciertosCalculados = grouped.reduce((acc, [, preguntas]) => {
+        const stats = getGroupStats(preguntas);
+        return acc + (stats.aprobado ? 1 : 0);
+    }, 0);
+    const totalGrupos = grouped.length || total;
+    const scoreEfectivo = data ? aciertosCalculados : score;
+    const totalEfectivo = data ? totalGrupos : total;
+    const puntajePorcentual = totalEfectivo > 0 ? (scoreEfectivo / totalEfectivo) * 100 : 0;
 
     return (
         <Dialog fullScreen open={open} onClose={onClose}>
@@ -118,7 +126,7 @@ export default function EvaluacionRevision({ open, onClose, onCorrect, evaluacio
                         Estado Final: {statusId === 'A' ? 'Aprobada' : statusId === 'D' ? 'Desaprobada' : 'Completada'}
                     </Typography>
                     <Typography variant="body2">
-                        Aciertos: {score} de {total} ({puntajePorcentual.toFixed(1)}%)
+                        Aciertos: {scoreEfectivo} de {totalEfectivo} ({puntajePorcentual.toFixed(1)}%)
                     </Typography>
                 </Alert>
 
@@ -184,7 +192,7 @@ export default function EvaluacionRevision({ open, onClose, onCorrect, evaluacio
 
                                     {/* Preguntas del grupo */}
                                     <List disablePadding>
-                                        {preguntasDelGrupo.map((p: any, idx: number) => {
+                                        {preguntasDelGrupo.map((p, idx: number) => {
                                             const { text, esCorrecta } = getAnswerText(p.id, p.puntaje_invertido);
                                             return (
                                                 <React.Fragment key={p.id}>

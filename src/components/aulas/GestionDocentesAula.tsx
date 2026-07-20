@@ -39,6 +39,7 @@ export default function GestionDocentesAula({ aula, open, onClose }: Props) {
 
     useEffect(() => {
         if (open && aula) loadDocentesData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, aula]);
 
     const docentesDisponibles = todosLosDocentes.filter(docente => {
@@ -57,7 +58,7 @@ export default function GestionDocentesAula({ aula, open, onClose }: Props) {
             await asignarDocenteAula(aula.id, selectedDocenteId);
             setSelectedDocenteId("");
             loadDocentesData();
-        } catch (e) { alert("Error al asignar"); }
+        } catch { alert("Error al asignar"); }
     };
 
     const handleQuitar = async (profesorId: string) => {
@@ -65,7 +66,7 @@ export default function GestionDocentesAula({ aula, open, onClose }: Props) {
         try {
             await desasignarDocenteAula(aula.id, profesorId);
             loadDocentesData();
-        } catch (e) { alert("Error al quitar"); }
+        } catch { alert("Error al quitar"); }
     };
 
     return (

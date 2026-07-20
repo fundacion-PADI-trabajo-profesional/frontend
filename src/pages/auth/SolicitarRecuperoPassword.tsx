@@ -28,8 +28,8 @@ export default function SolicitarRecuperoPassword() {
     try {
       await requestPasswordReset(email.trim());
       setResult("success");
-    } catch (err: any) {
-      const msg: string = err.message || "";
+    } catch (err: unknown) {
+      const msg: string = err instanceof Error ? err.message : "";
       if (msg === "EMAIL_NOT_REGISTERED") {
         // Email no registrado en el sistema → indicar que contacte al Equipo PADI
         setResult("not_registered");

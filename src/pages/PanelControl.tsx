@@ -77,8 +77,8 @@ export default function PanelControl() {
                 const escuelasData = await getEscuelas();
                 setEscuelas(escuelasData);
             }
-        } catch (e: any) {
-            setError(e.message || "Error al cargar panel de control");
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "Error al cargar panel de control");
         } finally {
             setLoading(false);
         }
@@ -94,6 +94,7 @@ export default function PanelControl() {
             if (isEquipoPadi) setView("zonas");
             else setView("escuelas");
         });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isEquipoPadi, isEncargadoZona, navigate]);
 
     useEffect(() => {
@@ -125,6 +126,7 @@ export default function PanelControl() {
             setPendingRestore(false);
         };
         restore();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pendingRestore, loading, escuelas, zonas, aulas]);
 
     const aulasByEscuela = useMemo(() => {
@@ -171,8 +173,8 @@ export default function PanelControl() {
             setTodosLosEstudiantes(todos);
             setSelectedEstudianteId("");
             setView("estudiantes");
-        } catch (e: any) {
-            setError(e.message || "Error al cargar estudiantes del aula");
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "Error al cargar estudiantes del aula");
         } finally {
             setLoadingStudents(false);
         }

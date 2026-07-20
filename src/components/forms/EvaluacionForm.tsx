@@ -27,7 +27,7 @@ interface EvaluacionFormProps {
   onSuccess: (evaluacionId: string) => void;
   onCancel: () => void;
   evaluacionAEditar?: EvaluacionInstancia | null;
-  profile: any | null;
+  profile: { id: string; rol: string; escuela_id?: string } | null;
   prefillEstudianteId?: string;
 }
 
@@ -79,7 +79,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
       try {
         const data = await getEstudiantes();
         setEstudiantes(data);
-      } catch (err) {
+      } catch {
         if (profile.rol === "docente" || profile.rol === "director") {
           try {
             const aulas = await getDocenteAulasConEstudiantes();
@@ -101,6 +101,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
       }
     };
     loadEstudiantes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.rol]);
 
   useEffect(() => {
@@ -231,8 +232,8 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
       setTimeout(() => {
         onSuccess(resultId)
       }, 1500)
-    } catch (err: any) {
-      setError(err.message || (evaluacionAEditar ? "Error al actualizar" : "Error al crear"));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : (evaluacionAEditar ? "Error al actualizar" : "Error al crear"));
       console.error("[v0] Error:", err);
     } finally {
       setLoading(false);

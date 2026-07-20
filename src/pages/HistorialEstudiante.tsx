@@ -39,8 +39,8 @@ export default function HistorialEstudiante() {
       };
       await eliminarEvaluacionInstancia(evaluacion.id, userInfo)
       setItems((prev) => prev.filter((e) => e.id !== evaluacion.id))
-    } catch (e: any) {
-      alert(e.message || "Error al eliminar la evaluación")
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Error al eliminar la evaluación")
     }
   }
 
@@ -56,8 +56,8 @@ export default function HistorialEstudiante() {
       try {
         const data = await getEvaluacionesInstanciasByEstudiante(estudianteId, { limit: 50, offset: 0 })
         setItems(data)
-      } catch (e: any) {
-        setError(e.message || "Error al cargar el historial")
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : "Error al cargar el historial")
       } finally {
         setLoading(false)
       }

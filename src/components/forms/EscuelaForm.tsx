@@ -52,8 +52,8 @@ export default function EscuelaForm({ onCancel, onSuccess, defaultZonaId }: Prop
                         setZonas([encargadoData.zona]);
                         setFormData(prev => ({ ...prev, zona_id: encargadoData.zona!.id }));
                         setLoadingZonas(false);
-                    } catch (err: any) {
-                        setError("Error al obtener tu información de zona: " + err.message);
+                    } catch (err: unknown) {
+                        setError("Error al obtener tu información de zona: " + (err instanceof Error ? err.message : String(err)));
                         setLoadingZonas(false);
                     }
                 } else if (parsedUser.rol === "equipo_padi") {
@@ -61,7 +61,7 @@ export default function EscuelaForm({ onCancel, onSuccess, defaultZonaId }: Prop
                     try {
                         const data = await getZonas();
                         setZonas(data);
-                    } catch (err) {
+                    } catch {
                         setError("No se pudieron cargar las zonas de la base de datos.");
                     } finally {
                         setLoadingZonas(false);
@@ -86,8 +86,8 @@ export default function EscuelaForm({ onCancel, onSuccess, defaultZonaId }: Prop
         try {
             await createEscuela(formData);
             onSuccess();
-        } catch (err: any) {
-            setError(err.message || "Error al crear la escuela.");
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Error al crear la escuela.");
         } finally {
             setLoading(false);
         }

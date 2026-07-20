@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
-import { getEscuelasSinZona, asignarEscuela } from "../../api/zonas";
+import { getEscuelasSinZona, asignarEscuela, type EscuelaSinZona } from "../../api/zonas";
 
 interface Props {
     open: boolean;
@@ -17,7 +17,7 @@ interface Props {
 }
 
 export default function AsignarEscuelaModal({ open, onClose, zonaId, onSuccess }: Props) {
-    const [escuelas, setEscuelas] = useState<any[]>([]);
+    const [escuelas, setEscuelas] = useState<EscuelaSinZona[]>([]);
     const [filtro, setFiltro] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -28,8 +28,8 @@ export default function AsignarEscuelaModal({ open, onClose, zonaId, onSuccess }
         try {
             const data = await getEscuelasSinZona();
             setEscuelas(data);
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Error al cargar escuelas");
         } finally {
             setLoading(false);
         }
@@ -46,14 +46,11 @@ export default function AsignarEscuelaModal({ open, onClose, zonaId, onSuccess }
     const handleAsignar = async (escuelaId: string) => {
         setAssigning(escuelaId);
         try {
-            // const stored = localStorage.getItem("padiUser");
-            // const rol = stored ? JSON.parse(stored).rol : "";
-
             await asignarEscuela(zonaId, escuelaId);
             onSuccess(); // Refresca la tabla de la página principal
             onClose();   // Cierra el modal
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Error al asignar escuela");
         } finally {
             setAssigning(null);
         }

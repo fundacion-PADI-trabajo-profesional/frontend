@@ -7,7 +7,7 @@ import {
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
 import {
-    asignarEstudianteAula, desasignarEstudianteAula, type Aula
+    asignarEstudianteAula, desasignarEstudianteAula, getAulaEstudiantes, type Aula
 } from "../../api/aulas";
 
 import { getEstudiantes, type Estudiante } from "../../api/estudiantes";
@@ -21,6 +21,7 @@ interface Props {
 export default function EstudiantesAulaView({ aula, onVolver, escuelaNombreProp }: Props) {
     const navigate = useNavigate();
 
+    const [estudiantesAulaActual, setEstudiantesAulaActual] = useState<Estudiante[]>([]);
     const [todosLosEstudiantes, setTodosLosEstudiantes] = useState<Estudiante[]>([]);
     const [selectedEstudianteId, setSelectedEstudianteId] = useState("");
     const [loading, setLoading] = useState(true);
@@ -48,10 +49,14 @@ export default function EstudiantesAulaView({ aula, onVolver, escuelaNombreProp 
         setLoading(true);
         setError(null);
         try {
-            const todos = await getEstudiantes();
+            const [asignados, todos] = await Promise.all([
+                getAulaEstudiantes(aula.id),
+                getEstudiantes(),
+            ]);
+            setEstudiantesAulaActual(asignados);
             setTodosLosEstudiantes(todos);
-        } catch (e: any) {
-            setError(e.message || "Error al cargar los estudiantes.");
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "Error al cargar los estudiantes.");
         } finally {
             setLoading(false);
         }
@@ -61,16 +66,14 @@ export default function EstudiantesAulaView({ aula, onVolver, escuelaNombreProp 
         if (aula) fetchData();
     }, [aula]);
 
-    const estudiantesAula = todosLosEstudiantes.filter(
-        (e) => e.aula_asignada?.id === aula.id || e.aula_id === aula.id
-    );
+    const estudiantesAula = estudiantesAulaActual;
 
+    const asignadosIds = new Set(estudiantesAulaActual.map((e) => e.id));
     const estudiantesDisponibles = todosLosEstudiantes.filter((e) => {
         const mismaEscuela = e.escuela?.escuela_id === aula.escuela_id;
         const mismaSala = e.sala_id === aula.sala_id;
-        const noEstaEnEstaAula = e.aula_asignada?.id !== aula.id && e.aula_id !== aula.id;
-
-        return mismaEscuela && mismaSala && noEstaEnEstaAula;
+        const noEstaAsignado = !asignadosIds.has(e.id);
+        return mismaEscuela && mismaSala && noEstaAsignado;
     });
 
     const handleAsignar = async () => {
@@ -80,8 +83,8 @@ export default function EstudiantesAulaView({ aula, onVolver, escuelaNombreProp 
             setSelectedEstudianteId("");
             setSnackbar({ open: true, message: "Estudiante asignado correctamente", severity: "success" });
             fetchData();
-        } catch (err: any) {
-            setSnackbar({ open: true, message: err.message || "Error al asignar estudiante", severity: "error" });
+        } catch (err: unknown) {
+            setSnackbar({ open: true, message: err instanceof Error ? err.message : "Error al asignar estudiante", severity: "error" });
         }
     };
 
@@ -98,8 +101,8 @@ export default function EstudiantesAulaView({ aula, onVolver, escuelaNombreProp 
             await desasignarEstudianteAula(aula.id, estudianteAQuitar);
             setSnackbar({ open: true, message: "Estudiante quitado de la comisión", severity: "success" });
             fetchData();
-        } catch (err: any) {
-            setSnackbar({ open: true, message: err.message || "Error al quitar estudiante", severity: "error" });
+        } catch (err: unknown) {
+            setSnackbar({ open: true, message: err instanceof Error ? err.message : "Error al quitar estudiante", severity: "error" });
         } finally {
             setEstudianteAQuitar(null);
         }

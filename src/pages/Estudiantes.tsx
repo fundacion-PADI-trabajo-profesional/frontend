@@ -66,8 +66,8 @@ export default function Estudiantes() {
                 setEstudiantes(data);
                 setAulasDocente([]);
             }
-        } catch (err: any) {
-            setError(err.message || "Error al cargar los estudiantes")
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Error al cargar los estudiantes")
         } finally {
             setLoading(false)
         }
@@ -117,7 +117,7 @@ export default function Estudiantes() {
         navigate("/estudiantes", { replace: true });
     }
 
-    const handleSuccess = (nuevoEstudiante: EstudianteCreado) => {
+    const handleSuccess = (nuevoEstudiante: Estudiante | EstudianteCreado) => {
         if (userRole === "docente") {
             setView("list");
             setRefreshKey(prev => prev + 1);
@@ -130,7 +130,7 @@ export default function Estudiantes() {
             setRefreshKey(prev => prev + 1);
         } else {
             // Si es creación nueva, mostramos pantalla de éxito
-            setEstudianteCreado(nuevoEstudiante);
+            setEstudianteCreado(nuevoEstudiante as EstudianteCreado);
             setView("success");
             setRefreshKey(prev => prev + 1);
         }

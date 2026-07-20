@@ -7,6 +7,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { updateEscuela, deleteEscuela, Escuela, asignarDirectivo, desasignarDirectivo, getDirectivosDisponibles, NIVELES_SOCIOECONOMICOS } from "../../api/escuelas";
 import { getZonas, Zona } from "../../api/zonas";
 import { Directivo } from "../../api/directivos";
@@ -50,7 +51,7 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem("padiUser") || "{}");
         setUserRole(user.rol);
-        loadZonas();
+        if (user.rol === "equipo_padi") loadZonas();
         loadDirectivosDisponibles();
     }, []);
 
@@ -63,7 +64,7 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
         try {
             const data = await getDirectivosDisponibles();
             setDirectivosDisponibles(data);
-        } catch (err) { console.error("Error cargando directivos"); }
+        } catch { console.error("Error cargando directivos"); }
     };
 
     const handleAgregarDirectivo = () => {
@@ -101,7 +102,7 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
 
             setNotification({ open: true, message: "¡Institución actualizada!", severity: "success" });
             setTimeout(() => onSuccess(), 1000);
-        } catch (err: any) {
+        } catch {
             setNotification({ open: true, message: "Error al actualizar", severity: "error" });
         } finally { setLoading(false); }
     };
@@ -115,10 +116,10 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
                 severity: "success"
             });
             setTimeout(() => onSuccess(), 2000);
-        } catch (err: any) {
+        } catch (err: unknown) {
             setNotification({
                 open: true,
-                message: err.message || "Error al eliminar la escuela",
+                message: err instanceof Error ? err.message : "Error al eliminar la escuela",
                 severity: "error"
             });
         }
@@ -141,10 +142,14 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
                             onChange={(e) => setFormData({ ...formData, nombre: e.target.value })} />
                     </Grid>
                     <Grid item xs={12} sm={6}>
-                        <TextField select fullWidth label="Zona" value={formData.zona_id}
-                            onChange={(e) => setFormData({ ...formData, zona_id: e.target.value })}>
-                            {zonas.map(z => <MenuItem key={z.id} value={z.id}>{z.nombre}</MenuItem>)}
-                        </TextField>
+                        {userRole === "equipo_padi" ? (
+                            <TextField select fullWidth label="Zona" value={formData.zona_id}
+                                onChange={(e) => setFormData({ ...formData, zona_id: e.target.value })}>
+                                {zonas.map(z => <MenuItem key={z.id} value={z.id}>{z.nombre}</MenuItem>)}
+                            </TextField>
+                        ) : (
+                            <TextField fullWidth label="Zona" value={escuela.zona?.nombre || "Sin zona asignada"} disabled />
+                        )}
                     </Grid>
                     <Grid item xs={12} sm={6}>
                         <TextField fullWidth label="Dirección" value={formData.direccion}
@@ -216,7 +221,7 @@ export default function EditarEscuela({ escuela, onCancel, onSuccess }: Props) {
             </Paper>
 
             <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>
-                <DialogTitle sx={{ fontWeight: 600 }}>⚠️ DESVINCULAR ESCUELA</DialogTitle>
+                <DialogTitle sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 0.5 }}><WarningAmberIcon color="warning" /> DESVINCULAR ESCUELA</DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ whiteSpace: 'pre-line' }}>
                         {"La escuela quedará inactiva y desaparecerá de la gestión, pero sus datos históricos se conservan para métricas.\n\nSe liberarán automáticamente:\n• Todos los estudiantes (quedarán sin escuela asignada)\n• Todos los directivos (quedarán disponibles para otras escuelas)\n• Todos los docentes (quedarán disponibles para otras escuelas)\n\nEn los reportes comparativos figurará como \"(Desvinculada)\".\n\n¿Está seguro de continuar?"}

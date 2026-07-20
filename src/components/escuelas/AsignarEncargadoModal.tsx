@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import { getEncargadosSinZona, asignarEncargadoAZona } from "../../api/zonas";
+import { getEncargadosSinZona, asignarEncargadoAZona, type EncargadoSinZona } from "../../api/zonas";
 
 interface Props {
     open: boolean;
@@ -17,7 +17,7 @@ interface Props {
 }
 
 export default function AsignarEncargadoModal({ open, onClose, zonaId, onSuccess }: Props) {
-    const [encargados, setEncargados] = useState<any[]>([]);
+    const [encargados, setEncargados] = useState<EncargadoSinZona[]>([]);
     const [filtro, setFiltro] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -28,8 +28,8 @@ export default function AsignarEncargadoModal({ open, onClose, zonaId, onSuccess
         try {
             const data = await getEncargadosSinZona();
             setEncargados(data);
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Error al cargar encargados");
         } finally {
             setLoading(false);
         }
@@ -49,8 +49,8 @@ export default function AsignarEncargadoModal({ open, onClose, zonaId, onSuccess
             onSuccess(); // Refresca la vista de fondo para ver al nuevo encargado
             // Filtramos localmente para que desaparezca de la lista de "disponibles"
             setEncargados(prev => prev.filter(e => e.id !== encargadoId));
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Error al asignar encargado");
         } finally {
             setAssigningId(null);
         }

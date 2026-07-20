@@ -3,7 +3,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PlaceIcon from "@mui/icons-material/Place";
 import EqualizerIcon from "@mui/icons-material/Equalizer";
-import { getNivelSocioeconomicoLabel } from "../../api/escuelas";
+import { getNivelSocioeconomicoLabel, type Escuela } from "../../api/escuelas";
 
 function InfoItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
     return (
@@ -21,11 +21,11 @@ function InfoItem({ icon, label, value }: { icon: React.ReactNode; label: string
     );
 }
 
-function PersonCard({ title, people, getName, getSubtitle }: {
+function PersonCard<T extends { id: string | number }>({ title, people, getName, getSubtitle }: {
     title: string;
-    people: any[];
-    getName: (p: any) => string;
-    getSubtitle: (p: any) => string;
+    people: T[];
+    getName: (p: T) => string;
+    getSubtitle: (p: T) => string;
 }) {
     return (
         <Box sx={{ border: "1px solid #e8e8e8", borderRadius: 2, overflow: "hidden", height: "100%" }}>
@@ -61,7 +61,7 @@ function PersonCard({ title, people, getName, getSubtitle }: {
     );
 }
 
-export default function EscuelaDetalle({ escuela, onEdit }: any) {
+export default function EscuelaDetalle({ escuela, onEdit }: { escuela: Escuela; onEdit: () => void }) {
     return (
         <Box>
             <Paper sx={{ p: 4, borderRadius: 3, boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}>

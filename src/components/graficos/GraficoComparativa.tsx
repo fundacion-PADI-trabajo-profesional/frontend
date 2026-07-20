@@ -16,12 +16,12 @@ interface Props {
   data: ComparativaResponse;
 }
 
-function CustomTooltip({ active, payload, label }: any) {
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ dataKey: string; name: string; fill: string; value: number | null }>; label?: string }) {
   if (!active || !payload?.length) return null;
   return (
     <Box sx={{ bgcolor: "white", border: "1px solid #ddd", borderRadius: 1, p: 1.5, minWidth: 180 }}>
       <Typography variant="body2" fontWeight={700} sx={{ mb: 0.5 }}>{label}</Typography>
-      {payload.map((p: any) => (
+      {payload.map((p) => (
         <Typography key={p.dataKey} variant="body2" color={p.fill}>
           {p.name}: {p.value != null ? `${p.value}%` : "Sin datos"}
         </Typography>

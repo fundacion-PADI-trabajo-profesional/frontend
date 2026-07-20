@@ -56,7 +56,7 @@ export default function AulasView({ escuelaId, salaSeleccionada, onVerEstudiante
             );
 
             setAulas(aulasFiltradas);
-        } catch (e: any) {
+        } catch {
             setError("Error al cargar las comisiones de esta sala.");
         } finally {
             setLoading(false);
@@ -65,6 +65,7 @@ export default function AulasView({ escuelaId, salaSeleccionada, onVerEstudiante
 
     useEffect(() => {
         if (escuelaId && salaSeleccionada) fetchData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [escuelaId, salaSeleccionada]);
 
     const handleSubmit = async () => {
@@ -90,8 +91,8 @@ export default function AulasView({ escuelaId, salaSeleccionada, onVerEstudiante
             setMode("list");
             setEditing(null);
             fetchData();
-        } catch (e: any) {
-            setFormError("Error al guardar la comisión: " + e.message);
+        } catch (e: unknown) {
+            setFormError("Error al guardar la comisión: " + (e instanceof Error ? e.message : String(e)));
         }
     };
 
@@ -106,8 +107,8 @@ export default function AulasView({ escuelaId, salaSeleccionada, onVerEstudiante
             await deleteAula(aulaAEliminar.id);
             setAulaAEliminar(null);
             fetchData();
-        } catch (e: any) {
-            setError("Error al eliminar: " + e.message);
+        } catch (e: unknown) {
+            setError("Error al eliminar: " + (e instanceof Error ? e.message : String(e)));
             setAulaAEliminar(null);
         } finally {
             setDeleting(false);

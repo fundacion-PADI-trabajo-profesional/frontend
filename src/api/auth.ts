@@ -1,5 +1,26 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
+export type PadiRol = "docente" | "director" | "encargado_zona" | "equipo_padi";
+
+export interface PadiUser {
+  id: string;
+  email: string;
+  nombre: string;
+  apellido: string;
+  rol: PadiRol;
+  escuela_id?: string;
+  escuela?: { nombre?: string };
+}
+
+export interface PadiProfile {
+  id?: string;
+  nombre?: string;
+  apellido?: string;
+  rol: PadiRol;
+  escuela?: { nombre?: string };
+  escuelas?: Array<{ nombre?: string; zona?: string }>;
+}
+
 /**
  * Flag para evitar múltiples refreshes simultáneos.
  */
@@ -131,7 +152,7 @@ export function setupFetchInterceptor() {
         "/auth/update-password",
       ];
       const urlPath = new URL(url, window.location.origin).pathname;
-      if (AUTH_BYPASS_ENDPOINTS.includes(urlPath)) return response;
+      if (AUTH_BYPASS_ENDPOINTS.some(endpoint => urlPath === endpoint || urlPath.endsWith(endpoint))) return response;
 
       const newToken = await getRefreshedToken();
 
@@ -258,9 +279,9 @@ export async function login(email: string, password: string) {
     body: JSON.stringify({ email, password }),
   });
 
-  const data = await response.json();
+  const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(data.message || "Credenciales inválidas");
+    throw new Error(data.message || "Credenciales inválidas. Por favor, vuelva a intentarlo.");
   }
 
   return {

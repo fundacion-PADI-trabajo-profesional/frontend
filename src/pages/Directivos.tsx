@@ -26,8 +26,8 @@ export default function DirectivosPage() {
                 ])
                 setItems(directivosData)
                 setEscuelas(escuelasData)
-            } catch (e: any) {
-                setError(e.message || "Error al cargar directivos")
+            } catch (e: unknown) {
+                setError(e instanceof Error ? e.message : "Error al cargar directivos")
             } finally {
                 setLoading(false)
             }
@@ -54,8 +54,8 @@ export default function DirectivosPage() {
             const updated = await getDirectivos()
             setItems(updated)
             closeDialog()
-        } catch (e: any) {
-            setError(e.message || "Error al asignar escuela")
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "Error al asignar escuela")
         }
     }
 

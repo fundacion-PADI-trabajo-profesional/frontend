@@ -25,7 +25,7 @@ export default function SalasView({ escuelaId, escuelaNombre, onVolver, onVerAul
                 const data = await getSalas();
                 const salasOrdenadas = data.sort((a, b) => (a.grado || 0) - (b.grado || 0));
                 setSalas(salasOrdenadas);
-            } catch (e: any) {
+            } catch {
                 setError("Error al cargar las salas.");
             } finally {
                 setLoading(false);

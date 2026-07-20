@@ -1,6 +1,7 @@
 import { styled } from '@mui/material/styles';
 import { TextField } from '@mui/material';
 
+/** Campo de búsqueda con estilo PADI. Ancho completo en mobile, 450 px en desktop. */
 export const BuscadorPadi = styled(TextField)(({ theme }) => ({
     backgroundColor: '#ffffff',
     borderRadius: '12px',

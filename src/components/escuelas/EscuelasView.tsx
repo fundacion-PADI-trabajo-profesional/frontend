@@ -35,7 +35,7 @@ export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVe
         try {
             const escData = await getEscuelas();
 
-            let zonasData: any[] = [];
+            let zonasData: import("../../api/zonas").Zona[] = [];
             if (isEquipoPadi) {
                 zonasData = await getZonas();
             }
@@ -44,7 +44,7 @@ export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVe
 
             if (zonaIdParam) {
                 filtered = escData.filter(e => e.zona?.id === zonaIdParam);
-                const zona = zonasData.find((z: any) => z.id === zonaIdParam);
+                const zona = zonasData.find((z) => z.id === zonaIdParam);
                 setZonaNombre(zona?.nombre || "Zona desconocida");
             } else if (!isEquipoPadi && escData.length > 0) {
                 setZonaNombre(escData[0].zona?.nombre || "Mi Zona");
@@ -61,7 +61,10 @@ export default function EscuelasView({ zonaIdParam, isEquipoPadi, onVolver, onVe
         }
     };
 
-    useEffect(() => { fetchData(); }, [zonaIdParam]);
+    useEffect(() => {
+        fetchData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [zonaIdParam]);
 
     const escuelasFiltradas = useMemo(() => {
         return escuelas.filter(escuela =>

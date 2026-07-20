@@ -20,8 +20,8 @@ export default function ZonaForm({ onSubmit, onCancel, loading, initialValue }: 
         }
         try {
             await onSubmit({ nombre });
-        } catch (err: any) {
-            setError(err.message || "Error al crear la zona");
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Error al crear la zona");
         }
     };
 

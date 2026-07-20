@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
     Box,
     TextField,
@@ -14,7 +14,9 @@ import {
     FormHelperText,
     IconButton,
 } from "@mui/material"
+import { type SelectChangeEvent } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
+import LocationOnIcon from "@mui/icons-material/LocationOn"
 import {
     createEstudiante,
     updateEstudiante, // Asegúrate de tener esta función en tu api/estudiantes.ts
@@ -30,7 +32,7 @@ import { filtrarAulasParaEstudiante } from "../../utils/docentes-aulas";
 
 interface EstudianteFormProps {
     onCancel: () => void
-    onSuccess: (estudiante: any) => void
+    onSuccess: (estudiante: Estudiante | import("../../api/estudiantes").EstudianteCreado) => void
     estudianteAEditar?: Estudiante | null // Prop para detectar si estamos editando
     aulaContext?: {
         aula_id: string
@@ -52,6 +54,7 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
     const [escuelas, setEscuelas] = useState<Escuela[]>([])
 
     const [aulasDisponibles, setAulasDisponibles] = useState<Aula[]>([]);
+    const originalEscuelaId = useRef<string>("");
 
     const [formData, setFormData] = useState({
         dni: "",
@@ -117,6 +120,7 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
                     }
 
                     // MODO EDICIÓN
+                    originalEscuelaId.current = estudianteAEditar.escuela.escuela_id || "";
                     setFormData({
                         dni: estudianteAEditar.personas.dni || "",
                         nombre: estudianteAEditar.personas.nombre || "",
@@ -143,7 +147,7 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
                         escuela_id: user.escuela_id // Institución automática
                     }))
                 }
-            } catch (err: any) {
+            } catch {
                 setError("Error al cargar los datos necesarios.")
             } finally {
                 setLoading(false)
@@ -158,8 +162,13 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
                 try {
                     const data = await getAulasPorEscuela(formData.escuela_id);
                     setAulasDisponibles(data);
-                    // Si el aula seleccionada previamente no pertenece a la nueva escuela, la limpiamos
-                    setFormData(prev => ({ ...prev, aula_id: estudianteAEditar?.aula_asignada?.id || "" }));
+                    const aulaOriginal = estudianteAEditar?.aula_asignada?.id || "";
+                    const isOriginalSchool = formData.escuela_id === originalEscuelaId.current;
+                    const aulaEnEscuela = data.some(a => a.id === aulaOriginal);
+                    setFormData(prev => ({
+                        ...prev,
+                        aula_id: (isOriginalSchool && aulaEnEscuela) ? aulaOriginal : "",
+                    }));
                 } catch (err) {
                     console.error("Error cargando aulas:", err);
                 }
@@ -172,6 +181,7 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
         if (!aulaContext) {
             fetchAulas();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formData.escuela_id, aulaContext]);
 
     const validate = () => {
@@ -179,7 +189,6 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
         if (!formData.dni) newErrors.dni = "El DNI es obligatorio"
         if (!formData.nombre) newErrors.nombre = "El nombre es obligatorio"
         if (!formData.apellido) newErrors.apellido = "El apellido es obligatorio"
-        //if (!formData.fecha_nacimiento) newErrors.fecha_nacimiento = "La fecha de nacimiento es obligatoria"
         if (!formData.genero_id) newErrors.genero_id = "Seleccione un género"
         if (!formData.sala_id) newErrors.sala_id = "Seleccione una sala"
         if (!formData.escuela_id) newErrors.escuela_id = "Seleccione una institución"
@@ -188,8 +197,9 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
         return Object.keys(newErrors).length === 0
     }
 
-    const handleChange = (e: any) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent) => {
         const { name, value } = e.target
+        if (!name) return
         setFormData((prev) => ({ ...prev, [name]: value }))
         if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }))
     }
@@ -219,8 +229,8 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
                 })
                 onSuccess(nuevo)
             }
-        } catch (err: any) {
-            setError(err.message || "Error al procesar la solicitud")
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Error al procesar la solicitud")
         } finally {
             setLoading(false)
         }
@@ -341,8 +351,8 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
                 ) : (
                     /* VISTA DOCENTE */
                     <Grid item xs={12}>
-                        <Typography variant="body2" sx={{ color: 'text.secondary', bgcolor: '#f8f9fa', p: 2, borderRadius: 2, border: '1px dashed #dee2e6' }}>
-                            📍 Institución y Aula configuradas automáticamente.
+                        <Typography variant="body2" sx={{ color: 'text.secondary', bgcolor: '#f8f9fa', p: 2, borderRadius: 2, border: '1px dashed #dee2e6', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <LocationOnIcon sx={{ fontSize: '1rem' }} /> Institución y Aula configuradas automáticamente.
                         </Typography>
                     </Grid>
                 )}

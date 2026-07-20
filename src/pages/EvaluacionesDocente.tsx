@@ -26,8 +26,8 @@ export default function EvaluacionesDocente() {
         setError(null)
         const data = await getEvaluacionesInstanciasByProfesor(profesorId, { limit: 50 })
         setItems(data)
-      } catch (e: any) {
-        setError(e.message || "Error al cargar evaluaciones")
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : "Error al cargar evaluaciones")
       } finally {
         setLoading(false)
       }

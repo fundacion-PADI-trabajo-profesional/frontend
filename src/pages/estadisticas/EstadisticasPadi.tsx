@@ -12,6 +12,7 @@ import {
   Tab,
   Tabs,
 } from "@mui/material";
+import DownloadIcon from "@mui/icons-material/Download";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import PageHeader from "../../components/common/PageHeader";
@@ -26,6 +27,7 @@ import {
   getAreasCriticasPadi,
   getCoberturaPorZona,
   getRendimientoPorNivelSocioeconomico,
+  getExportEvaluaciones,
 } from "../../api/estadisticas";
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -36,6 +38,35 @@ export default function EstadisticasPadi() {
   const [tab, setTab] = useState(0);
   const [periodo, setPeriodo] = useState(CURRENT_YEAR);
   const [tipo, setTipo] = useState("inicial");
+  const [exportando, setExportando] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  async function handleExportarExcel() {
+    setExportando(true);
+    setExportError(null);
+    try {
+      const data = await getExportEvaluaciones({ periodo });
+      // Import lazy: ExcelJS y el builder no entran al bundle inicial
+      const { buildWorkbookEvaluaciones } = await import("../../utils/exportExcelEvaluaciones");
+      const wb = await buildWorkbookEvaluaciones(data);
+      const buffer = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `PADI-Evaluaciones-${periodo}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setExportError((e as Error).message);
+    } finally {
+      setExportando(false);
+    }
+  }
 
   const heatmapQuery = useQuery({
     queryKey: ["estadisticas-padi-heatmap", periodo, tipo],
@@ -96,6 +127,15 @@ export default function EstadisticasPadi() {
         )}
 
         <Box sx={{ ml: "auto", display: "flex", gap: 1 }}>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={exportando ? <CircularProgress size={16} /> : <DownloadIcon />}
+            disabled={exportando}
+            onClick={handleExportarExcel}
+          >
+            Exportar Excel
+          </Button>
           <Button size="small" variant="outlined" onClick={() => navigate("/estadisticas/escuela")}>
             Ver por escuela →
           </Button>
@@ -104,6 +144,12 @@ export default function EstadisticasPadi() {
           </Button>
         </Box>
       </Box>
+
+      {exportError && (
+        <Alert severity="error" onClose={() => setExportError(null)} sx={{ mb: 2 }}>
+          {exportError}
+        </Alert>
+      )}
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
         <Tab label="Rendimiento" />

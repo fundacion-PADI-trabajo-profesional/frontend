@@ -54,11 +54,12 @@ describe("colLetter / computeLayout", () => {
   });
 
   it("computa el layout para 2 áreas", () => {
-    // 11 base + 2 áreas × 4 = 19 visibles (S); ocultas: T bucket, U/V símbolos, W/X/Y flags+rank
+    // 11 base + 2 áreas × 3 = 17 visibles (Q); ocultas: R bucket, S/T símbolos, U/V detalles, W/X/Y flags+rank
     const ly = computeLayout(2, 3);
-    expect(ly.lastVisibleCol).toBe("S");
-    expect(ly.bucketCol).toBe("T");
-    expect(ly.simboloCols).toEqual(["U", "V"]);
+    expect(ly.lastVisibleCol).toBe("Q");
+    expect(ly.bucketCol).toBe("R");
+    expect(ly.simboloCols).toEqual(["S", "T"]);
+    expect(ly.detalleCols).toEqual(["U", "V"]);
     expect(ly.flagBaseCol).toBe("W");
     expect(ly.flagFullCol).toBe("X");
     expect(ly.rankCol).toBe("Y");
@@ -67,8 +68,9 @@ describe("colLetter / computeLayout", () => {
 
   it("computa el layout para 4 áreas (letras del spec)", () => {
     const ly = computeLayout(4, 10);
-    expect(ly.lastVisibleCol).toBe("AA");
-    expect(ly.bucketCol).toBe("AB");
+    expect(ly.lastVisibleCol).toBe("W");
+    expect(ly.bucketCol).toBe("X");
+    expect(ly.detalleCols).toEqual(["AC", "AD", "AE", "AF"]);
     expect(ly.flagBaseCol).toBe("AG");
     expect(ly.rankCol).toBe("AI");
   });
@@ -109,8 +111,10 @@ describe("buildWorkbookEvaluaciones — hoja Datos", () => {
     expect(headers[11]).toBe("Motricidad — Pautas");
     expect(headers[12]).toBe("Motricidad — Mín");
     expect(headers[13]).toBe("Motricidad — Estado");
-    expect(headers[14]).toBe("Motricidad — Obs.");
-    expect(headers[15]).toBe("Lenguaje — Pautas");
+    expect(headers[14]).toBe("Lenguaje — Pautas");
+    expect(headers[17]).toBe("Bucket");
+    expect(headers[18]).toBe("Símbolo Motricidad");
+    expect(ws.getCell("U1").value).toBe("Detalle Motricidad");
   });
 
   it("escribe la fila con etiquetas, pautas y estáticos ocultos", async () => {
@@ -128,15 +132,17 @@ describe("buildWorkbookEvaluaciones — hoja Datos", () => {
     expect(ws.getCell("L2").value).toBe("8/10"); // MOT pautas
     expect(ws.getCell("M2").value).toBe(7);      // MOT mín
     expect(ws.getCell("N2").value).toBe("Aprobada");
-    expect(ws.getCell("P2").value).toBe("4/8");  // LEN pautas
-    expect(ws.getCell("S2").value).toBe("obs");  // LEN obs
-    expect(ws.getCell("T2").value).toBe("1 área"); // bucket estático (etiqueta no numérica)
-    expect(ws.getCell("U2").value).toBe("✔");    // símbolo MOT
-    expect(ws.getCell("V2").value).toBe("✘");    // símbolo LEN
+    expect(ws.getCell("O2").value).toBe("4/8");  // LEN pautas
+    expect(ws.getCell("P2").value).toBe(5);      // LEN mín
+    expect(ws.getCell("R2").value).toBe("1 área"); // bucket estático (etiqueta no numérica)
+    expect(ws.getCell("S2").value).toBe("✔");    // símbolo MOT
+    expect(ws.getCell("T2").value).toBe("✘");    // símbolo LEN
+    expect(ws.getCell("U2").value).toBe("8/10 - 7"); // detalle MOT
+    expect(ws.getCell("V2").value).toBe("4/8 - 5");  // detalle LEN
     // Assertion 2: Estado fill (green for Aprobada)
     expect(ws.getCell("I2").fill).toMatchObject({ type: "pattern", pattern: "solid", fgColor: { argb: "FFC6EFCE" } });
-    // Assertion 3a: Per-área Desaprobada fill (red for LEN with estado "D", Estado cell is R2)
-    expect(ws.getCell("R2").fill).toMatchObject({ type: "pattern", pattern: "solid", fgColor: { argb: "FFFFC7CE" } });
+    // Assertion 3a: Per-área Desaprobada fill (red for LEN with estado "D", Estado cell is Q2)
+    expect(ws.getCell("Q2").fill).toMatchObject({ type: "pattern", pattern: "solid", fgColor: { argb: "FFFFC7CE" } });
     // Assertion 3b: numFmt for date column
     expect(ws.getColumn(10).numFmt).toBe("dd/mm/yyyy");
   });
@@ -152,8 +158,9 @@ describe("buildWorkbookEvaluaciones — hoja Datos", () => {
     expect(ws.getCell("J2").value).toBe("");
     expect(ws.getCell("K2").value).toBe("");
     expect(ws.getCell("L2").value).toBe("");
-    expect(ws.getCell("T2").value).toBe("Sin evaluar");
-    expect(ws.getCell("U2").value).toBe("");
+    expect(ws.getCell("R2").value).toBe("Sin evaluar");
+    expect(ws.getCell("S2").value).toBe("");
+    expect(ws.getCell("U2").value).toBe(""); // detalle vacío sin datos de área
   });
 
   it("pautas sin total muestra solo las aprobadas", async () => {
@@ -167,7 +174,9 @@ describe("buildWorkbookEvaluaciones — hoja Datos", () => {
     const ws = wb.getWorksheet("Datos")!;
     expect(ws.getCell("L2").value).toBe("8");
     expect(ws.getCell("M2").value).toBe("");
-    expect(ws.getCell("P2").value).toBe("");
+    expect(ws.getCell("O2").value).toBe("");
+    expect(ws.getCell("U2").value).toBe("8");  // detalle sin regla: sin sufijo "- N"
+    expect(ws.getCell("V2").value).toBe("");   // detalle sin datos
   });
 
   it("escribe las fórmulas ocultas flag_base, flag_full y rank", async () => {
@@ -180,18 +189,18 @@ describe("buildWorkbookEvaluaciones — hoja Datos", () => {
     expect(flagBase).toContain('OR(Control!$B$3="Todas",$B2=Control!$B$3)');
     expect(flagBase).toContain("$H2=Control!$B$6");
     expect(flagFull).toContain("$W3=1");
-    expect(flagFull).toContain('OR(Control!$B$7="Todas",$T3=Control!$B$7)');
+    expect(flagFull).toContain('OR(Control!$B$7="Todas",$R3=Control!$B$7)');
     expect(rank).toBe('IF($X3=1,SUM($X$2:$X3),"")');
   });
 
   it("oculta las columnas auxiliares y limita el autofilter a las visibles", async () => {
     const wb = await buildWorkbookEvaluaciones(mkData([mkFila()]));
     const ws = wb.getWorksheet("Datos")!;
-    for (const col of ["T", "U", "V", "W", "X", "Y"]) {
+    for (const col of ["R", "S", "T", "U", "V", "W", "X", "Y"]) {
       expect(ws.getColumn(col).hidden, `columna ${col}`).toBe(true);
     }
-    expect(ws.getColumn("S").hidden ?? false).toBe(false);
-    expect(ws.autoFilter).toEqual({ from: "A1", to: "S2" });
+    expect(ws.getColumn("Q").hidden ?? false).toBe(false);
+    expect(ws.autoFilter).toEqual({ from: "A1", to: "Q2" });
   });
 });
 
@@ -251,11 +260,11 @@ describe("buildWorkbookEvaluaciones — hoja Control", () => {
     // 2 áreas → D4="2 áreas aprobadas" .. D6="0 áreas aprobadas", D7 En progreso, D8 Sin evaluar
     expect(ws.getCell("D4").value).toBe("2 áreas aprobadas");
     expect((ws.getCell("E4").value as any).formula).toBe(
-      'SUMPRODUCT(Datos!$W$2:$W$2*(Datos!$T$2:$T$2="2 áreas"))'
+      'SUMPRODUCT(Datos!$W$2:$W$2*(Datos!$R$2:$R$2="2 áreas"))'
     );
     expect(ws.getCell("D7").value).toBe("En progreso");
     expect((ws.getCell("E8").value as any).formula).toBe(
-      'SUMPRODUCT(Datos!$W$2:$W$2*(Datos!$T$2:$T$2="Sin evaluar"))'
+      'SUMPRODUCT(Datos!$W$2:$W$2*(Datos!$R$2:$R$2="Sin evaluar"))'
     );
   });
 
@@ -277,7 +286,7 @@ describe("buildWorkbookEvaluaciones — hoja Control", () => {
       'IFERROR(INDEX(Datos!$B$2:$B$3,MATCH(ROW()-12,Datos!$Y$2:$Y$3,0))&"","")'
     );
     expect(alumno).toContain('&", "&');
-    expect(simbolo).toContain("Datos!$U$2:$U$3");
+    expect(simbolo).toContain("Datos!$S$2:$S$3");
     expect(aprob).toContain("Datos!$K$2:$K$3");
     expect(aprob).toContain('&"","")');
 

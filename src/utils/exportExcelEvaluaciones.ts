@@ -40,6 +40,7 @@ export interface Layout {
   lastDataRow: number;
   bucketCol: string;
   simboloCols: string[];
+  detalleCols: string[];
   flagBaseCol: string;
   flagFullCol: string;
   rankCol: string;
@@ -47,14 +48,15 @@ export interface Layout {
 }
 
 export function computeLayout(numAreas: number, numFilas: number): Layout {
-  const lastVisible = BASE_COLS + 4 * numAreas;
+  const lastVisible = BASE_COLS + 3 * numAreas;
   const bucket = lastVisible + 1;
-  const flagBase = bucket + 1 + numAreas;
+  const flagBase = bucket + 1 + 2 * numAreas;
   return {
     numAreas,
     lastDataRow: Math.max(2, numFilas + 1),
     bucketCol: colLetter(bucket),
     simboloCols: Array.from({ length: numAreas }, (_, i) => colLetter(bucket + 1 + i)),
+    detalleCols: Array.from({ length: numAreas }, (_, i) => colLetter(bucket + 1 + numAreas + i)),
     flagBaseCol: colLetter(flagBase),
     flagFullCol: colLetter(flagBase + 1),
     rankCol: colLetter(flagBase + 2),
@@ -94,6 +96,17 @@ function pautasTexto(aprobadas: number | null, total: number | null): string {
   return total === null ? String(aprobadas) : `${aprobadas}/${total}`;
 }
 
+/** Texto de la celda de área de la lista del Control: `"4/7 - 5"` (pautas - umbral). */
+function detalleArea(
+  aprobadas: number | null,
+  total: number | null,
+  apruebaCon: number | null
+): string {
+  const pautas = pautasTexto(aprobadas, total);
+  if (pautas === "") return "";
+  return apruebaCon === null ? pautas : `${pautas} - ${apruebaCon}`;
+}
+
 // ─── Hoja Datos ──────────────────────────────────────────────────────────────
 
 function fillDatos(ws: Worksheet, data: ExportEvaluacionesData, ly: Layout) {
@@ -104,10 +117,10 @@ function fillDatos(ws: Worksheet, data: ExportEvaluacionesData, ly: Layout) {
       `${a.nombre} — Pautas`,
       `${a.nombre} — Mín`,
       `${a.nombre} — Estado`,
-      `${a.nombre} — Obs.`,
     ]),
     "Bucket",
     ...data.areas.map((a) => `Símbolo ${a.nombre}`),
+    ...data.areas.map((a) => `Detalle ${a.nombre}`),
     "flag_base",
     "flag_full",
     "rank",
@@ -125,7 +138,6 @@ function fillDatos(ws: Worksheet, data: ExportEvaluacionesData, ly: Layout) {
         pautasTexto(ea?.aprobadas ?? null, ea?.total ?? null),
         ea?.aprueba_con ?? "",
         ea?.estado ? ESTADO_LABEL[ea.estado] ?? ea.estado : "",
-        ea?.observacion ?? "",
       ];
     });
 
@@ -147,6 +159,10 @@ function fillDatos(ws: Worksheet, data: ExportEvaluacionesData, ly: Layout) {
         const ea = porArea.get(a.id);
         return ea?.estado ? SIMBOLO[ea.estado] ?? "" : "";
       }),
+      ...data.areas.map((a) => {
+        const ea = porArea.get(a.id);
+        return detalleArea(ea?.aprobadas ?? null, ea?.total ?? null, ea?.aprueba_con ?? null);
+      }),
     ]);
 
     // Fills estáticos en los estados
@@ -154,7 +170,7 @@ function fillDatos(ws: Worksheet, data: ExportEvaluacionesData, ly: Layout) {
     else if (f.estado === "D") row.getCell(9).fill = FILL_ROJO;
     data.areas.forEach((a, j) => {
       const ea = porArea.get(a.id);
-      const cell = row.getCell(14 + j * 4); // columna "Estado" del área j
+      const cell = row.getCell(14 + j * 3); // columna "Estado" del área j
       if (ea?.estado === "A") cell.fill = FILL_VERDE;
       else if (ea?.estado === "D") cell.fill = FILL_ROJO;
     });
@@ -182,16 +198,13 @@ function fillDatos(ws: Worksheet, data: ExportEvaluacionesData, ly: Layout) {
     ws.getColumn(i + 1).width = w;
   });
   data.areas.forEach((_, j) => {
-    ws.getColumn(12 + j * 4).width = 10;
-    ws.getColumn(13 + j * 4).width = 7;
-    ws.getColumn(14 + j * 4).width = 13;
-    const obs = ws.getColumn(15 + j * 4);
-    obs.width = 40;
-    obs.alignment = { wrapText: true };
+    ws.getColumn(12 + j * 3).width = 10;
+    ws.getColumn(13 + j * 3).width = 7;
+    ws.getColumn(14 + j * 3).width = 13;
   });
 
-  const bucketNum = BASE_COLS + 4 * ly.numAreas + 1;
-  const rankNum = bucketNum + ly.numAreas + 3;
+  const bucketNum = BASE_COLS + 3 * ly.numAreas + 1;
+  const rankNum = bucketNum + 2 * ly.numAreas + 3;
   for (let c = bucketNum; c <= rankNum; c++) ws.getColumn(c).hidden = true;
 
   // AutoFilter solo sobre las columnas visibles

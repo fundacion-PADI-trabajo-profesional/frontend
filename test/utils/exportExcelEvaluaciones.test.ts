@@ -80,8 +80,11 @@ describe("colLetter / computeLayout", () => {
 
 describe("bucketDeFila", () => {
   it("usa areas_aprobadas cuando la evaluación está terminada", () => {
-    expect(bucketDeFila(mkFila({ areas_aprobadas: 0, estado: "D" }))).toBe("0");
-    expect(bucketDeFila(mkFila({ areas_aprobadas: 2 }))).toBe("2");
+    expect(bucketDeFila(mkFila({ areas_aprobadas: 0, estado: "D" }))).toBe("0 áreas");
+    expect(bucketDeFila(mkFila({ areas_aprobadas: 2 }))).toBe("2 áreas");
+  });
+  it("usa singular para 1 área", () => {
+    expect(bucketDeFila(mkFila({ areas_aprobadas: 1 }))).toBe("1 área");
   });
   it("distingue en progreso de sin evaluar", () => {
     expect(bucketDeFila(mkFila({ areas_aprobadas: null, estado: "E" }))).toBe("En progreso");
@@ -127,7 +130,7 @@ describe("buildWorkbookEvaluaciones — hoja Datos", () => {
     expect(ws.getCell("N2").value).toBe("Aprobada");
     expect(ws.getCell("P2").value).toBe("4/8");  // LEN pautas
     expect(ws.getCell("S2").value).toBe("obs");  // LEN obs
-    expect(ws.getCell("T2").value).toBe("1");    // bucket estático (texto)
+    expect(ws.getCell("T2").value).toBe("1 área"); // bucket estático (etiqueta no numérica)
     expect(ws.getCell("U2").value).toBe("✔");    // símbolo MOT
     expect(ws.getCell("V2").value).toBe("✘");    // símbolo LEN
     // Assertion 2: Estado fill (green for Aprobada)
@@ -221,7 +224,7 @@ describe("buildWorkbookEvaluaciones — hoja Control", () => {
     expect((ws.getCell("B7").dataValidation as any).formulae[0]).toMatch(/^\$P\$2:\$P\$\d+$/);
   });
 
-  it("escribe las listas de opciones en columnas ocultas (buckets como texto)", async () => {
+  it("escribe las listas de opciones en columnas ocultas (buckets como etiquetas no numéricas)", async () => {
     const wb = await buildWorkbookEvaluaciones(mkData([mkFila(), mkFila({ escuela: "Otra" })]));
     const ws = wb.getWorksheet("Control")!;
 
@@ -230,10 +233,10 @@ describe("buildWorkbookEvaluaciones — hoja Control", () => {
     expect(ws.getCell("L4").value).toBe("Otra");
     expect(ws.getCell("O2").value).toBe("Inicial");
     expect(ws.getCell("O3").value).toBe("Cierre");
-    // 2 áreas → Todas, 2, 1, 0, En progreso, Sin evaluar
+    // 2 áreas → Todas, 2 áreas, 1 área, 0 áreas, En progreso, Sin evaluar
     expect(
       ["P2", "P3", "P4", "P5", "P6", "P7"].map((c) => ws.getCell(c).value)
-    ).toEqual(["Todas", "2", "1", "0", "En progreso", "Sin evaluar"]);
+    ).toEqual(["Todas", "2 áreas", "1 área", "0 áreas", "En progreso", "Sin evaluar"]);
     for (const col of ["L", "M", "N", "O", "P"]) {
       expect(ws.getColumn(col).hidden, `columna ${col}`).toBe(true);
     }
@@ -248,7 +251,7 @@ describe("buildWorkbookEvaluaciones — hoja Control", () => {
     // 2 áreas → D4="2 áreas aprobadas" .. D6="0 áreas aprobadas", D7 En progreso, D8 Sin evaluar
     expect(ws.getCell("D4").value).toBe("2 áreas aprobadas");
     expect((ws.getCell("E4").value as any).formula).toBe(
-      'SUMPRODUCT(Datos!$W$2:$W$2*(Datos!$T$2:$T$2="2"))'
+      'SUMPRODUCT(Datos!$W$2:$W$2*(Datos!$T$2:$T$2="2 áreas"))'
     );
     expect(ws.getCell("D7").value).toBe("En progreso");
     expect((ws.getCell("E8").value as any).formula).toBe(

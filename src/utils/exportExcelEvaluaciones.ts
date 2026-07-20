@@ -62,9 +62,18 @@ export function computeLayout(numAreas: number, numFilas: number): Layout {
   };
 }
 
+/**
+ * Etiqueta de bucket para k áreas aprobadas: "0 áreas", "1 área", "4 áreas".
+ * Nunca debe parecer un número: al elegir "4" en el dropdown, Sheets/LibreOffice
+ * convierten la entrada a número y deja de matchear la columna Bucket (texto).
+ */
+function bucketLabel(k: number): string {
+  return `${k} ${k === 1 ? "área" : "áreas"}`;
+}
+
 /** Bucket estático de la fila para los contadores del Control. */
 export function bucketDeFila(f: FilaExport): string {
-  if (f.areas_aprobadas !== null) return String(f.areas_aprobadas);
+  if (f.areas_aprobadas !== null) return bucketLabel(f.areas_aprobadas);
   if (f.estado === "E") return "En progreso";
   return "Sin evaluar";
 }
@@ -259,7 +268,7 @@ function fillControl(ws: Worksheet, data: ExportEvaluacionesData, ly: Layout) {
   const tipos = ["Inicial", "Cierre"];
   const buckets = [
     "Todas",
-    ...Array.from({ length: ly.numAreas + 1 }, (_, i) => String(ly.numAreas - i)),
+    ...Array.from({ length: ly.numAreas + 1 }, (_, i) => bucketLabel(ly.numAreas - i)),
     "En progreso",
     "Sin evaluar",
   ];
@@ -310,7 +319,7 @@ function fillControl(ws: Worksheet, data: ExportEvaluacionesData, ly: Layout) {
       const k = ly.numAreas - i;
       return [
         `${k} área${k === 1 ? "" : "s"} aprobada${k === 1 ? "" : "s"}`,
-        `SUMPRODUCT(${fBase}*(${bRange}="${k}"))`,
+        `SUMPRODUCT(${fBase}*(${bRange}="${bucketLabel(k)}"))`,
       ] as [string, string];
     }),
     ["En progreso", `SUMPRODUCT(${fBase}*(${bRange}="En progreso"))`],

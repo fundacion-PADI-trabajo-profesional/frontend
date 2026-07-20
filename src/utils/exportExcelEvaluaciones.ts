@@ -256,9 +256,9 @@ export async function buildWorkbookEvaluaciones(data: ExportEvaluacionesData): P
 /**
  * Hoja Control: 5 dropdowns (B3..B7), contadores (D3:E…) y lista extraída con
  * INDEX/MATCH sobre la columna rank de Datos. Las listas de opciones viven en
- * columnas ocultas L..P de esta misma hoja (sin named ranges ni INDIRECT).
- * Nota: L..P asume hasta 6 áreas (la lista visible llega hasta la columna
- * 5 + numAreas); con más áreas habría que desplazar las listas.
+ * columnas ocultas L..P de esta misma hoja (sin named ranges ni INDIRECT), y los
+ * helpers de color del CF en Q.. (uno por área). Con 6 áreas: lista visible hasta K,
+ * listas L..P, helpers Q..V — sin colisión; con 7+, la lista visible pisaría L.
  */
 function fillControl(ws: Worksheet, data: ExportEvaluacionesData, ly: Layout) {
   if (ly.numAreas > 6) {
@@ -363,47 +363,59 @@ function fillControl(ws: Worksheet, data: ExportEvaluacionesData, ly: Layout) {
   const m = (col: string) =>
     `INDEX(Datos!$${col}$2:$${col}$${N1},MATCH(ROW()-12,Datos!$${ly.rankCol}$2:$${ly.rankCol}$${N1},0))`;
 
+  const HELPER_COL = 17; // Q — helpers de color, a la derecha de las listas L..P
+
   for (let i = 0; i < data.filas.length; i++) {
     const r = 13 + i;
     const formulas = [
       `IFERROR(${m("B")}&"","")`,
       `IFERROR(${m("D")}&"","")`,
       `IFERROR(${m("E")}&", "&${m("F")},"")`,
-      ...ly.simboloCols.map((sc) => `IFERROR(${m(sc)}&"","")`),
+      ...ly.detalleCols.map((dc) => `IFERROR(${m(dc)}&"","")`),
       `IFERROR(${m("K")}&"","")`,
       `IFERROR(${m("I")}&"","")`,
     ];
     formulas.forEach((formula, j) => {
       ws.getCell(r, j + 1).value = { formula };
     });
+    // Helpers de color: el símbolo ✔/✘ del área alimenta el CF de la celda visible
+    ly.simboloCols.forEach((sc, j) => {
+      ws.getCell(r, HELPER_COL + j).value = { formula: `IFERROR(${m(sc)}&"","")` };
+    });
   }
+  data.areas.forEach((_, j) => {
+    ws.getColumn(HELPER_COL + j).hidden = true;
+  });
 
-  // ── Formato condicional sobre los símbolos ──
+  // ── Formato condicional: verde/rojo según el símbolo oculto del área ──
   if (data.filas.length > 0) {
-    ws.addConditionalFormatting({
-      ref: `D13:${colLetter(3 + ly.numAreas)}${12 + data.filas.length}`,
-      rules: [
-        {
-          type: "cellIs",
-          operator: "equal",
-          formulae: ['"✔"'],
-          priority: 1,
-          style: {
-            font: { color: { argb: "FF006100" } },
-            fill: { type: "pattern", pattern: "solid", bgColor: { argb: "FFC6EFCE" } },
+    const lastListRow = 12 + data.filas.length;
+    data.areas.forEach((_, j) => {
+      const colVisible = colLetter(4 + j);
+      const colHelper = colLetter(HELPER_COL + j);
+      ws.addConditionalFormatting({
+        ref: `${colVisible}13:${colVisible}${lastListRow}`,
+        rules: [
+          {
+            type: "expression",
+            formulae: [`$${colHelper}13="✔"`],
+            priority: 2 * j + 1,
+            style: {
+              font: { color: { argb: "FF006100" } },
+              fill: { type: "pattern", pattern: "solid", bgColor: { argb: "FFC6EFCE" } },
+            },
           },
-        },
-        {
-          type: "cellIs",
-          operator: "equal",
-          formulae: ['"✘"'],
-          priority: 2,
-          style: {
-            font: { color: { argb: "FF9C0006" } },
-            fill: { type: "pattern", pattern: "solid", bgColor: { argb: "FFFFC7CE" } },
+          {
+            type: "expression",
+            formulae: [`$${colHelper}13="✘"`],
+            priority: 2 * j + 2,
+            style: {
+              font: { color: { argb: "FF9C0006" } },
+              fill: { type: "pattern", pattern: "solid", bgColor: { argb: "FFFFC7CE" } },
+            },
           },
-        },
-      ],
+        ],
+      });
     });
   }
 

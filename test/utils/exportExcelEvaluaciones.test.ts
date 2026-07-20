@@ -278,29 +278,49 @@ describe("buildWorkbookEvaluaciones — hoja Control", () => {
 
     const escuela = (ws.getCell("A13").value as any).formula as string;
     const alumno = (ws.getCell("C13").value as any).formula as string;
-    const simbolo = (ws.getCell("D13").value as any).formula as string;
+    const detalle = (ws.getCell("D13").value as any).formula as string;
     const aprob = (ws.getCell("F13").value as any).formula as string;
+    const helperMot = (ws.getCell("Q13").value as any).formula as string;
+    const helperLen = (ws.getCell("R13").value as any).formula as string;
 
     // extracción clásica INDEX/MATCH sobre rank, con coerción &"" contra el 0 de celdas vacías
     expect(escuela).toBe(
       'IFERROR(INDEX(Datos!$B$2:$B$3,MATCH(ROW()-12,Datos!$Y$2:$Y$3,0))&"","")'
     );
     expect(alumno).toContain('&", "&');
-    expect(simbolo).toContain("Datos!$S$2:$S$3");
+    expect(detalle).toContain("Datos!$U$2:$U$3"); // U = Detalle MOT en Datos
     expect(aprob).toContain("Datos!$K$2:$K$3");
     expect(aprob).toContain('&"","")');
+
+    // helpers de color ocultos: símbolo del área para el CF (S/T = Símbolo MOT/LEN en Datos)
+    expect(helperMot).toContain("Datos!$S$2:$S$3");
+    expect(helperLen).toContain("Datos!$T$2:$T$3");
+    expect(ws.getColumn("Q").hidden, "columna Q").toBe(true);
+    expect(ws.getColumn("R").hidden, "columna R").toBe(true);
 
     // una fila de fórmula por fila de datos
     expect((ws.getCell("A14").value as any).formula).toBeTruthy();
     expect(ws.getCell("A15").value).toBeNull();
   });
 
-  it("agrega formato condicional para los símbolos", async () => {
+  it("agrega formato condicional expression verde/rojo por columna de área", async () => {
     const wb = await buildWorkbookEvaluaciones(mkData([mkFila()]));
     const ws = wb.getWorksheet("Control")!;
-    // ExcelJS expone las reglas registradas vía el modelo interno
-    const cf = (ws as any).conditionalFormattings ?? (ws.model as any).conditionalFormattings;
-    expect(cf?.length).toBeGreaterThan(0);
+    const cf = ((ws as any).conditionalFormattings ??
+      (ws.model as any).conditionalFormattings) as any[];
+    // 2 áreas → un bloque por área (D y E), 2 reglas cada uno
+    expect(cf.length).toBe(2);
+    const bloqueD = cf.find((b) => String(b.ref).startsWith("D13"));
+    const bloqueE = cf.find((b) => String(b.ref).startsWith("E13"));
+    expect(bloqueD.ref).toBe("D13:D13");
+    expect(bloqueE.ref).toBe("E13:E13");
+    const [verde, rojo] = bloqueD.rules;
+    expect(verde.type).toBe("expression");
+    expect(verde.formulae).toEqual(['$Q13="✔"']);
+    expect(verde.style.font.color.argb).toBe("FF006100");
+    expect(rojo.formulae).toEqual(['$Q13="✘"']);
+    expect(rojo.style.fill.bgColor.argb).toBe("FFFFC7CE");
+    expect(bloqueE.rules[0].formulae).toEqual(['$R13="✔"']);
   });
 
   it("dataset vacío: sin filas de lista y contadores sobre el rango mínimo", async () => {
@@ -308,6 +328,10 @@ describe("buildWorkbookEvaluaciones — hoja Control", () => {
     const ws = wb.getWorksheet("Control")!;
     expect((ws.getCell("E3").value as any).formula).toBe("SUM(Datos!$X$2:$X$2)");
     expect(ws.getCell("A13").value).toBeNull();
+    expect(ws.getCell("Q13").value).toBeNull();
+    const cf = ((ws as any).conditionalFormattings ??
+      (ws.model as any).conditionalFormattings) as any[] | undefined;
+    expect(cf ?? []).toHaveLength(0);
   });
 
   it("lanza error explícito con más de 6 áreas (colisión con columnas ocultas)", async () => {

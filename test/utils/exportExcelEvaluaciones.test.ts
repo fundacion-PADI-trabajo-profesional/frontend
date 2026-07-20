@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- los asserts acceden a
+   estructuras internas de ExcelJS (fórmulas, validaciones, CF) sin tipos públicos */
 import { describe, it, expect } from "vitest";
 import {
   buildWorkbookEvaluaciones,

@@ -18,10 +18,10 @@ function Celda({ e, areas }: { e: EstudianteResultado | null; areas: AreaCatalog
   if (!e) return <View style={{ flex: 1 }} />;
   const desaprobadas = areas.filter((a) => e.areas[a.id] === "D").map((a) => a.id);
   return (
-    <View style={{ flex: 1, flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", gap: u(0.6), borderBottomWidth: 0.8, borderBottomColor: C.lineaFila, paddingVertical: u(0.15), paddingHorizontal: u(0.2) }}>
-      <Text style={{ fontSize: u(0.9) }}>{e.nombre}</Text>
+    <View style={{ flex: 1, flexDirection: "row", alignItems: "flex-end", gap: u(0.6), borderBottomWidth: 0.8, borderBottomColor: C.lineaFila, paddingVertical: u(0.08), paddingHorizontal: u(0.2) }}>
+      <Text style={{ flexGrow: 1, flexShrink: 1, minWidth: 0, fontSize: u(0.9) }}>{e.nombre}</Text>
       {desaprobadas.length > 0 && (
-        <Text style={{ fontSize: u(0.82), color: C.secundario, textAlign: "right", maxWidth: "60%" }}>{textoAreas(desaprobadas, areas)}</Text>
+        <Text style={{ flexShrink: 0, maxWidth: "55%", fontSize: u(0.82), color: C.secundario, textAlign: "right" }}>{textoAreas(desaprobadas, areas)}</Text>
       )}
     </View>
   );
@@ -45,7 +45,7 @@ export function Nomina({ r, areas }: { r: ResultadoTipo; areas: AreaCatalogo[] }
         <View style={{ flex: 2.3 }}><Pildora texto="No pasaron la prueba" /></View>
       </View>
       {filas.map((f, i) => (
-        <View key={i} wrap={false} style={{ ...pad, flexDirection: "row", gap: u(1.4), paddingTop: u(0.1) }}>
+        <View key={i} wrap={false} style={{ ...pad, flexDirection: "row", gap: u(1.4), paddingTop: u(0.05) }}>
           <View style={{ flex: 0.75, flexDirection: "row" }}><Celda e={f.a} areas={areas} /></View>
           <View style={{ flex: 1.15, flexDirection: "row" }}><Celda e={f.n1} areas={areas} /></View>
           <View style={{ flex: 1.15, flexDirection: "row" }}><Celda e={f.n2} areas={areas} /></View>

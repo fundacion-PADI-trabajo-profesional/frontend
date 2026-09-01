@@ -14,7 +14,7 @@ export function PorArea({ r, areas }: { r: ResultadoTipo; areas: AreaCatalogo[] 
       {areas.map((a) => {
         const pa = r.por_area.find((p) => p.area_id === a.id);
         return (
-          <View key={a.id} style={{ flexDirection: "row", alignItems: "center", gap: u(0.9), marginBottom: u(0.7) }}>
+          <View key={a.id} style={{ flexDirection: "row", alignItems: "center", gap: u(0.9), marginBottom: u(0.55) }}>
             <IconoArea area={a} size={u(1.6)} />
             <Text style={{ width: u(8.5), fontSize: u(0.95), fontWeight: 600 }}>{a.nombre}</Text>
             <Cuadricula estados={estadosArea(r, a.id)} layout={layoutCuadricula(r.evaluados, "area")} />

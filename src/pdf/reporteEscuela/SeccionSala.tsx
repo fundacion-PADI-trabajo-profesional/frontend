@@ -9,7 +9,7 @@ import { Pautas } from "./bloques/Pautas";
 import { subtituloModo, type Modo } from "../../utils/reporteEscuela";
 import type { ReporteEscuela, SalaReporte } from "../../api/reportes";
 
-const gap = () => <View style={{ height: u(1.2) }} />;
+const gap = () => <View style={{ height: u(0.9) }} />;
 
 /** Página(s) de una sala. `wrap`: los bloques son indivisibles y la nómina se corta entre filas (§6.3). */
 export function SeccionSala({ data, sala, modo, assets }: { data: ReporteEscuela; sala: SalaReporte; modo: Modo; assets: { logo: string } }) {

@@ -38,17 +38,20 @@ describe("ReporteEscuelaDocument — portada", () => {
 });
 
 describe("ReporteEscuelaDocument — documento completo", () => {
-  it("escuela de una sala de 24: portada + resumen + sala = 3", async () => {
-    expect(paginas(await render(REPORTE_24, "inicial"))).toBe(3);
+  // Nómina a dos renglones (v2-D, Ruling A): celdas más altas hacen que algunas nóminas ya no entren
+  // en 1 hoja. Se prioriza legibilidad sobre conteo de páginas — conteos re-verificados contra el motor
+  // de layout real (yoga), no estimados.
+  it("escuela de una sala de 24: portada + resumen + sala (2 hojas, nómina no entra en 1) = 4", async () => {
+    expect(paginas(await render(REPORTE_24, "inicial"))).toBe(4);
   });
   it("escuela de una sala de 44: portada + resumen + 2 = 4", async () => {
     expect(paginas(await render(REPORTE_44, "inicial"))).toBe(4);
   });
-  it("escuela de tres salas chicas: portada + resumen + 3 = 5", async () => {
-    expect(paginas(await render(REPORTE_ESCUELA, "inicial"))).toBe(5);
+  it("escuela de tres salas chicas: portada + resumen + 3 salas (2 se parten en 2 hojas) = 7", async () => {
+    expect(paginas(await render(REPORTE_ESCUELA, "inicial"))).toBe(7);
   });
-  it("una sola sala: sin resumen (portada + sala = 2)", async () => {
-    expect(paginas(await render(REPORTE_24, "inicial", 5))).toBe(2);
+  it("una sola sala: sin resumen (portada + sala en 2 hojas) = 3", async () => {
+    expect(paginas(await render(REPORTE_24, "inicial", 5))).toBe(3);
   });
   it("comparativo de 24: el bloque de pautas fluye a otra hoja si no entra", async () => {
     const n = paginas(await render(REPORTE_24, "comparativo"));

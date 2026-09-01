@@ -14,14 +14,15 @@ function Pildora({ texto, verde }: { texto: string; verde?: boolean }) {
   );
 }
 
+/** Nombre y áreas en renglones separados: nunca comparten línea, así no pueden pisarse (§7.6 / fix producción). */
 function Celda({ e, areas }: { e: EstudianteResultado | null; areas: AreaCatalogo[] }) {
   if (!e) return <View style={{ flex: 1 }} />;
   const desaprobadas = areas.filter((a) => e.areas[a.id] === "D").map((a) => a.id);
   return (
-    <View style={{ flex: 1, flexDirection: "row", alignItems: "flex-end", gap: u(0.6), borderBottomWidth: 0.8, borderBottomColor: C.lineaFila, paddingVertical: u(0.08), paddingHorizontal: u(0.2) }}>
-      <Text style={{ flexGrow: 1, flexShrink: 1, minWidth: 0, fontSize: u(0.9) }}>{e.nombre}</Text>
+    <View style={{ flex: 1, borderBottomWidth: 0.8, borderBottomColor: C.lineaFila, paddingVertical: u(0.2), paddingHorizontal: u(0.2), gap: u(0.15) }}>
+      <Text style={{ fontSize: u(0.9) }}>{e.nombre}</Text>
       {desaprobadas.length > 0 && (
-        <Text style={{ flexShrink: 0, maxWidth: "55%", fontSize: u(0.82), color: C.secundario, textAlign: "right" }}>{textoAreas(desaprobadas, areas)}</Text>
+        <Text style={{ fontSize: u(0.82), color: C.secundario }}>{textoAreas(desaprobadas, areas)}</Text>
       )}
     </View>
   );

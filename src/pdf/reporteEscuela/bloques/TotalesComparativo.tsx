@@ -3,13 +3,13 @@ import { C, u } from "../theme";
 import { Cuadricula } from "./Cuadricula";
 import { Leyenda } from "./Leyenda";
 import { Rotulo } from "./Rotulo";
-import { estadosComparativo, layoutCuadricula, textoResumenComparativo } from "../../../utils/reporteEscuela";
+import { estadosParComparativo, layoutCuadricula, textoResumenComparativo } from "../../../utils/reporteEscuela";
 import type { SalaReporte } from "../../../api/reportes";
 
-/** Totales del comparativo: par de cuadrículas con cada chico en la misma posición (§7.6). */
+/** Totales del comparativo: par de cuadrículas, cada una ordenada de corrido por estado (§7.6). */
 export function TotalesComparativo({ sala }: { sala: SalaReporte }) {
   const c = sala.comparativo!;
-  const par = estadosComparativo(sala)!;
+  const par = estadosParComparativo(c);
   const layout = layoutCuadricula(c.base, "sala", 24);
   const cap = (t: string, n: number) => (
     <Text style={{ fontSize: u(0.95), color: C.titulo, marginBottom: u(0.5) }}>

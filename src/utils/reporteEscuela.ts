@@ -56,7 +56,6 @@ export function estadosTira(k: number, n: number): EstadoCuadro[] {
  * Par inicial → cierre a nivel escuela o sala, sin desagregar por área (spec v2 §7.6): NO usa posiciones
  * estables por chico (eso mostraba quién recuperó, lo que expone datos sensibles) — arma dos tiras
  * ordenadas por estado: primero los verdes, después los azules, después los grises.
- * Reemplaza a `estadosComparativoResumen` (misma cuenta, mismo resultado; unificado bajo un solo nombre).
  */
 export function estadosParComparativo(
   c: Pick<Comparativo, "base" | "aprobaron_inicial" | "recuperaron" | "persisten" | "pendientes">
@@ -91,44 +90,9 @@ export function estadosParAreaComparativo(c: Comparativo, areaId: string): { ini
   };
 }
 
-// TODO(v2-C/D): eliminar alias — solo para que src/pdf/** (PaginaResumen.tsx) siga compilando hasta que se rewiree.
-export const estadosComparativoResumen = estadosParComparativo;
-
-/**
- * @deprecated posiciones estables por chico; reemplazado por `estadosParComparativo` / `estadosParAreaComparativo`.
- * TODO(v2-C/D): eliminar — solo para que src/pdf/** (TotalesComparativo.tsx, PorAreaComparativo.tsx) siga
- * compilando hasta que se rewiree para usar los helpers nuevos.
- */
-export function estadosComparativo(sala: SalaReporte, areaId?: string): { inicial: EstadoCuadro[]; cierre: EstadoCuadro[] } | null {
-  const c = sala.comparativo;
-  const ini = sala.inicial;
-  if (!c || !ini) return null;
-  const aprobaron = ini.estudiantes.filter((e) => e.aprobado);
-  const estadoIni = new Map(ini.estudiantes.map((e) => [e.estudiante_id, e]));
-  const inicial: EstadoCuadro[] = [];
-  const cierre: EstadoCuadro[] = [];
-  for (const e of aprobaron) {
-    const v = areaId ? e.areas[areaId] : "A";
-    const est: EstadoCuadro = v === "A" ? "g" : v === "D" ? "b" : "h";
-    inicial.push(est); cierre.push(est);
-  }
-  for (const e of c.estudiantes) {
-    if (areaId) {
-      const vi = estadoIni.get(e.estudiante_id)?.areas[areaId] ?? null;
-      inicial.push(vi === "A" ? "g" : vi === "D" ? "b" : "h");
-      const vc = e.areas[areaId];
-      cierre.push(vc === "pendiente" ? "h" : vc === "ok" || vc === "recupero" ? "g" : "b");
-    } else {
-      inicial.push("b");
-      cierre.push(e.resultado === "recupero" ? "g" : e.resultado === "persiste" ? "b" : "h");
-    }
-  }
-  return { inicial, cierre };
-}
-
 export function textoResumenComparativo(c: Comparativo): string {
   const noPasaron = c.base - c.aprobaron_inicial;
-  return `De los ${noPasaron} que no pasaron la inicial se reevaluó a ${c.reevaluados}: ${c.recuperaron} recuperaron todas las áreas, ${c.persisten} siguen con áreas para reforzar y ${c.pendientes} todavía no tienen evaluación de cierre. Cada cuadrado es el mismo chico en las dos cuadrículas: los que pasaron de azul a verde son los que recuperaron.`;
+  return `De los ${noPasaron} que no pasaron la inicial se reevaluó a ${c.reevaluados}: ${c.recuperaron} recuperaron todas las áreas, ${c.persisten} siguen con áreas para reforzar y ${c.pendientes} todavía no tienen evaluación de cierre.`;
 }
 
 export function subtituloModo(modo: Modo, periodo: number): string {

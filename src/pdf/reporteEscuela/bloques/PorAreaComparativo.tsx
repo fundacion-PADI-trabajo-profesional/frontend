@@ -3,7 +3,7 @@ import { C, u } from "../theme";
 import { Cuadricula } from "./Cuadricula";
 import { IconoArea } from "./IconoArea";
 import { Rotulo } from "./Rotulo";
-import { estadosComparativo, layoutCuadricula } from "../../../utils/reporteEscuela";
+import { estadosParAreaComparativo, layoutCuadricula } from "../../../utils/reporteEscuela";
 import type { AreaCatalogo, SalaReporte } from "../../../api/reportes";
 
 /** Aprobados por área en pares inicial → cierre, con "9 → 17 de 24" (§7.6). */
@@ -14,7 +14,7 @@ export function PorAreaComparativo({ sala, areas }: { sala: SalaReporte; areas: 
     <View>
       <Rotulo>Aprobados por área · de inicial a cierre</Rotulo>
       {areas.map((a) => {
-        const par = estadosComparativo(sala, a.id)!;
+        const par = estadosParAreaComparativo(c, a.id);
         const pa = c.por_area.find((p) => p.area_id === a.id);
         return (
           <View key={a.id} style={{ flexDirection: "row", alignItems: "center", gap: u(0.7), marginBottom: u(0.9) }}>

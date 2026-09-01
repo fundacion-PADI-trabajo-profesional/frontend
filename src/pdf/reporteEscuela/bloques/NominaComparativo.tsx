@@ -2,18 +2,19 @@ import { Text, View } from "@react-pdf/renderer";
 import { C, u } from "../theme";
 import { Chip } from "./Chip";
 import { Rotulo } from "./Rotulo";
-import { nombreCortoArea } from "../../../utils/reporteEscuela";
+import { chipsComparativo, nombreCortoArea } from "../../../utils/reporteEscuela";
 import type { AreaCatalogo, EstudianteComparativo, SalaReporte } from "../../../api/reportes";
 
+/** Nombre y chips en renglones separados: nunca comparten línea, así no pueden pisarse (§7.6 / fix producción). */
 function CeldaCmp({ e, areas }: { e: EstudianteComparativo | null; areas: AreaCatalogo[] }) {
   if (!e) return <View style={{ flex: 1 }} />;
-  const chips = areas.filter((a) => ["recupero", "persiste", "nueva"].includes(e.areas[a.id]));
+  const chips = chipsComparativo(e, areas);
   return (
-    <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: u(0.6), borderBottomWidth: 0.8, borderBottomColor: C.lineaFila, paddingVertical: u(0.32), paddingHorizontal: u(0.2) }}>
-      <Text style={{ flexGrow: 1, flexShrink: 1, minWidth: 0, fontSize: u(0.9) }}>{e.nombre}</Text>
-      <View style={{ flexShrink: 0, flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-end", gap: u(0.3), maxWidth: "62%" }}>
-        {chips.map((a) => (
-          <Chip key={a.id} variant={e.areas[a.id] as "recupero" | "persiste" | "nueva"}>{nombreCortoArea(a)}</Chip>
+    <View style={{ flex: 1, borderBottomWidth: 0.8, borderBottomColor: C.lineaFila, paddingVertical: u(0.28), paddingHorizontal: u(0.2), gap: u(0.22) }}>
+      <Text style={{ fontSize: u(0.9) }}>{e.nombre}</Text>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: u(0.3) }}>
+        {chips.map(({ area, aprobada }) => (
+          <Chip key={area.id} variant={aprobada ? "aprobada" : "desaprobada"}>{nombreCortoArea(area)}</Chip>
         ))}
       </View>
     </View>
@@ -56,7 +57,7 @@ export function NominaComparativo({ sala, areas }: { sala: SalaReporte; areas: A
       )}
       <View style={{ ...pad, height: u(1), borderBottomLeftRadius: u(1), borderBottomRightRadius: u(1) }} />
       <Text style={{ fontSize: u(0.85), fontStyle: "italic", color: C.secundario, marginTop: u(0.6), lineHeight: 1.45 }}>
-        Se listan las áreas que cada chico había desaprobado en la inicial. √ verde: la recuperó en el cierre · azul: sigue desaprobada · ▲ contorno: la había aprobado en la inicial y no en el cierre.
+        Se muestran las 4 áreas de cada chico según cómo terminó el año: verde aprobada · azul desaprobada.
       </Text>
     </View>
   );

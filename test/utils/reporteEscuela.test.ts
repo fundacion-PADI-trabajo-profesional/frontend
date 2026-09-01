@@ -107,7 +107,7 @@ describe("textos", () => {
   it("textoResumenComparativo", () => {
     const c = { ...REPORTE_24.salas[0].comparativo!, base: 24, aprobaron_inicial: 7, reevaluados: 15, recuperaron: 9, persisten: 6, pendientes: 2 };
     expect(textoResumenComparativo(c)).toBe(
-      "De los 17 que no pasaron la inicial se reevaluó a 15: 9 recuperaron todas las áreas, 6 siguen con áreas para reforzar y 2 todavía no tienen evaluación de cierre. Cada cuadrado es el mismo chico en las dos cuadrículas: los que pasaron de azul a verde son los que recuperaron."
+      "De los 17 que no pasaron la inicial se reevaluó a 15: 9 recuperaron todas las áreas, 6 siguen con áreas para reforzar y 2 todavía no tienen evaluación de cierre."
     );
   });
   it("subtituloModo", () => {

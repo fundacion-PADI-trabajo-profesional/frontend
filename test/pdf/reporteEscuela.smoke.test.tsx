@@ -1,34 +1,10 @@
 // @vitest-environment node
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, vi } from "vitest";
 import path from "node:path";
 
-// Initialize globals and WASM support for Node environment
-globalThis.TextEncoder = class TextEncoder {
-  encode(str: string) {
-    const arr = new Uint8Array(str.length);
-    for (let i = 0; i < str.length; i++) arr[i] = str.charCodeAt(i);
-    return arr;
-  }
-};
-globalThis.TextDecoder = class TextDecoder {
-  decode(arr: Uint8Array) {
-    let str = "";
-    for (let i = 0; i < arr.length; i++) str += String.fromCharCode(arr[i]);
-    return str;
-  }
-};
-globalThis.fetch = async (url: string | Request) => {
-  if (typeof url === "string" && url.startsWith("data:application/wasm;base64,")) {
-    const base64 = url.slice(29);
-    const buffer = Buffer.from(base64, "base64");
-    return {
-      ok: true,
-      status: 200,
-      arrayBuffer: async () => buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.length),
-    } as Response;
-  }
-  throw new Error(`Unexpected fetch: ${url}`);
-};
+// test/setup.ts stubs fetch con vi.fn() (devuelve undefined y rompe el loader WASM de yoga).
+// Con que fetch RECHACE alcanza: yoga captura el error y cae a su decodificador base64 interno.
+vi.stubGlobal("fetch", () => Promise.reject(new Error("fetch deshabilitado en el smoke test de PDF")));
 
 import { renderToBuffer } from "@react-pdf/renderer";
 import { registerFonts } from "../../src/pdf/reporteEscuela/fonts";

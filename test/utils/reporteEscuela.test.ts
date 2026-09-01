@@ -16,11 +16,18 @@ describe("layoutCuadricula", () => {
     expect(layoutCuadricula(100, "area").cols).toBe(20);
     expect(layoutCuadricula(62, "escuela").cols).toBe(13);
     expect(layoutCuadricula(300, "escuela").cols).toBe(28);
-    for (const n of [24, 44, 62, 100, 130, 300]) {
+    for (const n of [24, 44, 62, 100, 101, 130, 160, 161, 200, 250, 251, 300]) {
       for (const tipo of ["sala", "area", "escuela", "areaEscuela", "tira"] as const) {
         expect(layoutCuadricula(n, tipo).alto, `${tipo} ${n}`).toBeLessThanOrEqual(14);
       }
     }
+    // Verify tier boundaries for sala
+    expect(layoutCuadricula(100, "sala").cols).toBe(15);
+    expect(layoutCuadricula(101, "sala").cols).toBe(18);
+    expect(layoutCuadricula(160, "sala").cols).toBe(18);
+    expect(layoutCuadricula(161, "sala").cols).toBe(22);
+    expect(layoutCuadricula(250, "sala").cols).toBe(22);
+    expect(layoutCuadricula(251, "sala").cols).toBe(25);
   });
   it("tira: una fila hasta 30, dos hasta 60, tres después; lado máximo 0.62", () => {
     expect(layoutCuadricula(24, "tira")).toMatchObject({ cols: 24, filas: 1 });

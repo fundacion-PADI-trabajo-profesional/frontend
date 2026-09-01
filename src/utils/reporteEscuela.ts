@@ -17,7 +17,7 @@ export function layoutCuadricula(n: number, tipo: TipoCuadricula): LayoutCuadric
   let cols: number, ancho: number, gap: number, tileMax = Infinity;
   switch (tipo) {
     case "sala":
-      cols = N <= 24 ? 8 : N <= 40 ? 10 : N <= 60 ? 12 : N <= 100 ? 15 : N <= 200 ? 18 : 25; ancho = 25; gap = cols <= 8 ? 0.42 : 0.3; break;
+      cols = N <= 24 ? 8 : N <= 40 ? 10 : N <= 60 ? 12 : N <= 100 ? 15 : N <= 160 ? 18 : N <= 250 ? 22 : 25; ancho = 25; gap = cols <= 8 ? 0.42 : 0.3; break;
     case "area":
       cols = N <= 24 ? 12 : N <= 60 ? 15 : 20; ancho = 14; gap = 0.17; break;
     case "escuela":

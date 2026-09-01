@@ -126,7 +126,7 @@ export default function ReporteEscuela() {
           <Select value={turnoSel} label="Turno" onChange={(e) => setTurnoSel(e.target.value)}>
             <MenuItem value="todos">Todos</MenuItem>
             {(data?.turnos?.length ? data.turnos : turnosCatalogoRef.current[escuelaId] ?? []).map((t) => (
-              <MenuItem key={t} value={t} sx={{ textTransform: "capitalize" }}>{t}</MenuItem>
+              <MenuItem key={t} value={t}>{t}</MenuItem>
             ))}
           </Select>
         </FormControl>

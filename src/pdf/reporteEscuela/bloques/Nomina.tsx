@@ -32,10 +32,10 @@ function Celda({ e, areas }: { e: EstudianteResultado | null; areas: AreaCatalog
 export function Nomina({ r, areas }: { r: ResultadoTipo; areas: AreaCatalogo[] }) {
   const aprobaron = r.estudiantes.filter((e) => e.aprobado);
   const noPasaron = r.estudiantes.filter((e) => !e.aprobado);
-  const mitad = Math.ceil(noPasaron.length / 2);
-  const nFilas = Math.max(aprobaron.length, mitad);
+  const t = Math.ceil(noPasaron.length / 3);
+  const nFilas = Math.max(aprobaron.length, t);
   const filas = Array.from({ length: nFilas }, (_, i) => ({
-    a: aprobaron[i] ?? null, n1: noPasaron[i] ?? null, n2: noPasaron[i + mitad] ?? null,
+    a: aprobaron[i] ?? null, n1: noPasaron[i] ?? null, n2: noPasaron[i + t] ?? null, n3: noPasaron[i + 2 * t] ?? null,
   }));
   const pad = { paddingHorizontal: u(1.2), backgroundColor: C.panel } as const;
   return (
@@ -43,13 +43,14 @@ export function Nomina({ r, areas }: { r: ResultadoTipo; areas: AreaCatalogo[] }
       <Rotulo>Quiénes aprobaron y quiénes no</Rotulo>
       <View wrap={false} minPresenceAhead={60} style={{ ...pad, borderTopLeftRadius: u(1), borderTopRightRadius: u(1), paddingTop: u(1), flexDirection: "row", gap: u(1.4) }}>
         <View style={{ flex: 0.75 }}><Pildora texto="Aprobaron" verde /></View>
-        <View style={{ flex: 2.3 }}><Pildora texto="No pasaron la prueba" /></View>
+        <View style={{ flex: 3.24 }}><Pildora texto="No pasaron la prueba" /></View>
       </View>
       {filas.map((f, i) => (
         <View key={i} wrap={false} style={{ ...pad, flexDirection: "row", gap: u(1.4), paddingTop: u(0.05) }}>
           <View style={{ flex: 0.75, flexDirection: "row" }}><Celda e={f.a} areas={areas} /></View>
-          <View style={{ flex: 1.15, flexDirection: "row" }}><Celda e={f.n1} areas={areas} /></View>
-          <View style={{ flex: 1.15, flexDirection: "row" }}><Celda e={f.n2} areas={areas} /></View>
+          <View style={{ flex: 1.08, flexDirection: "row" }}><Celda e={f.n1} areas={areas} /></View>
+          <View style={{ flex: 1.08, flexDirection: "row" }}><Celda e={f.n2} areas={areas} /></View>
+          <View style={{ flex: 1.08, flexDirection: "row" }}><Celda e={f.n3} areas={areas} /></View>
         </View>
       ))}
       <View style={{ ...pad, height: u(1), borderBottomLeftRadius: u(1), borderBottomRightRadius: u(1) }} />

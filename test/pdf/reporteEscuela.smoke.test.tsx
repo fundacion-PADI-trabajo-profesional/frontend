@@ -38,9 +38,17 @@ describe("ReporteEscuelaDocument — portada", () => {
 });
 
 describe("ReporteEscuelaDocument — documento completo", () => {
-  // Nómina a dos renglones (v2-D, Ruling A): celdas más altas hacen que algunas nóminas ya no entren
-  // en 1 hoja. Se prioriza legibilidad sobre conteo de páginas — conteos re-verificados contra el motor
-  // de layout real (yoga), no estimados.
+  // Nómina a dos renglones (v2-D) + "No pasaron la prueba" a 3 columnas (v2-E, Ruling controller):
+  // se buscó recuperar densidad angostando las celdas de no-pasaron en más columnas. Conteos
+  // re-verificados contra el motor de layout real (yoga), no estimados — coinciden con los de v2-D:
+  // la 3ra columna reduce filas donde "no pasaron" domina (p. ej. sala de 20 en REPORTE_ESCUELA, que
+  // vuelve a entrar en 1 hoja), pero en salas donde "aprobaron" domina el conteo de filas no baja (misma
+  // cantidad de filas que a 2 columnas) y las celdas más angostas ahora envuelven a 2 líneas más seguido
+  // el texto de áreas de los que reprobaron 3 de 4 (p. ej. la sala de 18), por lo que esa sala pasa a
+  // ocupar 2 hojas en vez de 1. El total de hojas de REPORTE_ESCUELA no cambia (sigue en 7): es una
+  // redistribución, no una regresión aislada — verificado visualmente que ninguna celda se corta ni se
+  // superpone en ningún caso (Ruling A: nunca comprimir por debajo de la legibilidad para forzar el
+  // conteo de páginas).
   it("escuela de una sala de 24: portada + resumen + sala (2 hojas, nómina no entra en 1) = 4", async () => {
     expect(paginas(await render(REPORTE_24, "inicial"))).toBe(4);
   });

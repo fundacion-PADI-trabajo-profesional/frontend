@@ -5,7 +5,7 @@ import { Pie } from "./bloques/Pie";
 import { Rotulo } from "./bloques/Rotulo";
 import { Cuadricula } from "./bloques/Cuadricula";
 import { Donut } from "./bloques/Donut";
-import { BarraApilada } from "./bloques/BarraApilada";
+import { ColumnaApilada } from "./bloques/ColumnaApilada";
 import { Leyenda } from "./bloques/Leyenda";
 import { IconoArea } from "./bloques/IconoArea";
 import { TablaSalaArea } from "./bloques/TablaSalaArea";
@@ -91,32 +91,34 @@ export function PaginaResumen({ data, modo, assets }: { data: ReporteEscuela; mo
 
       <View wrap={false}>
         <Rotulo>Aprobados por área</Rotulo>
-        {data.areas.map((a) => {
-          const etiqueta = cmp
-            ? (() => {
-                const p = cmp.por_area.find((x) => x.area_id === a.id);
-                const apIni = p?.aprobados_inicial ?? 0;
-                const apCierre = p?.aprobados_cierre ?? 0;
-                return { barra: { aprobados: apCierre, evaluados: cmp.base }, texto: `${porcentaje(apIni, cmp.base)} → ${porcentaje(apCierre, cmp.base)}`, deN: cmp.base };
-              })()
-            : (() => {
-                const p = r!.por_area.find((x) => x.area_id === a.id);
-                const evA = p?.evaluados ?? 0;
-                const apA = p?.aprobados ?? 0;
-                return { barra: { aprobados: apA, evaluados: evA }, texto: porcentaje(apA, evA), deN: evA };
-              })();
-          return (
-            <View key={a.id} style={{ flexDirection: "row", alignItems: "center", gap: u(0.9), marginBottom: u(0.85) }}>
-              <IconoArea area={a} size={u(1.6)} />
-              <Text style={{ width: u(8.5), fontSize: u(0.95), fontWeight: 600 }}>{a.nombre}</Text>
-              <BarraApilada aprobados={etiqueta.barra.aprobados} evaluados={etiqueta.barra.evaluados} ancho={u(20)} />
-              <View style={{ flexGrow: 1, alignItems: "flex-end" }}>
-                <Text style={{ fontSize: u(1.15), fontWeight: 700, color: C.titulo }}>{etiqueta.texto}</Text>
-                <Text style={{ fontSize: u(0.75), color: C.secundario }}>de {etiqueta.deN} evaluados</Text>
+        <View style={{ flexDirection: "row", justifyContent: "space-evenly" }}>
+          {data.areas.map((a) => {
+            const grupo = cmp
+              ? (() => {
+                  const p = cmp.por_area.find((x) => x.area_id === a.id);
+                  const apIni = p?.aprobados_inicial ?? 0;
+                  const apCierre = p?.aprobados_cierre ?? 0;
+                  return { columna: { aprobados: apCierre, evaluados: cmp.base }, texto: `${porcentaje(apIni, cmp.base)} → ${porcentaje(apCierre, cmp.base)}`, deN: cmp.base };
+                })()
+              : (() => {
+                  const p = r!.por_area.find((x) => x.area_id === a.id);
+                  const evA = p?.evaluados ?? 0;
+                  const apA = p?.aprobados ?? 0;
+                  return { columna: { aprobados: apA, evaluados: evA }, texto: porcentaje(apA, evA), deN: evA };
+                })();
+            return (
+              <View key={a.id} style={{ width: u(11), alignItems: "center" }}>
+                <Text style={{ fontSize: cmp ? u(1) : u(1.15), fontWeight: 700, color: C.titulo, textAlign: "center", marginBottom: u(0.5) }}>{grupo.texto}</Text>
+                <ColumnaApilada aprobados={grupo.columna.aprobados} evaluados={grupo.columna.evaluados} />
+                <View style={{ alignItems: "center", marginTop: u(0.6) }}>
+                  <IconoArea area={a} size={u(1.6)} />
+                  <Text style={{ fontSize: u(0.95), fontWeight: 600, textAlign: "center", marginTop: u(0.3) }}>{a.nombre}</Text>
+                  <Text style={{ fontSize: u(0.75), color: C.secundario, marginTop: u(0.15) }}>de {grupo.deN} evaluados</Text>
+                </View>
               </View>
-            </View>
-          );
-        })}
+            );
+          })}
+        </View>
       </View>
       {gap()}
 

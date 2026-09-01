@@ -14,6 +14,11 @@ const Visor = lazy(() => import("../../pdf/reporteEscuela/Visor"));
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 5 }, (_, i) => CURRENT_YEAR - i);
 const MODOS: Modo[] = ["inicial", "cierre", "comparativo"];
+const RAZON_DESHABILITADO: Record<Modo, string> = {
+  inicial: "sin evaluaciones iniciales",
+  cierre: "sin evaluaciones de cierre",
+  comparativo: "sin datos para comparar",
+};
 
 export default function ReporteEscuela() {
   const [escuelaId, setEscuelaId] = useState("");
@@ -107,7 +112,7 @@ export default function ReporteEscuela() {
               const habilitado = !data || escuelaTieneModo(data, m);
               return (
                 <MenuItem key={m} value={m} disabled={!habilitado}>
-                  {MODO_LABEL[m]}{!habilitado ? ` (sin evaluaciones de cierre en ${periodo})` : ""}
+                  {MODO_LABEL[m]}{!habilitado ? ` (${RAZON_DESHABILITADO[m]} en ${periodo})` : ""}
                 </MenuItem>
               );
             })}

@@ -14,8 +14,18 @@ function Pildora({ texto, verde }: { texto: string; verde?: boolean }) {
   );
 }
 
-/** Nombre y áreas en renglones separados: nunca comparten línea, así no pueden pisarse (§7.6 / fix producción). */
-function Celda({ e, areas }: { e: EstudianteResultado | null; areas: AreaCatalogo[] }) {
+/** Celda de un renglón (solo nombre): aprobaron no tiene áreas que mostrar (§7.6 / v2-D3). */
+function CeldaAprobado({ e }: { e: EstudianteResultado | null }) {
+  if (!e) return <View style={{ flex: 1 }} />;
+  return (
+    <View style={{ flex: 1, borderBottomWidth: 0.8, borderBottomColor: C.lineaFila, paddingVertical: u(0.2), paddingHorizontal: u(0.2) }}>
+      <Text style={{ fontSize: u(0.9) }}>{e.nombre}</Text>
+    </View>
+  );
+}
+
+/** Celda de dos renglones (nombre / áreas desaprobadas): nunca comparten línea, así no pueden pisarse (§7.6). */
+function CeldaNoPaso({ e, areas }: { e: EstudianteResultado | null; areas: AreaCatalogo[] }) {
   if (!e) return <View style={{ flex: 1 }} />;
   const desaprobadas = areas.filter((a) => e.areas[a.id] === "D").map((a) => a.id);
   return (
@@ -28,29 +38,43 @@ function Celda({ e, areas }: { e: EstudianteResultado | null; areas: AreaCatalog
   );
 }
 
-/** Estadística 3: quiénes aprobaron y quiénes no (§7.6). El panel puede cortarse entre filas. */
+/**
+ * Estadística 3: quiénes aprobaron y quiénes no (§7.6). Secciones apiladas en vez de columnas en
+ * paralelo (v2-D3): antes "aprobaron" y "no pasaron" compartían fila con `nFilas = max(...)`, así que
+ * una sección corta desperdiciaba tanto alto como ocupara la más alta. Ahora cada sección tiene su
+ * propia píldora a todo el ancho del panel y su propia grilla, una debajo de la otra — el alto total es
+ * la suma de ambas, no el máximo. El panel puede cortarse entre filas.
+ */
 export function Nomina({ r, areas }: { r: ResultadoTipo; areas: AreaCatalogo[] }) {
   const aprobaron = r.estudiantes.filter((e) => e.aprobado);
   const noPasaron = r.estudiantes.filter((e) => !e.aprobado);
-  const t = Math.ceil(noPasaron.length / 3);
-  const nFilas = Math.max(aprobaron.length, t);
-  const filas = Array.from({ length: nFilas }, (_, i) => ({
-    a: aprobaron[i] ?? null, n1: noPasaron[i] ?? null, n2: noPasaron[i + t] ?? null, n3: noPasaron[i + 2 * t] ?? null,
-  }));
+  const colsA = 4;
+  const filasA = Math.ceil(aprobaron.length / colsA);
+  const colsN = 3;
+  const t = Math.ceil(noPasaron.length / colsN);
   const pad = { paddingHorizontal: u(1.2), backgroundColor: C.panel } as const;
   return (
     <View>
       <Rotulo>Quiénes aprobaron y quiénes no</Rotulo>
-      <View wrap={false} minPresenceAhead={60} style={{ ...pad, borderTopLeftRadius: u(1), borderTopRightRadius: u(1), paddingTop: u(1), flexDirection: "row", gap: u(1.4) }}>
-        <View style={{ flex: 0.75 }}><Pildora texto="Aprobaron" verde /></View>
-        <View style={{ flex: 3.24 }}><Pildora texto="No pasaron la prueba" /></View>
+      <View wrap={false} minPresenceAhead={60} style={{ ...pad, borderTopLeftRadius: u(1), borderTopRightRadius: u(1), paddingTop: u(1) }}>
+        <Pildora texto="Aprobaron" verde />
       </View>
-      {filas.map((f, i) => (
-        <View key={i} wrap={false} style={{ ...pad, flexDirection: "row", gap: u(1.4), paddingTop: u(0.05) }}>
-          <View style={{ flex: 0.75, flexDirection: "row" }}><Celda e={f.a} areas={areas} /></View>
-          <View style={{ flex: 1.08, flexDirection: "row" }}><Celda e={f.n1} areas={areas} /></View>
-          <View style={{ flex: 1.08, flexDirection: "row" }}><Celda e={f.n2} areas={areas} /></View>
-          <View style={{ flex: 1.08, flexDirection: "row" }}><Celda e={f.n3} areas={areas} /></View>
+      {Array.from({ length: filasA }, (_, i) => (
+        <View key={`a${i}`} wrap={false} style={{ ...pad, flexDirection: "row", gap: u(1.4), paddingTop: u(0.05) }}>
+          {Array.from({ length: colsA }, (_, c) => (
+            <CeldaAprobado key={c} e={aprobaron[i * colsA + c] ?? null} />
+          ))}
+        </View>
+      ))}
+      <View style={{ ...pad, height: u(0.6) }} />
+      <View wrap={false} minPresenceAhead={60} style={{ ...pad, paddingTop: u(0.05) }}>
+        <Pildora texto="No pasaron la prueba" />
+      </View>
+      {Array.from({ length: t }, (_, i) => (
+        <View key={`n${i}`} wrap={false} style={{ ...pad, flexDirection: "row", gap: u(1.4), paddingTop: u(0.05) }}>
+          <CeldaNoPaso e={noPasaron[i] ?? null} areas={areas} />
+          <CeldaNoPaso e={noPasaron[i + t] ?? null} areas={areas} />
+          <CeldaNoPaso e={noPasaron[i + 2 * t] ?? null} areas={areas} />
         </View>
       ))}
       <View style={{ ...pad, height: u(1), borderBottomLeftRadius: u(1), borderBottomRightRadius: u(1) }} />

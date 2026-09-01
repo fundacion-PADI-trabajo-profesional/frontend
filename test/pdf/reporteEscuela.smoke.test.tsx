@@ -38,25 +38,26 @@ describe("ReporteEscuelaDocument — portada", () => {
 });
 
 describe("ReporteEscuelaDocument — documento completo", () => {
-  // Nómina a dos renglones (v2-D) + "No pasaron la prueba" a 3 columnas (v2-E, Ruling controller):
-  // se buscó recuperar densidad angostando las celdas de no-pasaron en más columnas. Conteos
-  // re-verificados contra el motor de layout real (yoga), no estimados — coinciden con los de v2-D:
-  // la 3ra columna reduce filas donde "no pasaron" domina (p. ej. sala de 20 en REPORTE_ESCUELA, que
-  // vuelve a entrar en 1 hoja), pero en salas donde "aprobaron" domina el conteo de filas no baja (misma
-  // cantidad de filas que a 2 columnas) y las celdas más angostas ahora envuelven a 2 líneas más seguido
-  // el texto de áreas de los que reprobaron 3 de 4 (p. ej. la sala de 18), por lo que esa sala pasa a
-  // ocupar 2 hojas en vez de 1. El total de hojas de REPORTE_ESCUELA no cambia (sigue en 7): es una
-  // redistribución, no una regresión aislada — verificado visualmente que ninguna celda se corta ni se
-  // superpone en ningún caso (Ruling A: nunca comprimir por debajo de la legibilidad para forzar el
-  // conteo de páginas).
+  // Nómina en secciones apiladas (v2-D3, Ruling controller): las columnas en paralelo de v2-D/v2-E
+  // ("aprobaron" vs "no pasaron" compartiendo fila con nFilas = max(...)) desperdiciaban tanto alto
+  // como ocupara la sección más alta, y las celdas de no-pasaron a 3 columnas competían por ancho con
+  // la columna de aprobaron en la misma fila. Ahora cada sección (píldora a todo el ancho del panel +
+  // grilla propia) va una debajo de la otra: "Aprobaron" en 4 columnas de una sola línea (sin área que
+  // mostrar), "No pasaron la prueba" en 3 columnas de dos renglones — y esas 3 columnas ahora usan el
+  // ancho completo del panel (antes lo compartían con la columna de aprobaron), no solo un ~81%, lo que
+  // reduce el envoltorio a 2 líneas del texto de áreas que afectaba a REPORTE_ESCUELA en v2-E. Conteos
+  // re-verificados contra el motor de layout real (yoga), no estimados: REPORTE_ESCUELA baja de 7 a 6
+  // páginas (mejora real, no solo redistribución); REPORTE_24, REPORTE_44, la sala única sin resumen y
+  // el rango del comparativo no cambian. Verificado visualmente que ninguna celda se corta ni se
+  // superpone (Ruling A: nunca comprimir por debajo de la legibilidad para forzar el conteo de páginas).
   it("escuela de una sala de 24: portada + resumen + sala (2 hojas, nómina no entra en 1) = 4", async () => {
     expect(paginas(await render(REPORTE_24, "inicial"))).toBe(4);
   });
   it("escuela de una sala de 44: portada + resumen + 2 = 4", async () => {
     expect(paginas(await render(REPORTE_44, "inicial"))).toBe(4);
   });
-  it("escuela de tres salas chicas: portada + resumen + 3 salas (2 se parten en 2 hojas) = 7", async () => {
-    expect(paginas(await render(REPORTE_ESCUELA, "inicial"))).toBe(7);
+  it("escuela de tres salas chicas: portada + resumen + 3 salas (secciones apiladas, v2-D3) = 6", async () => {
+    expect(paginas(await render(REPORTE_ESCUELA, "inicial"))).toBe(6);
   });
   it("una sola sala: sin resumen (portada + sala en 2 hojas) = 3", async () => {
     expect(paginas(await render(REPORTE_24, "inicial", 5))).toBe(3);

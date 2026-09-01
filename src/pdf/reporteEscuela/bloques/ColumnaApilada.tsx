@@ -11,7 +11,7 @@ export function ColumnaApilada({ aprobados, evaluados, alto = u(9), ancho = u(3.
   const p = evaluados > 0 ? Math.max(0, Math.min(1, aprobados / evaluados)) : 0;
   const altoVerde = alto * p;
   return (
-    <View style={{ width: ancho, height: alto, borderRadius: ancho / 2, overflow: "hidden", flexDirection: "column", backgroundColor: C.grisTile }}>
+    <View style={{ width: ancho, height: alto, borderRadius: 0, overflow: "hidden", flexDirection: "column", backgroundColor: C.grisTile }}>
       {evaluados > 0 && (
         <>
           {p < 1 && <View style={{ width: ancho, flexGrow: 1, backgroundColor: C.azul }} />}

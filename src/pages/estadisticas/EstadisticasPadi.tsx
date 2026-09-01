@@ -13,6 +13,7 @@ import {
   Tabs,
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import PageHeader from "../../components/common/PageHeader";
@@ -135,6 +136,9 @@ export default function EstadisticasPadi() {
             onClick={handleExportarExcel}
           >
             Exportar Excel
+          </Button>
+          <Button size="small" variant="outlined" startIcon={<PictureAsPdfIcon />} onClick={() => navigate("/reportes/escuela")}>
+            Reporte de escuela (PDF)
           </Button>
           <Button size="small" variant="outlined" onClick={() => navigate("/estadisticas/escuela")}>
             Ver por escuela →

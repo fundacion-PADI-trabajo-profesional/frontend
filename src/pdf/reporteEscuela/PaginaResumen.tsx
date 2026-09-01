@@ -69,10 +69,21 @@ export function PaginaResumen({ data, modo, assets }: { data: ReporteEscuela; mo
         <Rotulo>Por sala</Rotulo>
         {cmp
           ? cmp.por_sala.map((s) => (
-              <Text key={s.sala_id} style={{ fontSize: u(1), marginBottom: u(0.6) }}>
-                <Text style={{ fontWeight: 700 }}>{s.sala}</Text> ({s.base} chicos): {porcentaje(s.aprobaron_inicial, s.base)} → {porcentaje(s.cierra_con, s.base)}
-                {s.pendientes > 0 ? ` · ${s.pendientes} sin cierre` : ""}
-              </Text>
+              <View key={s.sala_id} style={{ flexDirection: "row", alignItems: "center", gap: u(1.2), marginBottom: u(1.1) }}>
+                <View style={{ width: u(9) }}>
+                  <Text style={{ fontSize: u(1.05), fontWeight: 700 }}>{s.sala}</Text>
+                  <Text style={{ fontSize: u(0.85), color: C.secundario }}>{s.base} evaluados</Text>
+                </View>
+                <BarraApilada aprobados={s.cierra_con} evaluados={s.base} pendientes={s.pendientes} ancho={u(22)} alto={u(1.6)} />
+                <View style={{ flexGrow: 1, alignItems: "flex-end" }}>
+                  <Text style={{ fontSize: u(1.15), fontWeight: 700, color: C.titulo }}>
+                    {porcentaje(s.aprobaron_inicial, s.base)} → {porcentaje(s.cierra_con, s.base)}
+                  </Text>
+                  <Text style={{ fontSize: u(0.75), color: C.secundario }}>
+                    aprobaron todas las áreas{s.pendientes > 0 ? ` · ${s.pendientes} sin cierre` : ""}
+                  </Text>
+                </View>
+              </View>
             ))
           : r!.por_sala.map((s) => (
               <View key={s.sala_id} style={{ flexDirection: "row", alignItems: "center", gap: u(1.2), marginBottom: u(1.1) }}>

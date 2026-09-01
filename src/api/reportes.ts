@@ -92,11 +92,16 @@ export interface ReporteEscuela {
     cierre: ResumenCierre | null;
     comparativo: ResumenComparativo | null;
   };
+  /** Filtro de turno aplicado (`null` = sin filtro), eco del query param. */
+  turno: string | null;
+  /** Turnos disponibles para la escuela, para armar el selector. */
+  turnos: string[];
 }
 
 /** Reporte completo de una escuela para un año (los tres modos, resumen y salas). Solo `equipo_padi`. */
-export async function getReporteEscuela(params: { escuela_id: string; periodo: number }): Promise<ReporteEscuela> {
+export async function getReporteEscuela(params: { escuela_id: string; periodo: number; turno?: string | null }): Promise<ReporteEscuela> {
   const qs = new URLSearchParams({ escuela_id: params.escuela_id, periodo: String(params.periodo) });
+  if (params.turno) qs.set("turno", params.turno);
   const res = await fetch(`${API_URL}/reportes/escuela?${qs}`, { headers: getAuthHeaders() });
   const body: ApiResponse<ReporteEscuela> = await res.json();
   if (!res.ok || !body.success) {

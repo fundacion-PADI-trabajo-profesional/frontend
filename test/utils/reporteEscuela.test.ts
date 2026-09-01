@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   layoutCuadricula, estadosTotales, estadosArea, estadosTira, estadosComparativo, textoResumenComparativo,
   nombreArchivo, colorCelda, nombreCortoArea, iconoArea, textoAreas, salaTieneModo, escuelaTieneModo, subtituloModo, slug,
+  estadosComparativoResumen,
 } from "../../src/utils/reporteEscuela";
 import { AREAS, REPORTE_24, REPORTE_SIN_CIERRE, mkSala } from "../fixtures/reporteEscuela";
 
@@ -117,6 +118,18 @@ describe("colorCelda", () => {
     expect(colorCelda(5, 10).fg).toBe("#2B2F33");
     expect(colorCelda(6, 10).fg).toBe("#FFFFFF");
     expect(colorCelda(0, 0).fg).toBe("#2B2F33");
+  });
+});
+
+describe("extensiones para el comparativo", () => {
+  it("layoutCuadricula acepta ancho override (pares del comparativo)", () => {
+    expect(layoutCuadricula(24, "sala", 24).tile).toBeCloseTo((24 - 7 * 0.42) / 8, 5);
+    expect(layoutCuadricula(24, "area", 12.5).tile).toBeCloseTo((12.5 - 11 * 0.17) / 12, 5);
+  });
+  it("estadosComparativoResumen arma el par a nivel escuela", () => {
+    const par = estadosComparativoResumen({ base: 10, aprobaron_inicial: 4, recuperaron: 3, persisten: 2, pendientes: 1 });
+    expect(par.inicial).toEqual(["g", "g", "g", "g", "b", "b", "b", "b", "b", "b"]);
+    expect(par.cierre).toEqual(["g", "g", "g", "g", "g", "g", "g", "b", "b", "h"]);
   });
 });
 

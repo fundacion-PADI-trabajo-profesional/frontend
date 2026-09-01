@@ -11,25 +11,26 @@ export interface LayoutCuadricula { cols: number; tile: number; gap: number; fil
 
 const clamp = (min: number, x: number, max: number) => Math.min(max, Math.max(min, x));
 
-/** Columnas, lado y gap de cada cuadrícula según la cantidad de chicos (spec §7.4). */
-export function layoutCuadricula(n: number, tipo: TipoCuadricula): LayoutCuadricula {
+/** Columnas, lado y gap de cada cuadrícula según la cantidad de chicos (spec §7.4). `ancho` override para los pares del comparativo (la tira lo ignora). */
+export function layoutCuadricula(n: number, tipo: TipoCuadricula, ancho?: number): LayoutCuadricula {
   const N = Math.max(1, n);
-  let cols: number, ancho: number, gap: number, tileMax = Infinity;
+  let cols: number, anchoDefault: number, gap: number, tileMax = Infinity;
   switch (tipo) {
     case "sala":
-      cols = N <= 24 ? 8 : N <= 40 ? 10 : N <= 60 ? 12 : N <= 100 ? 15 : N <= 160 ? 18 : N <= 250 ? 22 : 25; ancho = 25; gap = cols <= 8 ? 0.42 : 0.3; break;
+      cols = N <= 24 ? 8 : N <= 40 ? 10 : N <= 60 ? 12 : N <= 100 ? 15 : N <= 160 ? 18 : N <= 250 ? 22 : 25; anchoDefault = 25; gap = cols <= 8 ? 0.42 : 0.3; break;
     case "area":
-      cols = N <= 24 ? 12 : N <= 60 ? 15 : 20; ancho = 14; gap = 0.17; break;
+      cols = N <= 24 ? 12 : N <= 60 ? 15 : 20; anchoDefault = 14; gap = 0.17; break;
     case "escuela":
-      cols = clamp(12, Math.ceil(Math.sqrt(2.5 * N)), 30); ancho = 30; gap = 0.2; break;
+      cols = clamp(12, Math.ceil(Math.sqrt(2.5 * N)), 30); anchoDefault = 30; gap = 0.2; break;
     case "areaEscuela":
-      cols = clamp(21, Math.ceil(Math.sqrt(3 * N)), 40); ancho = 18; gap = 0.16; break;
+      cols = clamp(21, Math.ceil(Math.sqrt(3 * N)), 40); anchoDefault = 18; gap = 0.16; break;
     case "tira": {
       const filas = N <= 30 ? 1 : N <= 60 ? 2 : 3;
-      cols = Math.ceil(N / filas); ancho = 18; gap = 0.13; tileMax = 0.62; break;
+      cols = Math.ceil(N / filas); anchoDefault = 18; gap = 0.13; tileMax = 0.62; break;
     }
   }
-  const tile = Math.min(tileMax, (ancho - (cols - 1) * gap) / cols);
+  const anchoFinal = tipo === "tira" ? anchoDefault : (ancho ?? anchoDefault);
+  const tile = Math.min(tileMax, (anchoFinal - (cols - 1) * gap) / cols);
   const filas = Math.ceil(N / cols);
   return { cols, tile, gap, filas, alto: filas * tile + (filas - 1) * gap };
 }
@@ -77,6 +78,19 @@ export function estadosComparativo(sala: SalaReporte, areaId?: string): { inicia
     }
   }
   return { inicial, cierre };
+}
+
+/** Par inicial → cierre a nivel escuela (el resumen no tiene detalle por chico): recuperados al inicio del bloque azul. */
+export function estadosComparativoResumen(c: { base: number; aprobaron_inicial: number; recuperaron: number; persisten: number; pendientes: number }): { inicial: EstadoCuadro[]; cierre: EstadoCuadro[] } {
+  const noPasaron = Math.max(0, c.base - c.aprobaron_inicial);
+  return {
+    inicial: [...Array<EstadoCuadro>(c.aprobaron_inicial).fill("g"), ...Array<EstadoCuadro>(noPasaron).fill("b")],
+    cierre: [
+      ...Array<EstadoCuadro>(c.aprobaron_inicial + c.recuperaron).fill("g"),
+      ...Array<EstadoCuadro>(c.persisten).fill("b"),
+      ...Array<EstadoCuadro>(c.pendientes).fill("h"),
+    ],
+  };
 }
 
 export function textoResumenComparativo(c: Comparativo): string {

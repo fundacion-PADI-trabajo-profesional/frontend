@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import {
   Alert, Box, Button, CircularProgress, FormControl, InputLabel, MenuItem, Paper, Select, Typography,
 } from "@mui/material";
@@ -25,8 +25,13 @@ export default function ReporteEscuela() {
   const [periodo, setPeriodo] = useState(CURRENT_YEAR);
   const [modo, setModo] = useState<Modo>("inicial");
   const [salaSel, setSalaSel] = useState<number | "todas">("todas");
+  const [turnoSel, setTurnoSel] = useState<string | "todos">("todos");
   const [descargando, setDescargando] = useState(false);
   const [descargaError, setDescargaError] = useState<string | null>(null);
+
+  // Conservar el catálogo de turnos por escuela para que las opciones no desaparezcan al filtrar.
+  // Cuando hay datos, usamos data.turnos; cuando filtramos y data.turnos está vacío, usamos el último catálogo guardado.
+  const turnosCatalogoRef = useRef<Record<string, string[]>>({});
 
   const escuelasQuery = useQuery({ queryKey: ["escuelas"], queryFn: getEscuelas });
   useEffect(() => {
@@ -34,13 +39,20 @@ export default function ReporteEscuela() {
   }, [escuelaId, escuelasQuery.data]);
 
   const reporteQuery = useQuery({
-    queryKey: ["reporte-escuela", escuelaId, periodo],
-    queryFn: () => getReporteEscuela({ escuela_id: escuelaId, periodo }),
+    queryKey: ["reporte-escuela", escuelaId, periodo, turnoSel],
+    queryFn: () => getReporteEscuela({ escuela_id: escuelaId, periodo, turno: turnoSel === "todos" ? undefined : turnoSel }),
     enabled: !!escuelaId,
   });
   const data = reporteQuery.data;
 
-  // Si el modo o la sala elegidos no existen en esta escuela/año, volver a un valor válido.
+  // Guardar el catálogo de turnos por escuela para que las opciones no desaparezcan al filtrar.
+  useEffect(() => {
+    if (data?.turnos.length) {
+      turnosCatalogoRef.current[escuelaId] = data.turnos;
+    }
+  }, [data?.turnos, escuelaId]);
+
+  // Si el modo, la sala o el turno elegidos no existen en esta escuela/año, volver a un valor válido.
   useEffect(() => {
     if (!data) return;
     if (!escuelaTieneModo(data, modo)) {
@@ -48,7 +60,8 @@ export default function ReporteEscuela() {
       if (disponible) setModo(disponible);
     }
     if (salaSel !== "todas" && !data.salas.some((s) => s.sala_id === salaSel)) setSalaSel("todas");
-  }, [data, modo, salaSel]);
+    if (turnoSel !== "todos" && !data.turnos.includes(turnoSel)) setTurnoSel("todos");
+  }, [data, modo, salaSel, turnoSel]);
 
   const salaId = salaSel === "todas" ? null : salaSel;
   const sinDatos = data !== undefined && data.salas.length === 0;
@@ -70,6 +83,7 @@ export default function ReporteEscuela() {
         periodo,
         modo,
         sala: salaId === null ? null : data.salas.find((s) => s.sala_id === salaId)?.sala ?? null,
+        turno: turnoSel === "todos" ? null : turnoSel,
       });
       document.body.appendChild(a);
       a.click();
@@ -93,7 +107,7 @@ export default function ReporteEscuela() {
       <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap", alignItems: "center" }}>
         <FormControl size="small" sx={{ minWidth: 240 }} disabled={!escuelasQuery.data?.length}>
           <InputLabel>Escuela</InputLabel>
-          <Select value={escuelaId} label="Escuela" onChange={(e) => { setEscuelaId(String(e.target.value)); setSalaSel("todas"); }}>
+          <Select value={escuelaId} label="Escuela" onChange={(e) => { const newId = String(e.target.value); setEscuelaId(newId); setSalaSel("todas"); setTurnoSel("todos"); delete turnosCatalogoRef.current[escuelaId]; }}>
             {(escuelasQuery.data ?? []).map((e) => <MenuItem key={e.id} value={e.id}>{e.nombre}</MenuItem>)}
           </Select>
         </FormControl>
@@ -102,6 +116,16 @@ export default function ReporteEscuela() {
           <InputLabel>Período</InputLabel>
           <Select value={periodo} label="Período" onChange={(e) => setPeriodo(Number(e.target.value))}>
             {YEARS.map((y) => <MenuItem key={y} value={y}>{y}</MenuItem>)}
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 140 }} disabled={!data || data.turnos.length === 0}>
+          <InputLabel>Turno</InputLabel>
+          <Select value={turnoSel} label="Turno" onChange={(e) => setTurnoSel(e.target.value)}>
+            <MenuItem value="todos">Todos</MenuItem>
+            {(data?.turnos?.length ? data.turnos : turnosCatalogoRef.current[escuelaId] ?? []).map((t) => (
+              <MenuItem key={t} value={t} sx={{ textTransform: "capitalize" }}>{t}</MenuItem>
+            ))}
           </Select>
         </FormControl>
 
@@ -151,7 +175,10 @@ export default function ReporteEscuela() {
       )}
 
       {sinDatos && (
-        <Alert severity="info">Esta escuela no tiene evaluaciones terminadas en {periodo}.</Alert>
+        <Alert severity="info">
+          Esta escuela no tiene evaluaciones terminadas en {periodo}
+          {turnoSel !== "todos" ? ` para el turno seleccionado` : ""}.
+        </Alert>
       )}
 
       {listo && (

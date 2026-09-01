@@ -11,7 +11,7 @@ import { registerFonts } from "../../src/pdf/reporteEscuela/fonts";
 import { ReporteEscuelaDocument } from "../../src/pdf/reporteEscuela/ReporteEscuelaDocument";
 import type { Modo } from "../../src/utils/reporteEscuela";
 import type { ReporteEscuela } from "../../src/api/reportes";
-import { REPORTE_24 } from "../fixtures/reporteEscuela";
+import { REPORTE_24, REPORTE_44, REPORTE_SIN_CIERRE } from "../fixtures/reporteEscuela";
 
 const dir = new URL(".", import.meta.url).pathname;
 const F = (f: string) => path.resolve(dir, "../../src/pdf/fonts", f);
@@ -34,5 +34,21 @@ describe("ReporteEscuelaDocument — portada", () => {
     const buf = await render({ ...REPORTE_24, salas: [] }, "inicial");
     expect(buf.subarray(0, 5).toString()).toBe("%PDF-");
     expect(paginas(buf)).toBe(1);
+  });
+});
+
+describe("ReporteEscuelaDocument — secciones de sala (inicial/cierre)", () => {
+  it("24 chicos: la sala entra en una hoja (portada + sala = 2)", async () => {
+    expect(paginas(await render(REPORTE_24, "inicial"))).toBe(2);
+  });
+  it("44 chicos: la sala usa dos hojas (portada + 2 = 3)", async () => {
+    expect(paginas(await render(REPORTE_44, "inicial"))).toBe(3);
+  });
+  it("una sola sala: portada + su sección", async () => {
+    expect(paginas(await render(REPORTE_24, "inicial", 5))).toBe(2);
+  });
+  it("modo cierre sin cierres: hoja con el aviso", async () => {
+    const buf = await render(REPORTE_SIN_CIERRE, "cierre");
+    expect(paginas(buf)).toBe(2); // portada + hoja "Sin evaluación de cierre en 2025"
   });
 });

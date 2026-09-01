@@ -12,7 +12,7 @@ export function PorAreaComparativo({ sala, areas }: { sala: SalaReporte; areas: 
   const layout = layoutCuadricula(c.base, "area", 12.5);
   return (
     <View>
-      <Rotulo>Aprobados por área · inicial → cierre</Rotulo>
+      <Rotulo>Aprobados por área · de inicial a cierre</Rotulo>
       {areas.map((a) => {
         const par = estadosComparativo(sala, a.id)!;
         const pa = c.por_area.find((p) => p.area_id === a.id);

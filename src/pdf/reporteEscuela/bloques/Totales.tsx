@@ -17,7 +17,9 @@ export function Totales({ r }: { r: ResultadoTipo }) {
         { color: C.azul, n: r.evaluados - r.aprobados, texto: "tienen al menos un área para reforzar" },
       ]} />
       <Text style={{ fontSize: u(0.85), fontStyle: "italic", color: C.secundario, marginTop: u(0.5) }}>
-        Cada cuadrado es un chico o una chica de la sala ({r.evaluados} en total).
+        {r.cierra_con
+          ? `Cada cuadrado es un chico o una chica de la sala evaluado en el cierre (${r.evaluados} en total).`
+          : `Cada cuadrado es un chico o una chica de la sala (${r.evaluados} en total).`}
       </Text>
       {r.cierra_con && (
         <Text style={{ fontSize: u(1), marginTop: u(0.6) }}>

@@ -48,7 +48,9 @@ export function PaginaResumen({ data, modo, assets }: { data: ReporteEscuela; mo
           ...(cmp ? [{ color: C.grisTile, n: cmp.pendientes, texto: "sin evaluación de cierre" }] : []),
         ]} />
         <Text style={{ fontSize: u(0.85), fontStyle: "italic", color: C.secundario, marginTop: u(0.5) }}>
-          Cada cuadrado es un chico o una chica de la escuela ({evaluados} en total).
+          {modo === "cierre"
+            ? `Cada cuadrado es un chico o una chica de la escuela evaluado en el cierre (${evaluados} en total).`
+            : `Cada cuadrado es un chico o una chica de la escuela (${evaluados} en total).`}
         </Text>
         {modo === "cierre" && data.resumen.cierre?.cierra_con && (
           <Text style={{ fontSize: u(1), marginTop: u(0.6) }}>

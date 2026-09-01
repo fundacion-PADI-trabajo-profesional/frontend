@@ -56,7 +56,7 @@ export function NominaComparativo({ sala, areas }: { sala: SalaReporte; areas: A
       )}
       <View style={{ ...pad, height: u(1), borderBottomLeftRadius: u(1), borderBottomRightRadius: u(1) }} />
       <Text style={{ fontSize: u(0.85), fontStyle: "italic", color: C.secundario, marginTop: u(0.6), lineHeight: 1.45 }}>
-        Se listan las áreas que cada chico había desaprobado en la inicial. ✓ verde: la recuperó en el cierre · azul: sigue desaprobada · ▲ contorno: la había aprobado en la inicial y no en el cierre.
+        Se listan las áreas que cada chico había desaprobado en la inicial. √ verde: la recuperó en el cierre · azul: sigue desaprobada · ▲ contorno: la había aprobado en la inicial y no en el cierre.
       </Text>
     </View>
   );

@@ -84,6 +84,7 @@ export function mkReporte(salas: SalaReporte[]): ReporteEscuela {
     generado_en: "2026-09-01T12:00:00.000Z",
     areas: AREAS,
     salas,
+    turno: null, turnos: [],
     resumen: {
       inicial: {
         evaluados: suma((s) => s.inicial?.evaluados ?? 0), aprobados: suma((s) => s.inicial?.aprobados ?? 0),

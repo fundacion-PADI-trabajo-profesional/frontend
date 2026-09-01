@@ -25,7 +25,8 @@ export function PaginaResumen({ data, modo, assets }: { data: ReporteEscuela; mo
   const cmp = modo === "comparativo" ? data.resumen.comparativo! : null;
   const r = modo === "comparativo" ? null : data.resumen[modo]!;
   const evaluados = cmp ? cmp.base : r!.evaluados;
-  const linea = `${data.escuela.nombre} · ${evaluados} niños y niñas evaluados con la Prueba PADI`;
+  const turnoTxt = data.turno ? ` · turno ${data.turno}` : "";
+  const linea = `${data.escuela.nombre}${turnoTxt} · ${evaluados} niños y niñas evaluados con la Prueba PADI`;
   return (
     <Page size="A4" wrap style={{ ...PAGE, fontFamily: F.body, fontSize: u(1.1), color: C.ink }}>
       <Encabezado titulo="Resumen de la escuela" subtitulo={sub} linea={linea} />
@@ -37,9 +38,9 @@ export function PaginaResumen({ data, modo, assets }: { data: ReporteEscuela; mo
             <View style={{ flexDirection: "row", alignItems: "center", gap: u(2) }}>
               <Donut aprobados={cmp.aprobaron_inicial} evaluados={cmp.base} size={u(7)} titulo="Inicial" />
               <Text style={{ fontSize: u(2.2), color: C.azul }}>→</Text>
-              <Donut aprobados={cmp.cierra_con} evaluados={cmp.base} size={u(7)} titulo="Cierre" />
-              <View style={{ width: u(17) }}>
-                <Leyenda items={leyendaTotales} />
+              <Donut aprobados={cmp.cierra_con} evaluados={cmp.base} pendientes={cmp.pendientes} size={u(7)} titulo="Cierre" />
+              <View style={{ width: u(19) }}>
+                <Leyenda items={cmp.pendientes > 0 ? [...leyendaTotales, { color: C.grisTile, texto: "sin evaluación de cierre" }] : leyendaTotales} />
               </View>
             </View>
             {cmp.pendientes > 0 && (
@@ -123,7 +124,7 @@ export function PaginaResumen({ data, modo, assets }: { data: ReporteEscuela; mo
         <TablaSalaArea data={data} modo={modo} />
       </View>
 
-      <Pie logo={assets.logo} textoCorrido={`${data.escuela.nombre} · ${sub}`} />
+      <Pie logo={assets.logo} textoCorrido={`${data.escuela.nombre}${turnoTxt} · ${sub}`} />
     </Page>
   );
 }

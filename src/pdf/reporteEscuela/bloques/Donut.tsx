@@ -5,12 +5,16 @@ import { arcoDonut, porcentaje } from "../../../utils/reporteEscuela";
 /**
  * Donut de aprobados/evaluados (v2-C §1): arco verde `0°→360·aprobados/evaluados` y azul el resto,
  * con el porcentaje grande al centro. `size` en pt (el llamador lo arma con `u(...)`). Sin evaluados: anillo gris + "—".
+ * `pendientes` (opcional) agrega un tercer arco gris al final del anillo (comparativo): verde `0→gA`,
+ * azul `gA→gB`, gris `gB→360`, con `gA = 360·aprobados/evaluados` y `gB = 360·(evaluados−pendientes)/evaluados`.
+ * Sin `pendientes` (o en 0), `gB` da 360 y el arco gris queda vacío: comportamiento idéntico al anterior.
  */
-export function Donut({ aprobados, evaluados, size, titulo }: { aprobados: number; evaluados: number; size: number; titulo?: string }) {
+export function Donut({ aprobados, evaluados, pendientes, size, titulo }: { aprobados: number; evaluados: number; pendientes?: number; size: number; titulo?: string }) {
   const r = size / 2;
   const strokeWidth = size * 0.16;
   const radio = r - strokeWidth / 2;
-  const grados = evaluados > 0 ? Math.max(0, Math.min(360, (360 * aprobados) / evaluados)) : 0;
+  const gA = evaluados > 0 ? Math.max(0, Math.min(360, (360 * aprobados) / evaluados)) : 0;
+  const gB = evaluados > 0 ? Math.max(0, Math.min(360, (360 * (evaluados - (pendientes ?? 0))) / evaluados)) : 0;
   const trazo = { strokeWidth, fill: "none" as const, strokeLinecap: "butt" as const };
   return (
     <View style={{ alignItems: "center" }}>
@@ -23,8 +27,9 @@ export function Donut({ aprobados, evaluados, size, titulo }: { aprobados: numbe
             <Path d={arcoDonut(r, r, radio, 0, 360)} stroke={C.grisTile} {...trazo} />
           ) : (
             <>
-              {grados < 360 && <Path d={arcoDonut(r, r, radio, grados, 360)} stroke={C.azul} {...trazo} />}
-              {grados > 0 && <Path d={arcoDonut(r, r, radio, 0, grados)} stroke={C.verde} {...trazo} />}
+              {gB < 360 && <Path d={arcoDonut(r, r, radio, gB, 360)} stroke={C.grisTile} {...trazo} />}
+              {gA < gB && <Path d={arcoDonut(r, r, radio, gA, gB)} stroke={C.azul} {...trazo} />}
+              {gA > 0 && <Path d={arcoDonut(r, r, radio, 0, gA)} stroke={C.verde} {...trazo} />}
             </>
           )}
         </Svg>

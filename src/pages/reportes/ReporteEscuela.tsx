@@ -29,8 +29,10 @@ export default function ReporteEscuela() {
   const [descargando, setDescargando] = useState(false);
   const [descargaError, setDescargaError] = useState<string | null>(null);
 
-  // Conservar el catálogo de turnos por escuela para que las opciones no desaparezcan al filtrar.
-  // Cuando hay datos, usamos data.turnos; cuando filtramos y data.turnos está vacío, usamos el último catálogo guardado.
+  // Mantener montados los MenuItem de turno mientras `data` es `undefined` durante un refetch (al cambiar
+  // escuela/período/turno cambia el queryKey y React Query descarta `data` hasta que llega la respuesta):
+  // sin este catálogo el <Select> se quedaría sin opciones, incluida la seleccionada. No es por filtrado:
+  // el catálogo del backend (findTurnos) nunca viene filtrado por el turno elegido.
   const turnosCatalogoRef = useRef<Record<string, string[]>>({});
 
   const escuelasQuery = useQuery({ queryKey: ["escuelas"], queryFn: getEscuelas });
@@ -45,7 +47,7 @@ export default function ReporteEscuela() {
   });
   const data = reporteQuery.data;
 
-  // Guardar el catálogo de turnos por escuela para que las opciones no desaparezcan al filtrar.
+  // Guardar el catálogo de turnos por escuela para reponerlo mientras `data` está `undefined` en un refetch.
   useEffect(() => {
     if (data?.turnos.length) {
       turnosCatalogoRef.current[escuelaId] = data.turnos;
@@ -114,7 +116,7 @@ export default function ReporteEscuela() {
 
         <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel>Período</InputLabel>
-          <Select value={periodo} label="Período" onChange={(e) => setPeriodo(Number(e.target.value))}>
+          <Select value={periodo} label="Período" onChange={(e) => { setPeriodo(Number(e.target.value)); setTurnoSel("todos"); }}>
             {YEARS.map((y) => <MenuItem key={y} value={y}>{y}</MenuItem>)}
           </Select>
         </FormControl>

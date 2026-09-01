@@ -77,15 +77,22 @@ export function estadosParAreaComparativo(c: Comparativo, areaId: string): { ini
   const aprobadosInicial = pa?.aprobados_inicial ?? 0;
   const aprobadosCierre = pa?.aprobados_cierre ?? 0;
   const sinDato = pa?.sin_dato ?? 0;
+  // Clamp estructural: el largo de `cierre` tiene que dar exactamente `c.base` aun con datos
+  // inconsistentes (p.ej. aprobados_cierre + sin_dato > base). Prioridad: se conserva `g` entero
+  // (topeado a `base`), después `h` (topeado al espacio que sobra tras `g`), y `b` se ajusta para
+  // completar el resto — nunca queda negativo ni se excede la base.
+  const g = Math.min(aprobadosCierre, c.base);
+  const h = Math.min(sinDato, c.base - g);
+  const b = c.base - g - h;
   return {
     inicial: [
       ...Array<EstadoCuadro>(aprobadosInicial).fill("g"),
       ...Array<EstadoCuadro>(Math.max(0, c.base - aprobadosInicial)).fill("b"),
     ],
     cierre: [
-      ...Array<EstadoCuadro>(aprobadosCierre).fill("g"),
-      ...Array<EstadoCuadro>(Math.max(0, c.base - aprobadosCierre - sinDato)).fill("b"),
-      ...Array<EstadoCuadro>(sinDato).fill("h"),
+      ...Array<EstadoCuadro>(g).fill("g"),
+      ...Array<EstadoCuadro>(b).fill("b"),
+      ...Array<EstadoCuadro>(h).fill("h"),
     ],
   };
 }

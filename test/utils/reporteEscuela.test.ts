@@ -91,11 +91,19 @@ describe("estadosParAreaComparativo (par ordenado por área)", () => {
     const c = mk([{ area_id: areaId, aprobados_inicial: 5, aprobados_cierre: 8, sin_dato: 1 }]);
     expect(estadosParAreaComparativo(c, areaId).cierre).toEqual(["g", "g", "g", "g", "g", "g", "g", "g", "b", "h"]);
   });
-  it("clampea a 0 en vez de negativo cuando aprobados_cierre+sin_dato > base", () => {
+  it("clampea el largo de cierre a exactamente `base` cuando aprobados_cierre + sin_dato > base (conserva g entero, luego h, ajusta b)", () => {
+    const c = mk([{ area_id: areaId, aprobados_inicial: 5, aprobados_cierre: 8, sin_dato: 5 }], 10);
+    const par = estadosParAreaComparativo(c, areaId);
+    expect(par.cierre).toHaveLength(10);
+    expect(par.cierre.filter((x) => x === "b")).toHaveLength(0);
+    expect(par.cierre).toEqual(["g", "g", "g", "g", "g", "g", "g", "g", "h", "h"]);
+  });
+  it("clampea a 0 en vez de negativo, e incluso g solo topeado a `base` mantiene el largo exacto", () => {
     const c = mk([{ area_id: areaId, aprobados_inicial: 5, aprobados_cierre: 5, sin_dato: 3 }], 5);
     const par = estadosParAreaComparativo(c, areaId);
+    expect(par.cierre).toHaveLength(5);
     expect(par.cierre.filter((x) => x === "b")).toHaveLength(0);
-    expect(par.cierre).toEqual(["g", "g", "g", "g", "g", "h", "h", "h"]);
+    expect(par.cierre).toEqual(["g", "g", "g", "g", "g"]);
   });
   it("área sin datos en por_area: todo en 0", () => {
     const c = mk([], 5);

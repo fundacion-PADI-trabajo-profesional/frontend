@@ -17,14 +17,15 @@ const gap = () => <View style={{ height: u(0.9) }} />;
 /** Página(s) de una sala. `wrap`: los bloques son indivisibles y la nómina se corta entre filas (§6.3). */
 export function SeccionSala({ data, sala, modo, assets }: { data: ReporteEscuela; sala: SalaReporte; modo: Modo; assets: { logo: string } }) {
   const sub = subtituloModo(modo, data.periodo);
-  const pieTxt = `${data.escuela.nombre} · ${sub}`;
+  const turnoTxt = data.turno ? ` · turno ${data.turno}` : "";
+  const pieTxt = `${data.escuela.nombre}${turnoTxt} · ${sub}`;
   const c = modo === "comparativo" ? sala.comparativo : null;
   const r = modo === "inicial" ? sala.inicial : modo === "cierre" ? sala.cierre : null;
   const linea = c
-    ? `${data.escuela.nombre} · ${c.base} niños y niñas · ${c.reevaluados} reevaluados en el cierre`
+    ? `${data.escuela.nombre}${turnoTxt} · ${c.base} niños y niñas · ${c.reevaluados} reevaluados en el cierre`
     : r
-      ? `${data.escuela.nombre} · ${r.evaluados} niños y niñas evaluados con la Prueba PADI`
-      : data.escuela.nombre;
+      ? `${data.escuela.nombre}${turnoTxt} · ${r.evaluados} niños y niñas evaluados con la Prueba PADI`
+      : `${data.escuela.nombre}${turnoTxt}`;
   const sinDatos = modo === "comparativo" ? !c : !r;
   return (
     <Page size="A4" wrap style={{ ...PAGE, fontFamily: F.body, fontSize: u(1.1), color: C.ink }}>

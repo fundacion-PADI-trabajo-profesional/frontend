@@ -32,7 +32,7 @@ export function PaginaPortada({ data, modo, salaId, assets }: { data: ReporteEsc
         </Text>
         <Text style={{ fontWeight: 600, fontSize: u(2.4), marginTop: u(3) }}>{data.escuela.nombre}</Text>
         <Text style={{ fontSize: u(1.05), color: C.secundario, marginTop: u(1), lineHeight: 1.5 }}>
-          {salasTxt} · {chicos.size} niños y niñas evaluados{"\n"}
+          {salasTxt}{data.turno ? ` · turno ${data.turno}` : ""} · {chicos.size} niños y niñas evaluados{"\n"}
           Generado el {fechaLarga(data.generado_en)} desde la plataforma PADI
         </Text>
       </View>

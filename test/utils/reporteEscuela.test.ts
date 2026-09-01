@@ -1,10 +1,11 @@
 import { describe, it, expect } from "vitest";
 import {
-  layoutCuadricula, estadosTotales, estadosArea, estadosTira, estadosComparativo, textoResumenComparativo,
+  layoutCuadricula, estadosTotales, estadosArea, estadosTira, textoResumenComparativo,
   nombreArchivo, colorCelda, nombreCortoArea, iconoArea, textoAreas, salaTieneModo, escuelaTieneModo, subtituloModo, slug,
-  estadosComparativoResumen,
+  estadosParComparativo, estadosParAreaComparativo, porcentaje, chipsComparativo, arcoDonut,
 } from "../../src/utils/reporteEscuela";
-import { AREAS, REPORTE_24, REPORTE_SIN_CIERRE, mkSala } from "../fixtures/reporteEscuela";
+import type { Comparativo, EstudianteComparativo } from "../../src/api/reportes";
+import { AREAS, REPORTE_24, REPORTE_SIN_CIERRE } from "../fixtures/reporteEscuela";
 
 describe("layoutCuadricula", () => {
   it("elige columnas según N y nunca supera 14 u de alto", () => {
@@ -61,27 +62,52 @@ describe("estados de cuadrícula", () => {
   it("tira: k azules y el resto gris", () => {
     expect(estadosTira(3, 5)).toEqual(["b", "b", "b", "h", "h"]);
   });
-  it("comparativo: mismas posiciones; aprobaron_inicial primero, luego los del comparativo en su orden", () => {
-    const sala = mkSala(5, 10, 4);
-    const par = estadosComparativo(sala)!;
-    expect(par.inicial).toHaveLength(10);
+});
+
+describe("estadosParComparativo (par ordenado, sin posiciones estables)", () => {
+  const c: Comparativo = {
+    base: 10, aprobaron_inicial: 4, reevaluados: 6, recuperaron: 3, persisten: 2, pendientes: 1, cierra_con: 7,
+    por_area: [], estudiantes: [], pautas: [],
+  };
+  it("inicial: aprobaron_inicial en verde, el resto en azul", () => {
+    expect(estadosParComparativo(c).inicial).toEqual(["g", "g", "g", "g", "b", "b", "b", "b", "b", "b"]);
+  });
+  it("cierre: aprobaron_inicial+recuperaron en verde, persisten en azul, pendientes en gris", () => {
+    expect(estadosParComparativo(c).cierre).toEqual(["g", "g", "g", "g", "g", "g", "g", "b", "b", "h"]);
+  });
+});
+
+describe("estadosParAreaComparativo (par ordenado por área)", () => {
+  const areaId = "sm";
+  const mk = (por_area: Comparativo["por_area"], base = 10): Comparativo => ({
+    base, aprobaron_inicial: 0, reevaluados: 0, recuperaron: 0, persisten: 0, pendientes: 0, cierra_con: 0,
+    por_area, estudiantes: [], pautas: [],
+  });
+  it("inicial: aprobados_inicial en verde, resto en azul", () => {
+    const c = mk([{ area_id: areaId, aprobados_inicial: 5, aprobados_cierre: 8, sin_dato: 1 }]);
+    expect(estadosParAreaComparativo(c, areaId).inicial).toEqual(["g", "g", "g", "g", "g", "b", "b", "b", "b", "b"]);
+  });
+  it("cierre: aprobados_cierre en verde, azul intermedio, sin_dato en gris al final", () => {
+    const c = mk([{ area_id: areaId, aprobados_inicial: 5, aprobados_cierre: 8, sin_dato: 1 }]);
+    expect(estadosParAreaComparativo(c, areaId).cierre).toEqual(["g", "g", "g", "g", "g", "g", "g", "g", "b", "h"]);
+  });
+  it("clampea el largo de cierre a exactamente `base` cuando aprobados_cierre + sin_dato > base (conserva g entero, luego h, ajusta b)", () => {
+    const c = mk([{ area_id: areaId, aprobados_inicial: 5, aprobados_cierre: 8, sin_dato: 5 }], 10);
+    const par = estadosParAreaComparativo(c, areaId);
     expect(par.cierre).toHaveLength(10);
-    expect(par.inicial.slice(0, 4)).toEqual(["g", "g", "g", "g"]);
-    expect(par.inicial.slice(4).every((x) => x === "b")).toBe(true);
-    sala.comparativo!.estudiantes.forEach((e, i) => {
-      expect(par.cierre[4 + i]).toBe(e.resultado === "recupero" ? "g" : e.resultado === "persiste" ? "b" : "h");
-    });
+    expect(par.cierre.filter((x) => x === "b")).toHaveLength(0);
+    expect(par.cierre).toEqual(["g", "g", "g", "g", "g", "g", "g", "g", "h", "h"]);
   });
-  it("comparativo por área: usa el estado del área", () => {
-    const sala = mkSala(5, 10, 4);
-    const par = estadosComparativo(sala, "sm")!;
-    sala.comparativo!.estudiantes.forEach((e, i) => {
-      const esperado = e.areas.sm === "pendiente" ? "h" : e.areas.sm === "ok" || e.areas.sm === "recupero" ? "g" : "b";
-      expect(par.cierre[4 + i]).toBe(esperado);
-    });
+  it("clampea a 0 en vez de negativo, e incluso g solo topeado a `base` mantiene el largo exacto", () => {
+    const c = mk([{ area_id: areaId, aprobados_inicial: 5, aprobados_cierre: 5, sin_dato: 3 }], 5);
+    const par = estadosParAreaComparativo(c, areaId);
+    expect(par.cierre).toHaveLength(5);
+    expect(par.cierre.filter((x) => x === "b")).toHaveLength(0);
+    expect(par.cierre).toEqual(["g", "g", "g", "g", "g"]);
   });
-  it("comparativo null si la sala no tiene inicial", () => {
-    expect(estadosComparativo({ ...mkSala(5, 10, 4), inicial: null, comparativo: null })).toBeNull();
+  it("área sin datos en por_area: todo en 0", () => {
+    const c = mk([], 5);
+    expect(estadosParAreaComparativo(c, "otra")).toEqual({ inicial: ["b", "b", "b", "b", "b"], cierre: ["b", "b", "b", "b", "b"] });
   });
 });
 
@@ -89,7 +115,7 @@ describe("textos", () => {
   it("textoResumenComparativo", () => {
     const c = { ...REPORTE_24.salas[0].comparativo!, base: 24, aprobaron_inicial: 7, reevaluados: 15, recuperaron: 9, persisten: 6, pendientes: 2 };
     expect(textoResumenComparativo(c)).toBe(
-      "De los 17 que no pasaron la inicial se reevaluó a 15: 9 recuperaron todas las áreas, 6 siguen con áreas para reforzar y 2 todavía no tienen evaluación de cierre. Cada cuadrado es el mismo chico en las dos cuadrículas: los que pasaron de azul a verde son los que recuperaron."
+      "De los 17 que no pasaron la inicial se reevaluó a 15: 9 recuperaron todas las áreas, 6 siguen con áreas para reforzar y 2 todavía no tienen evaluación de cierre."
     );
   });
   it("subtituloModo", () => {
@@ -101,6 +127,16 @@ describe("textos", () => {
     expect(slug("Jardín Municipal N° 1")).toBe("jardin-municipal-n-1");
     expect(nombreArchivo({ escuela: "Jardín Municipal N° 1", periodo: 2025, modo: "inicial" })).toBe("PADI-Reporte-jardin-municipal-n-1-2025-inicial.pdf");
     expect(nombreArchivo({ escuela: "Jardín Municipal N° 1", periodo: 2025, modo: "comparativo", sala: "Sala de 5" })).toBe("PADI-Reporte-jardin-municipal-n-1-2025-inicial-vs-cierre-sala-de-5.pdf");
+  });
+  it("nombreArchivo agrega -turno-<slug> antes de .pdf cuando se pasa turno", () => {
+    expect(nombreArchivo({ escuela: "Jardín Municipal N° 1", periodo: 2025, modo: "inicial", turno: "Mañana" }))
+      .toBe("PADI-Reporte-jardin-municipal-n-1-2025-inicial-turno-manana.pdf");
+    expect(nombreArchivo({ escuela: "Jardín Municipal N° 1", periodo: 2025, modo: "comparativo", sala: "Sala de 5", turno: "Tarde" }))
+      .toBe("PADI-Reporte-jardin-municipal-n-1-2025-inicial-vs-cierre-sala-de-5-turno-tarde.pdf");
+    expect(nombreArchivo({ escuela: "Jardín Municipal N° 1", periodo: 2025, modo: "inicial", turno: null }))
+      .toBe("PADI-Reporte-jardin-municipal-n-1-2025-inicial.pdf");
+    expect(nombreArchivo({ escuela: "Jardín Municipal N° 1", periodo: 2025, modo: "inicial", turno: "" }))
+      .toBe("PADI-Reporte-jardin-municipal-n-1-2025-inicial.pdf");
   });
   it("áreas: nombre corto, ícono por orden y texto de la nómina", () => {
     expect(AREAS.map(nombreCortoArea)).toEqual(["Sensoriomotora", "Lenguaje", "Cognitiva", "Socioemocional"]);
@@ -126,11 +162,6 @@ describe("extensiones para el comparativo", () => {
     expect(layoutCuadricula(24, "sala", 24).tile).toBeCloseTo((24 - 7 * 0.42) / 8, 5);
     expect(layoutCuadricula(24, "area", 12.5).tile).toBeCloseTo((12.5 - 11 * 0.17) / 12, 5);
   });
-  it("estadosComparativoResumen arma el par a nivel escuela", () => {
-    const par = estadosComparativoResumen({ base: 10, aprobaron_inicial: 4, recuperaron: 3, persisten: 2, pendientes: 1 });
-    expect(par.inicial).toEqual(["g", "g", "g", "g", "b", "b", "b", "b", "b", "b"]);
-    expect(par.cierre).toEqual(["g", "g", "g", "g", "g", "g", "g", "b", "b", "h"]);
-  });
 });
 
 describe("modos disponibles", () => {
@@ -142,5 +173,95 @@ describe("modos disponibles", () => {
     expect(salaTieneModo(REPORTE_SIN_CIERRE.salas[0], "cierre")).toBe(false);
     expect(escuelaTieneModo(REPORTE_SIN_CIERRE, "comparativo")).toBe(false);
     expect(escuelaTieneModo(REPORTE_24, "comparativo")).toBe(true);
+  });
+});
+
+describe("porcentaje", () => {
+  it("redondea con espacio antes del %", () => {
+    expect(porcentaje(1, 3)).toBe("33 %");
+    expect(porcentaje(2, 3)).toBe("67 %");
+    expect(porcentaje(10, 10)).toBe("100 %");
+    expect(porcentaje(0, 10)).toBe("0 %");
+  });
+  it("devuelve — cuando n es 0 o negativo", () => {
+    expect(porcentaje(0, 0)).toBe("—");
+    expect(porcentaje(5, -1)).toBe("—");
+  });
+});
+
+describe("chipsComparativo", () => {
+  it("una chip por área, en orden de catálogo, aprobada = ok o recupero", () => {
+    const e: EstudianteComparativo = {
+      estudiante_id: "e1", nombre: "Test", resultado: "persiste",
+      areas: { sm: "ok", cl: "recupero", cog: "persiste", se: "nueva" },
+    };
+    const chips = chipsComparativo(e, AREAS);
+    expect(chips.map((c) => c.area.id)).toEqual(["sm", "cl", "cog", "se"]);
+    expect(chips.map((c) => c.aprobada)).toEqual([true, true, false, false]);
+  });
+  it("respeta el orden de catálogo aunque las áreas vengan desordenadas", () => {
+    const desordenadas = [AREAS[2], AREAS[0], AREAS[3], AREAS[1]];
+    const e: EstudianteComparativo = {
+      estudiante_id: "e1", nombre: "Test", resultado: "recupero",
+      areas: { sm: "ok", cl: "ok", cog: "ok", se: "ok" },
+    };
+    expect(chipsComparativo(e, desordenadas).map((c) => c.area.id)).toEqual(["sm", "cl", "cog", "se"]);
+  });
+  it("devuelve [] cuando el resultado es pendiente", () => {
+    const e: EstudianteComparativo = {
+      estudiante_id: "e1", nombre: "Test", resultado: "pendiente",
+      areas: { sm: "pendiente", cl: "pendiente", cog: "pendiente", se: "pendiente" },
+    };
+    expect(chipsComparativo(e, AREAS)).toEqual([]);
+  });
+});
+
+describe("arcoDonut", () => {
+  const nums = (d: string) => (d.match(/-?\d+(?:\.\d+)?(?:e-?\d+)?/gi) ?? []).map(Number);
+
+  it("cuarto de círculo de las 12 a las 3: extremos correctos (1e-6), large-arc=0, sweep=1", () => {
+    const d = arcoDonut(0, 0, 10, 0, 90);
+    const [mx, my, rx, ry, , large, sweep, ex, ey] = nums(d);
+    expect(mx).toBeCloseTo(0, 6);
+    expect(my).toBeCloseTo(-10, 6);
+    expect(rx).toBe(10);
+    expect(ry).toBe(10);
+    expect(large).toBe(0);
+    expect(sweep).toBe(1);
+    expect(ex).toBeCloseTo(10, 6);
+    expect(ey).toBeCloseTo(0, 6);
+  });
+  it("cuarto de círculo con centro desplazado", () => {
+    const d = arcoDonut(50, 50, 20, 90, 180);
+    const [mx, my, , , , large, sweep, ex, ey] = nums(d);
+    expect(mx).toBeCloseTo(70, 6);
+    expect(my).toBeCloseTo(50, 6);
+    expect(large).toBe(0);
+    expect(sweep).toBe(1);
+    expect(ex).toBeCloseTo(50, 6);
+    expect(ey).toBeCloseTo(70, 6);
+  });
+  it("arco mayor a 180°: large-arc=1", () => {
+    const d = arcoDonut(0, 0, 10, 0, 200);
+    const [, , , , , large, sweep] = nums(d);
+    expect(large).toBe(1);
+    expect(sweep).toBe(1);
+  });
+  it("arco de exactamente 180°: large-arc=0", () => {
+    const d = arcoDonut(0, 0, 10, 0, 180);
+    const [, , , , , large] = nums(d);
+    expect(large).toBe(0);
+  });
+  it("círculo completo (hasta-desde >= 360): dos arcos de 180°, vuelve al punto de partida", () => {
+    const d = arcoDonut(0, 0, 10, 0, 360);
+    expect((d.match(/A/g) ?? []).length).toBe(2);
+    const n = nums(d);
+    expect(n).toHaveLength(16);
+    expect(n[0]).toBeCloseTo(0, 6);
+    expect(n[1]).toBeCloseTo(-10, 6);
+    expect(n[7]).toBeCloseTo(0, 6);
+    expect(n[8]).toBeCloseTo(10, 6);
+    expect(n[14]).toBeCloseTo(0, 6);
+    expect(n[15]).toBeCloseTo(-10, 6);
   });
 });

@@ -1,6 +1,8 @@
 import { api } from "./auth";
 import type { Estudiante } from "./estudiantes";
 
+export const TURNOS = ["Mañana", "Tarde", "Completo"] as const;
+export type Turno = (typeof TURNOS)[number];
 
 /** Lee usuario y rol desde padiUser para construir query params autenticados. */
 const getUserData = () => {
@@ -42,7 +44,7 @@ export interface Aula {
 export interface CreateAulaDto {
   sala_id: number;
   comision: string;
-  turno: string;
+  turno: Turno;
   escuela_id?: string;
 }
 

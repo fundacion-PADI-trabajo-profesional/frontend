@@ -14,9 +14,8 @@ export const C = {
   lineaFila: "#375E9E44",
   blanco: "#FFFFFF",
   chip: {
-    recupero: { bg: "#DDEFC4", fg: "#2F5A0E" },
-    persiste: { bg: "#DCE4F1", fg: "#274A82" },
-    nueva: { bg: "#FFFFFF", fg: "#274A82" },
+    aprobada: { bg: "#DDEFC4", fg: "#2F5A0E" },
+    desaprobada: { bg: "#DCE4F1", fg: "#274A82" },
     pendiente: { bg: "#E6E9EB", fg: "#4A4F55" },
   },
 } as const;

@@ -12,12 +12,16 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AulasList from "./AulasList";
 import GestionDocentesAula from "./GestionDocentesAula";
-import { getAulasPorEscuela, createAula, updateAula, deleteAula, type Aula } from "../../api/aulas";
+import { getAulasPorEscuela, createAula, updateAula, deleteAula, TURNOS, type Aula, type Turno } from "../../api/aulas";
 import { type Sala } from "../../api/estudiantes";
 
 interface Props {
@@ -78,12 +82,14 @@ export default function AulasView({ escuelaId, salaSeleccionada, onVerEstudiante
         try {
             if (editing) {
                 await updateAula(editing.id, {
-                    ...formData,
+                    comision: formData.comision,
+                    turno: formData.turno as Turno,
                     sala_id: salaSeleccionada.id
                 });
             } else {
                 await createAula({
-                    ...formData,
+                    comision: formData.comision,
+                    turno: formData.turno as Turno,
                     sala_id: salaSeleccionada.id,
                     escuela_id: escuelaId
                 });
@@ -169,7 +175,12 @@ export default function AulasView({ escuelaId, salaSeleccionada, onVerEstudiante
                         aulas={aulas}
                         onEdit={(a) => {
                             setEditing(a);
-                            setFormData({ comision: a.comision, turno: a.turno });
+                            // Si el turno guardado no es uno de los valores canónicos (legacy data),
+                            // dejar el campo vacío en el formulario para que el usuario lo corrija
+                            setFormData({
+                                comision: a.comision,
+                                turno: (TURNOS as readonly string[]).includes(a.turno) ? a.turno : ""
+                            });
                             setMode("form");
                         }}
                         onDelete={handleDelete}
@@ -192,12 +203,18 @@ export default function AulasView({ escuelaId, salaSeleccionada, onVerEstudiante
                             onChange={(e) => setFormData({ ...formData, comision: e.target.value })}
                         />
 
-                        <TextField
-                            fullWidth
-                            label="Turno (Ej: Mañana, Tarde)"
-                            value={formData.turno}
-                            onChange={(e) => setFormData({ ...formData, turno: e.target.value })}
-                        />
+                        <FormControl fullWidth>
+                            <InputLabel>Turno</InputLabel>
+                            <Select
+                                value={formData.turno}
+                                label="Turno"
+                                onChange={(e) => setFormData({ ...formData, turno: e.target.value })}
+                            >
+                                {TURNOS.map((t) => (
+                                    <MenuItem key={t} value={t}>{t}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
 
                         <Box sx={{ display: "flex", gap: 2, pt: 2 }}>
                             <Button

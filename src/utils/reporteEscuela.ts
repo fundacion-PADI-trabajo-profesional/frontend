@@ -1,4 +1,4 @@
-import type { AreaCatalogo, Comparativo, ReporteEscuela, ResultadoTipo, SalaReporte } from "../api/reportes";
+import type { AreaCatalogo, Comparativo, EstudianteComparativo, ReporteEscuela, ResultadoTipo, SalaReporte } from "../api/reportes";
 
 export type Modo = "inicial" | "cierre" | "comparativo";
 export type EstadoCuadro = "g" | "b" | "h";
@@ -52,36 +52,14 @@ export function estadosTira(k: number, n: number): EstadoCuadro[] {
   return [...Array<EstadoCuadro>(Math.max(0, k)).fill("b"), ...Array<EstadoCuadro>(Math.max(0, n - k)).fill("h")];
 }
 
-/** Par inicial → cierre con posiciones estables: primero los que aprobaron la inicial, luego `comparativo.estudiantes`. */
-export function estadosComparativo(sala: SalaReporte, areaId?: string): { inicial: EstadoCuadro[]; cierre: EstadoCuadro[] } | null {
-  const c = sala.comparativo;
-  const ini = sala.inicial;
-  if (!c || !ini) return null;
-  const aprobaron = ini.estudiantes.filter((e) => e.aprobado);
-  const estadoIni = new Map(ini.estudiantes.map((e) => [e.estudiante_id, e]));
-  const inicial: EstadoCuadro[] = [];
-  const cierre: EstadoCuadro[] = [];
-  for (const e of aprobaron) {
-    const v = areaId ? e.areas[areaId] : "A";
-    const est: EstadoCuadro = v === "A" ? "g" : v === "D" ? "b" : "h";
-    inicial.push(est); cierre.push(est);
-  }
-  for (const e of c.estudiantes) {
-    if (areaId) {
-      const vi = estadoIni.get(e.estudiante_id)?.areas[areaId] ?? null;
-      inicial.push(vi === "A" ? "g" : vi === "D" ? "b" : "h");
-      const vc = e.areas[areaId];
-      cierre.push(vc === "pendiente" ? "h" : vc === "ok" || vc === "recupero" ? "g" : "b");
-    } else {
-      inicial.push("b");
-      cierre.push(e.resultado === "recupero" ? "g" : e.resultado === "persiste" ? "b" : "h");
-    }
-  }
-  return { inicial, cierre };
-}
-
-/** Par inicial → cierre a nivel escuela (el resumen no tiene detalle por chico): recuperados al inicio del bloque azul. */
-export function estadosComparativoResumen(c: { base: number; aprobaron_inicial: number; recuperaron: number; persisten: number; pendientes: number }): { inicial: EstadoCuadro[]; cierre: EstadoCuadro[] } {
+/**
+ * Par inicial → cierre a nivel escuela o sala, sin desagregar por área (spec v2 §7.6): NO usa posiciones
+ * estables por chico (eso mostraba quién recuperó, lo que expone datos sensibles) — arma dos tiras
+ * ordenadas por estado: primero los verdes, después los azules, después los grises.
+ */
+export function estadosParComparativo(
+  c: Pick<Comparativo, "base" | "aprobaron_inicial" | "recuperaron" | "persisten" | "pendientes">
+): { inicial: EstadoCuadro[]; cierre: EstadoCuadro[] } {
   const noPasaron = Math.max(0, c.base - c.aprobaron_inicial);
   return {
     inicial: [...Array<EstadoCuadro>(c.aprobaron_inicial).fill("g"), ...Array<EstadoCuadro>(noPasaron).fill("b")],
@@ -93,9 +71,35 @@ export function estadosComparativoResumen(c: { base: number; aprobaron_inicial: 
   };
 }
 
+/** Igual que `estadosParComparativo` pero para una única área, a partir de `comparativo.por_area`. */
+export function estadosParAreaComparativo(c: Comparativo, areaId: string): { inicial: EstadoCuadro[]; cierre: EstadoCuadro[] } {
+  const pa = c.por_area.find((p) => p.area_id === areaId);
+  const aprobadosInicial = pa?.aprobados_inicial ?? 0;
+  const aprobadosCierre = pa?.aprobados_cierre ?? 0;
+  const sinDato = pa?.sin_dato ?? 0;
+  // Clamp estructural: el largo de `cierre` tiene que dar exactamente `c.base` aun con datos
+  // inconsistentes (p.ej. aprobados_cierre + sin_dato > base). Prioridad: se conserva `g` entero
+  // (topeado a `base`), después `h` (topeado al espacio que sobra tras `g`), y `b` se ajusta para
+  // completar el resto — nunca queda negativo ni se excede la base.
+  const g = Math.min(aprobadosCierre, c.base);
+  const h = Math.min(sinDato, c.base - g);
+  const b = c.base - g - h;
+  return {
+    inicial: [
+      ...Array<EstadoCuadro>(aprobadosInicial).fill("g"),
+      ...Array<EstadoCuadro>(Math.max(0, c.base - aprobadosInicial)).fill("b"),
+    ],
+    cierre: [
+      ...Array<EstadoCuadro>(g).fill("g"),
+      ...Array<EstadoCuadro>(b).fill("b"),
+      ...Array<EstadoCuadro>(h).fill("h"),
+    ],
+  };
+}
+
 export function textoResumenComparativo(c: Comparativo): string {
   const noPasaron = c.base - c.aprobaron_inicial;
-  return `De los ${noPasaron} que no pasaron la inicial se reevaluó a ${c.reevaluados}: ${c.recuperaron} recuperaron todas las áreas, ${c.persisten} siguen con áreas para reforzar y ${c.pendientes} todavía no tienen evaluación de cierre. Cada cuadrado es el mismo chico en las dos cuadrículas: los que pasaron de azul a verde son los que recuperaron.`;
+  return `De los ${noPasaron} que no pasaron la inicial se reevaluó a ${c.reevaluados}: ${c.recuperaron} recuperaron todas las áreas, ${c.persisten} siguen con áreas para reforzar y ${c.pendientes} todavía no tienen evaluación de cierre.`;
 }
 
 export function subtituloModo(modo: Modo, periodo: number): string {
@@ -107,9 +111,45 @@ export function slug(s: string): string {
   return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
-export function nombreArchivo(p: { escuela: string; periodo: number; modo: Modo; sala?: string | null }): string {
+export function nombreArchivo(p: { escuela: string; periodo: number; modo: Modo; sala?: string | null; turno?: string | null }): string {
   const modo = p.modo === "comparativo" ? "inicial-vs-cierre" : p.modo;
-  return `PADI-Reporte-${slug(p.escuela)}-${p.periodo}-${modo}${p.sala ? `-${slug(p.sala)}` : ""}.pdf`;
+  const sufijoSala = p.sala ? `-${slug(p.sala)}` : "";
+  const sufijoTurno = p.turno ? `-turno-${slug(p.turno)}` : "";
+  return `PADI-Reporte-${slug(p.escuela)}-${p.periodo}-${modo}${sufijoSala}${sufijoTurno}.pdf`;
+}
+
+/** Porcentaje redondeado con espacio antes del signo (es-AR); "—" cuando no hay base (`n<=0`). */
+export function porcentaje(k: number, n: number): string {
+  return n <= 0 ? "—" : `${Math.round((k / n) * 100)} %`;
+}
+
+/** Una chip por área del catálogo (en orden `orden`); aprobada = ok o recupero. `[]` si el chico está pendiente (fila especial). */
+export function chipsComparativo(e: EstudianteComparativo, areas: AreaCatalogo[]): { area: AreaCatalogo; aprobada: boolean }[] {
+  if (e.resultado === "pendiente") return [];
+  return [...areas]
+    .sort((a, b) => a.orden - b.orden)
+    .map((area) => ({ area, aprobada: e.areas[area.id] === "ok" || e.areas[area.id] === "recupero" }));
+}
+
+/**
+ * Path `d` de un arco de dona en SVG (para el PDF): centro `(cx, cy)`, radio `r`, ángulos en grados con
+ * 0° = 12 en punto, sentido horario. Si el tramo cubre el círculo completo (`hasta - desde >= 360`) devuelve
+ * dos semicírculos (un solo comando `A` no puede cerrar un círculo entero).
+ */
+export function arcoDonut(cx: number, cy: number, r: number, desde: number, hasta: number): string {
+  const punto = (deg: number) => {
+    const rad = (deg * Math.PI) / 180;
+    return { x: cx + r * Math.sin(rad), y: cy - r * Math.cos(rad) };
+  };
+  if (hasta - desde >= 360) {
+    const p0 = punto(desde);
+    const pMedio = punto(desde + 180);
+    return `M ${p0.x} ${p0.y} A ${r} ${r} 0 1 1 ${pMedio.x} ${pMedio.y} A ${r} ${r} 0 1 1 ${p0.x} ${p0.y}`;
+  }
+  const p0 = punto(desde);
+  const p1 = punto(hasta);
+  const arcoGrande = hasta - desde > 180 ? 1 : 0;
+  return `M ${p0.x} ${p0.y} A ${r} ${r} 0 ${arcoGrande} 1 ${p1.x} ${p1.y}`;
 }
 
 const hex = (n: number) => Math.round(n).toString(16).padStart(2, "0").toUpperCase();

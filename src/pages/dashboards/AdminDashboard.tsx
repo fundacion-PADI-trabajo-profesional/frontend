@@ -9,6 +9,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import GroupIcon from "@mui/icons-material/Group";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import BuildIcon from "@mui/icons-material/Build";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 
 interface Props {
     rol: string;
@@ -130,6 +131,18 @@ export default function AdminDashboard({ rol }: Props) {
                             icon={<AssessmentIcon />}
                             color="#A3BE54"
                             onClick={() => navigate("/estadisticas/padi")}
+                        />
+                    </Grid>
+                )}
+
+                {isEquipoPadi && (
+                    <Grid item xs={12} sm={6} md={4}>
+                        <DashboardCard
+                            title="Reportes"
+                            description="Reporte de escuela en PDF para entregar a las escuelas y docentes."
+                            icon={<PictureAsPdfIcon />}
+                            color="#375E9E"
+                            onClick={() => navigate("/reportes/escuela")}
                         />
                     </Grid>
                 )}

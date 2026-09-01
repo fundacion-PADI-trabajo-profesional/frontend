@@ -55,6 +55,7 @@ El frontend de PADI es la interfaz que utilizan los operadores de la Fundación 
 - Dashboards de resultados por escuela, zona, docente y nivel PADI.
 - Gráficos interactivos con Recharts.
 - Exportación de datos a Excel (ExcelJS).
+- Reporte de escuela en PDF (`@react-pdf/renderer`, generado en el cliente).
 
 ### Componentes y UI
 - Sistema de diseño basado en Material UI con tema centralizado.

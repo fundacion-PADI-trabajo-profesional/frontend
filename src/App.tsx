@@ -19,6 +19,7 @@ import EstadisticasPadi from "./pages/estadisticas/EstadisticasPadi"
 import EstadisticasZona from "./pages/estadisticas/EstadisticasZona"
 import EstadisticasEscuela from "./pages/estadisticas/EstadisticasEscuela"
 import EstadisticasDocente from "./pages/estadisticas/EstadisticasDocente"
+import ReporteEscuela from "./pages/reportes/ReporteEscuela"
 
 import type { PadiUser } from "./api/auth"
 
@@ -126,6 +127,18 @@ function App() {
             !currentUser
               ? <Navigate to="/login" replace />
               : <EstadisticasDocente />
+          }
+        />
+
+        {/* Reportes (solo equipo_padi) */}
+        <Route
+          path="/reportes/escuela"
+          element={
+            !currentUser
+              ? <Navigate to="/login" replace />
+              : currentUser.rol !== "equipo_padi"
+                ? <Navigate to="/home" replace />
+                : <ReporteEscuela />
           }
         />
 

@@ -1,0 +1,61 @@
+// @vitest-environment node
+import { describe, it, expect, beforeAll, vi } from "vitest";
+import path from "node:path";
+
+// test/setup.ts stubs fetch con vi.fn() (devuelve undefined y rompe el loader WASM de yoga).
+// Con que fetch RECHACE alcanza: yoga captura el error y cae a su decodificador base64 interno.
+vi.stubGlobal("fetch", () => Promise.reject(new Error("fetch deshabilitado en el smoke test de PDF")));
+
+import { renderToBuffer } from "@react-pdf/renderer";
+import { registerFonts } from "../../src/pdf/reporteEscuela/fonts";
+import { ReporteEscuelaDocument } from "../../src/pdf/reporteEscuela/ReporteEscuelaDocument";
+import type { Modo } from "../../src/utils/reporteEscuela";
+import type { ReporteEscuela } from "../../src/api/reportes";
+import { REPORTE_24, REPORTE_44, REPORTE_ESCUELA, REPORTE_SIN_CIERRE } from "../fixtures/reporteEscuela";
+
+const dir = new URL(".", import.meta.url).pathname;
+const F = (f: string) => path.resolve(dir, "../../src/pdf/fonts", f);
+const ASSETS = { logo: path.resolve(dir, "../../public/assets/images/logo_sin_fondo.png") };
+
+beforeAll(() =>
+  registerFonts({
+    ls700: F("LeagueSpartan-Bold.ttf"), ls800: F("LeagueSpartan-ExtraBold.ttf"),
+    m400: F("Montserrat-Regular.ttf"), m500: F("Montserrat-Medium.ttf"), m600: F("Montserrat-SemiBold.ttf"),
+    m700: F("Montserrat-Bold.ttf"), m700i: F("Montserrat-BoldItalic.ttf"),
+  })
+);
+
+export const paginas = (buf: Buffer) => (buf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) ?? []).length;
+export const render = (data: ReporteEscuela, modo: Modo, salaId: number | null = null) =>
+  renderToBuffer(<ReporteEscuelaDocument data={data} modo={modo} salaId={salaId} assets={ASSETS} />);
+
+describe("ReporteEscuelaDocument — portada", () => {
+  it("genera un PDF válido con la portada", async () => {
+    const buf = await render({ ...REPORTE_24, salas: [] }, "inicial");
+    expect(buf.subarray(0, 5).toString()).toBe("%PDF-");
+    expect(paginas(buf)).toBe(1);
+  });
+});
+
+describe("ReporteEscuelaDocument — documento completo", () => {
+  it("escuela de una sala de 24: portada + resumen + sala = 3", async () => {
+    expect(paginas(await render(REPORTE_24, "inicial"))).toBe(3);
+  });
+  it("escuela de una sala de 44: portada + resumen + 2 = 4", async () => {
+    expect(paginas(await render(REPORTE_44, "inicial"))).toBe(4);
+  });
+  it("escuela de tres salas chicas: portada + resumen + 3 = 5", async () => {
+    expect(paginas(await render(REPORTE_ESCUELA, "inicial"))).toBe(5);
+  });
+  it("una sola sala: sin resumen (portada + sala = 2)", async () => {
+    expect(paginas(await render(REPORTE_24, "inicial", 5))).toBe(2);
+  });
+  it("comparativo de 24: el bloque de pautas fluye a otra hoja si no entra", async () => {
+    const n = paginas(await render(REPORTE_24, "comparativo"));
+    expect(n).toBeGreaterThanOrEqual(4); // portada + resumen + sala en 1–2 hojas
+    expect(n).toBeLessThanOrEqual(5);
+  });
+  it("modo cierre sin cierres: portada + aviso (sin resumen)", async () => {
+    expect(paginas(await render(REPORTE_SIN_CIERRE, "cierre"))).toBe(2);
+  });
+});

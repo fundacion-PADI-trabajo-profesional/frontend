@@ -3,13 +3,13 @@ import { C, F, PAGE, u } from "./theme";
 import { Encabezado } from "./bloques/Encabezado";
 import { Pie } from "./bloques/Pie";
 import { Rotulo } from "./bloques/Rotulo";
-import { Cuadricula } from "./bloques/Cuadricula";
 import { Donut } from "./bloques/Donut";
 import { ColumnaApilada } from "./bloques/ColumnaApilada";
+import { BarraApilada } from "./bloques/BarraApilada";
 import { Leyenda } from "./bloques/Leyenda";
 import { IconoArea } from "./bloques/IconoArea";
 import { TablaSalaArea } from "./bloques/TablaSalaArea";
-import { estadosTotales, layoutCuadricula, porcentaje, subtituloModo, type Modo } from "../../utils/reporteEscuela";
+import { porcentaje, subtituloModo, type Modo } from "../../utils/reporteEscuela";
 import type { ReporteEscuela } from "../../api/reportes";
 
 const gap = () => <View style={{ height: u(2.2) }} />;
@@ -80,10 +80,11 @@ export function PaginaResumen({ data, modo, assets }: { data: ReporteEscuela; mo
                   <Text style={{ fontSize: u(1.05), fontWeight: 700 }}>{s.sala}</Text>
                   <Text style={{ fontSize: u(0.85), color: C.secundario }}>{s.evaluados} evaluados</Text>
                 </View>
-                <Cuadricula estados={estadosTotales(s)} layout={layoutCuadricula(s.evaluados, "area")} />
-                <Text style={{ flexGrow: 1, textAlign: "right", fontSize: u(1) }}>
-                  <Text style={{ fontWeight: 700 }}>{s.aprobados}</Text> de {s.evaluados} aprobaron todas las áreas
-                </Text>
+                <BarraApilada aprobados={s.aprobados} evaluados={s.evaluados} ancho={u(22)} alto={u(1.6)} />
+                <View style={{ flexGrow: 1, alignItems: "flex-end" }}>
+                  <Text style={{ fontSize: u(1.15), fontWeight: 700, color: C.titulo }}>{porcentaje(s.aprobados, s.evaluados)}</Text>
+                  <Text style={{ fontSize: u(0.75), color: C.secundario }}>aprobaron todas las áreas</Text>
+                </View>
               </View>
             ))}
       </View>

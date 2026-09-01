@@ -11,6 +11,9 @@ export function ReporteEscuelaDocument({ data, modo, salaId, assets }: ReporteDo
   return (
     <Document title={`Reporte PADI · ${data.escuela.nombre} · ${data.periodo}`} language="es">
       <PaginaPortada data={data} modo={modo} salaId={salaId} assets={assets} />
+      {/* Sin salas no hay resumen que mostrar. El backend manda resumen null en ese caso; el guard
+    además cubre fixtures/inputs inconsistentes (salas vacías con resumen no-null) sin
+    renderizar una página vacía. */}
       {salaId === null && data.salas.length > 0 && (modo === "comparativo" ? data.resumen.comparativo : data.resumen[modo]) && (
         <PaginaResumen data={data} modo={modo} assets={assets} />
       )}

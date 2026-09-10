@@ -148,6 +148,19 @@ describe("permissions.viewZonas", () => {
 });
 
 // ─── getCurrentUser ──────────────────────────────────────────────────────────
+describe("permissions.viewEstadisticas", () => {
+  // Temporal: la sección de estadísticas está en revisión y solo la ve el equipo PADI.
+  it("solo permite equipo_padi", () => {
+    expect(permissions.viewEstadisticas("equipo_padi")).toBe(true);
+  });
+  it.each(["director", "encargado_zona", "docente"])(
+    "no permite %s",
+    (rol) => {
+      expect(permissions.viewEstadisticas(rol)).toBe(false);
+    }
+  );
+});
+
 describe("getCurrentUser", () => {
   it("returns null when localStorage is empty", () => {
     expect(getCurrentUser()).toBeNull();

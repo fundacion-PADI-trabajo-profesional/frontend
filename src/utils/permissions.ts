@@ -63,6 +63,12 @@ export const permissions = {
     // Ver todas las zonas (para equipo_padi y encargado_zona)
     viewZonas: (userRole: string) =>
         ["equipo_padi", "encargado_zona"].includes(userRole),
+
+    // Ver la sección de estadísticas (rutas /estadisticas/* y tarjetas de los dashboards).
+    // TEMPORAL: la sección está en revisión, así que por ahora solo la ve equipo_padi.
+    // Para volver a habilitarla a los demás roles alcanza con ampliar esta lista.
+    viewEstadisticas: (userRole: string) =>
+        userRole === "equipo_padi",
 };
 
 // Helper para obtener información del usuario desde localStorage

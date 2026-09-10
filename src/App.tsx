@@ -22,6 +22,7 @@ import EstadisticasDocente from "./pages/estadisticas/EstadisticasDocente"
 import ReporteEscuela from "./pages/reportes/ReporteEscuela"
 
 import type { PadiUser } from "./api/auth"
+import { permissions } from "./utils/permissions"
 
 function App() {
   // State holds the full user object or null if not logged in
@@ -90,13 +91,14 @@ function App() {
           }
         />
 
-        {/* Estadísticas por rol */}
+        {/* Estadísticas por rol. Además del rol de cada vista, todas exigen `permissions.viewEstadisticas`
+            (temporal: la sección está en revisión y por ahora solo la ve equipo_padi). */}
         <Route
           path="/estadisticas/padi"
           element={
             !currentUser
               ? <Navigate to="/login" replace />
-              : currentUser.rol !== "equipo_padi"
+              : currentUser.rol !== "equipo_padi" || !permissions.viewEstadisticas(currentUser.rol)
                 ? <Navigate to="/home" replace />
                 : <EstadisticasPadi />
           }
@@ -106,7 +108,7 @@ function App() {
           element={
             !currentUser
               ? <Navigate to="/login" replace />
-              : currentUser.rol !== "encargado_zona"
+              : currentUser.rol !== "encargado_zona" || !permissions.viewEstadisticas(currentUser.rol)
                 ? <Navigate to="/home" replace />
                 : <EstadisticasZona />
           }
@@ -116,7 +118,7 @@ function App() {
           element={
             !currentUser
               ? <Navigate to="/login" replace />
-              : !["director", "encargado_zona", "equipo_padi"].includes(currentUser.rol)
+              : !["director", "encargado_zona", "equipo_padi"].includes(currentUser.rol) || !permissions.viewEstadisticas(currentUser.rol)
                 ? <Navigate to="/home" replace />
                 : <EstadisticasEscuela />
           }
@@ -126,7 +128,9 @@ function App() {
           element={
             !currentUser
               ? <Navigate to="/login" replace />
-              : <EstadisticasDocente />
+              : !permissions.viewEstadisticas(currentUser.rol)
+                ? <Navigate to="/home" replace />
+                : <EstadisticasDocente />
           }
         />
 

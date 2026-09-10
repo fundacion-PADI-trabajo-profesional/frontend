@@ -1,6 +1,7 @@
 import { Grid, Typography, Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import DashboardCard from "../../components/common/DashboardCard";
+import { hasPermission } from "../../utils/permissions";
 import { useEffect, useState } from "react";
 import SchoolIcon from "@mui/icons-material/School";
 import DescriptionIcon from "@mui/icons-material/Description";
@@ -53,15 +54,17 @@ export default function DocenteDashboard() {
                     />
                 </Grid>
 
-                <Grid item xs={12} sm={6} md={4}>
-                    <DashboardCard
-                        title="Estadísticas"
-                        description="Ítems con mayor error y distribución de puntajes de tu aula."
-                        icon={<AssessmentIcon />}
-                        color="#7E57C2"
-                        onClick={() => navigate("/estadisticas/docente")}
-                    />
-                </Grid>
+                {hasPermission("viewEstadisticas") && (
+                    <Grid item xs={12} sm={6} md={4}>
+                        <DashboardCard
+                            title="Estadísticas"
+                            description="Ítems con mayor error y distribución de puntajes de tu aula."
+                            icon={<AssessmentIcon />}
+                            color="#7E57C2"
+                            onClick={() => navigate("/estadisticas/docente")}
+                        />
+                    </Grid>
+                )}
             </Grid>
         </Box>
     );

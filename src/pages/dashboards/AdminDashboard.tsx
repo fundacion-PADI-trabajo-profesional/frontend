@@ -1,6 +1,7 @@
 import { Grid, Typography, Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import DashboardCard from "../../components/common/DashboardCard";
+import { permissions } from "../../utils/permissions";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import BackpackIcon from "@mui/icons-material/Backpack";
 import ExploreIcon from "@mui/icons-material/Explore";
@@ -123,7 +124,7 @@ export default function AdminDashboard({ rol }: Props) {
                     </Grid>
                 )}
 
-                {isEquipoPadi && (
+                {isEquipoPadi && permissions.viewEstadisticas(rol) && (
                     <Grid item xs={12} sm={6} md={4}>
                         <DashboardCard
                             title="Estadísticas"
@@ -147,7 +148,7 @@ export default function AdminDashboard({ rol }: Props) {
                     </Grid>
                 )}
 
-                {isEncargado && (
+                {isEncargado && permissions.viewEstadisticas(rol) && (
                     <Grid item xs={12} sm={6} md={4}>
                         <DashboardCard
                             title="Estadísticas"

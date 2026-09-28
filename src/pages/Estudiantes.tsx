@@ -75,7 +75,7 @@ export default function Estudiantes() {
 
     // Filtrado extendido
     const estudiantesFiltrados = estudiantes.filter((est) => {
-        const cumpleTexto = `${est.personas.nombre} ${est.personas.primer_apellido} ${est.personas.dni}`
+        const cumpleTexto = `${est.personas.nombre} ${est.personas.primer_apellido} ${est.personas.dni ?? ""}`
             .toLowerCase()
             .includes(searchTerm.toLowerCase());
 
@@ -343,7 +343,7 @@ export default function Estudiantes() {
                                     <Stack spacing={2}>
                                         <TextField
                                             fullWidth
-                                            placeholder="Buscar por nombre, apellido o DNI..."
+                                            placeholder="Buscar por nombre, apellido, DNI o ID interno..."
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
                                             InputProps={{

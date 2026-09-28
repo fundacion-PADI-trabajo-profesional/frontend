@@ -24,6 +24,7 @@ import SchoolIcon from '@mui/icons-material/School';
 import { getEvaluacionInstanciaById, type EvaluacionInstancia } from "../../api/evaluaciones"
 import EvaluacionWizard from "./EvaluacionWizard"
 import EvaluacionRevision from "./EvaluacionRevision";
+import { esIdentificadorInterno } from "../../utils/dni";
 
 interface Props {
     evaluacionId: string
@@ -223,7 +224,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                             }}
                         >
                             <Typography variant="body2" color="text.secondary">
-                                DNI:{" "}
+                                {esIdentificadorInterno(evaluacion.estudiante?.dni) ? "ID interno:" : "DNI:"}{" "}
                                 <Box component="span" sx={{ fontWeight: 700, color: "text.primary" }}>
                                     {evaluacion.estudiante?.dni ?? "-"}
                                 </Box>

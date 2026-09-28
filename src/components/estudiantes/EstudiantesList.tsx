@@ -18,6 +18,7 @@ import type { Estudiante } from "../../api/estudiantes"
 import { getSalas, type Sala } from "../../api/estudiantes"
 import { getEscuelas, type Escuela } from "../../api/escuelas"
 import { permissions } from "../../utils/permissions"
+import { etiquetaDni } from "../../utils/dni";
 
 interface EstudiantesListProps {
     estudiantes: Estudiante[]
@@ -198,7 +199,7 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
                                                 {est.personas.primer_apellido}, {est.personas.nombre}
                                             </Typography>
                                         }
-                                        secondary={est.personas.dni ? `DNI: ${est.personas.dni}` : "Sin DNI"}
+                                        secondary={etiquetaDni(est.personas.dni)}
                                     />
                                 </ListItem>
                             ))}

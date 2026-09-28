@@ -111,7 +111,7 @@ function detalleArea(
 
 function fillDatos(ws: Worksheet, data: ExportEvaluacionesData, ly: Layout) {
   const headers = [
-    "Zona", "Escuela", "Sala", "Aula", "Apellido", "Nombre", "DNI", "Tipo", "Estado", "Fecha",
+    "Zona", "Escuela", "Sala", "Aula", "Apellido", "Nombre", "DNI / ID interno", "Tipo", "Estado", "Fecha",
     "Áreas aprobadas",
     ...data.areas.flatMap((a) => [
       `${a.nombre} — Pautas`,

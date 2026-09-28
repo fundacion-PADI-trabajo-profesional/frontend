@@ -108,7 +108,7 @@ describe("buildWorkbookEvaluaciones — hoja Datos", () => {
     const ws = wb.getWorksheet("Datos")!;
     const headers = (ws.getRow(1).values as any[]).slice(1, 20);
     expect(headers.slice(0, 11)).toEqual([
-      "Zona", "Escuela", "Sala", "Aula", "Apellido", "Nombre", "DNI", "Tipo", "Estado", "Fecha", "Áreas aprobadas",
+      "Zona", "Escuela", "Sala", "Aula", "Apellido", "Nombre", "DNI / ID interno", "Tipo", "Estado", "Fecha", "Áreas aprobadas",
     ]);
     expect(headers[11]).toBe("Motricidad — Pautas");
     expect(headers[12]).toBe("Motricidad — Mín");

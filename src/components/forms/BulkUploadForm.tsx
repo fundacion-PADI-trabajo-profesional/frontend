@@ -17,6 +17,7 @@ import ExcelJS from 'exceljs';
 import { bulkCreateEstudiantes, type EstudianteBulkRow } from '../../api/estudiantes';
 import { getEscuelas } from '../../api/escuelas';
 import { getAulas, type Aula } from '../../api/aulas';
+import { normalizarDni } from '../../utils/dni';
 
 interface BulkDryRunResult {
     nuevos: { dni: string }[];
@@ -241,7 +242,7 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                     }
 
                     return {
-                        dni: row["DNI"] ? String(row["DNI"]).trim() : null,
+                        dni: normalizarDni(row["DNI"]),
                         nombre: row["Nombre"] ? String(row["Nombre"]).trim() : null,
                         apellido: row["Apellido"] ? String(row["Apellido"]).trim() : null,
                         fecha_nacimiento: finalDate,
@@ -345,6 +346,8 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                             Descargá la plantilla, completá los datos eligiendo el colegio o aula en la columna <strong>Colegio / Aula</strong>, y subí el archivo <strong>.xlsx</strong>.
                             <br /><br />
                             <strong>Importante:</strong> El formato de la Fecha de Nacimiento debe ser <strong>DD/MM/AAAA</strong> (ej: 25/05/2018).
+                            <br /><br />
+                            <strong>Sin DNI:</strong> si un alumno no tiene DNI, en la columna DNI cargá el identificador interno del colegio: el código del colegio seguido de un número correlativo, sin espacios ni guiones y en mayúsculas (ej: <strong>SM000001</strong>). Cada identificador es de un solo alumno y se mantiene todos los años.
                         </Alert>
 
                         <Box onClick={() => !bulkLoading && fileInputRef.current?.click()} sx={{ border: "2px dashed #65944F", borderRadius: 3, p: 4, textAlign: "center", cursor: bulkLoading ? "not-allowed" : "pointer", bgcolor: "#f9fdf6", transition: "0.2s", "&:hover": { bgcolor: bulkLoading ? "#f9fdf6" : "#f0faec" }, mb: 2 }}>
@@ -387,7 +390,7 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                             <Table size="small" stickyHeader>
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 700 }}>DNI</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>DNI / ID interno</TableCell>
                                         <TableCell sx={{ fontWeight: 700 }}>Nombre</TableCell>
                                         <TableCell sx={{ fontWeight: 700 }}>Colegio / Aula</TableCell>
                                         <TableCell sx={{ fontWeight: 700 }}>Sala</TableCell>

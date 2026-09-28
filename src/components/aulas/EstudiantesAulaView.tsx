@@ -11,6 +11,7 @@ import {
 } from "../../api/aulas";
 
 import { getEstudiantes, type Estudiante } from "../../api/estudiantes";
+import { etiquetaDni } from "../../utils/dni";
 
 interface Props {
     aula: Aula;
@@ -138,7 +139,7 @@ export default function EstudiantesAulaView({ aula, onVolver, escuelaNombreProp 
                     {estudiantesDisponibles.length > 0 ? (
                         estudiantesDisponibles.map((e) => (
                             <MenuItem key={e.id} value={e.id}>
-                                {e.personas?.primer_apellido}, {e.personas?.nombre} - DNI: {e.personas?.dni}
+                                {e.personas?.primer_apellido}, {e.personas?.nombre} - {etiquetaDni(e.personas?.dni)}
                             </MenuItem>
                         ))
                     ) : (
@@ -215,7 +216,7 @@ export default function EstudiantesAulaView({ aula, onVolver, escuelaNombreProp 
                                 >
                                     <ListItemText
                                         primary={<Typography sx={{ fontWeight: 600 }}>{nombreCompleto}</Typography>}
-                                        secondary={`DNI: ${est.personas?.dni ?? "-"}`}
+                                        secondary={etiquetaDni(est.personas?.dni)}
                                     />
                                 </ListItem>
                             );

@@ -29,6 +29,7 @@ import {
 import { getEscuelas, type Escuela } from "../../api/escuelas"
 import { getAulasPorEscuela, type Aula } from "../../api/aulas";
 import { filtrarAulasParaEstudiante } from "../../utils/docentes-aulas";
+import { normalizarDni } from "../../utils/dni"
 
 interface EstudianteFormProps {
     onCancel: () => void
@@ -186,7 +187,7 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
 
     const validate = () => {
         const newErrors: Record<string, string> = {}
-        if (!formData.dni) newErrors.dni = "El DNI es obligatorio"
+        if (!normalizarDni(formData.dni)) newErrors.dni = "Ingresá el DNI o el identificador interno del colegio (ej. SM000001)"
         if (!formData.nombre) newErrors.nombre = "El nombre es obligatorio"
         if (!formData.apellido) newErrors.apellido = "El apellido es obligatorio"
         if (!formData.genero_id) newErrors.genero_id = "Seleccione un género"
@@ -208,7 +209,9 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
         e.preventDefault()
         if (!validate()) return
 
-        console.log("Enviando a la API:", formData);
+        // Mayúsculas y solo letras/dígitos: "sm-000001" y "SM000001" son el mismo alumno
+        const datos = { ...formData, dni: normalizarDni(formData.dni) ?? "" }
+        console.log("Enviando a la API:", datos);
 
         setLoading(true)
         setError(null)
@@ -216,14 +219,14 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
             if (estudianteAEditar) {
                 // Actualizar estudiante existente
                 const actualizado = await updateEstudiante(estudianteAEditar.id, {
-                    ...formData,
+                    ...datos,
                     sala_id: Number(formData.sala_id)
                 })
                 onSuccess(actualizado)
             } else {
                 // Crear nuevo estudiante
                 const nuevo = await createEstudiante({
-                    ...formData,
+                    ...datos,
                     sala_id: Number(formData.sala_id),
                     aula_id: formData.aula_id || "",
                 })
@@ -271,7 +274,7 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
             <Grid container spacing={3}>
                 {/* DATOS PERSONALES */}
                 <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="DNI" name="dni" variant="filled" value={formData.dni} onChange={handleChange} error={!!errors.dni} helperText={errors.dni} />
+                    <TextField fullWidth label="DNI" name="dni" variant="filled" value={formData.dni} onChange={handleChange} error={!!errors.dni} helperText={errors.dni || "Si no tiene DNI, ingresá el identificador interno del colegio, ej. SM000001"} />
                 </Grid>
                 <Grid item xs={12} sm={6}>
                     <TextField fullWidth label="Fecha de Nacimiento" name="fecha_nacimiento" type="date" variant="filled" InputLabelProps={{ shrink: true }} value={formData.fecha_nacimiento} onChange={handleChange} error={!!errors.fecha_nacimiento} helperText={errors.fecha_nacimiento} />

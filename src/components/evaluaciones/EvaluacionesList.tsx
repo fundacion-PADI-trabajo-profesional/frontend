@@ -202,7 +202,7 @@ export default function EvaluacionesList({
   const evaluacionesFiltradas = evaluaciones.filter((ev) => {
     const cumpleBusqueda =
       ev.estudianteNombre?.toLowerCase().includes(filtros.busqueda.toLowerCase()) ||
-      ev.estudiante?.dni?.includes(filtros.busqueda);
+      ev.estudiante?.dni?.toUpperCase().includes(filtros.busqueda.toUpperCase());
 
     const cumpleSala = filtros.sala === "todas" || ev.salaNombre === filtros.sala;
     const cumpleComision = filtros.comision === "todas" || ev.aulaLabel === filtros.comision;
@@ -274,7 +274,7 @@ export default function EvaluacionesList({
           <Grid item xs={12} md={4}>
             <TextField
               fullWidth
-              label="Buscar por Nombre o DNI"
+              label="Buscar por nombre, DNI o ID interno"
               variant="outlined"
               size="small"
               value={filtros.busqueda}
@@ -394,7 +394,7 @@ export default function EvaluacionesList({
                     <Table size="small">
                       <TableHead sx={{ bgcolor: "#f9f9f9" }}>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 700 }}>DNI</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>DNI / ID interno</TableCell>
                           <TableCell sx={{ fontWeight: 700 }}>Estudiante</TableCell>
                           <TableCell align="center" sx={{ fontWeight: 700 }}>Tipo</TableCell>
                           <TableCell align="center" sx={{ fontWeight: 700 }}>Estado</TableCell>

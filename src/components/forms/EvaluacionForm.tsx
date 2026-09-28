@@ -22,6 +22,7 @@ import { getEstudiantes, type Estudiante } from "../../api/estudiantes";
 import { getDocenteAulasConEstudiantes } from "../../api/aulas";
 import { useSearchParams } from "react-router-dom"
 import { useNavigate } from "react-router-dom";
+import { etiquetaDni } from "../../utils/dni";
 
 interface EvaluacionFormProps {
   onSuccess: (evaluacionId: string) => void;
@@ -290,9 +291,9 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
                 options={estudiantes}
                 loading={loadingEstudiantes}
                 disabled={isLoading}
-                // Cómo mostrar el nombre en el dropdown (Ej: "Gomez, Juan (12345678)")
+                // Cómo mostrar el nombre en el dropdown (Ej: "Gomez, Juan (DNI: 12345678)")
                 getOptionLabel={(option) =>
-                  `${option.personas.primer_apellido}, ${option.personas.nombre} (${option.personas.dni})`
+                  `${option.personas.primer_apellido}, ${option.personas.nombre} (${etiquetaDni(option.personas.dni)})`
                 }
                 // Para que la búsqueda funcione comparando IDs
                 isOptionEqualToValue={(option, value) => option.id === value.id}
@@ -312,7 +313,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Buscar Estudiante por DNI o Nombre"
+                    label="Buscar estudiante por nombre, DNI o ID interno"
                     required
                     InputProps={{
                       ...params.InputProps,
@@ -334,7 +335,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
                           {option.personas.primer_apellido}, {option.personas.nombre}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          DNI: {option.personas.dni}
+                          {etiquetaDni(option.personas.dni)}
                         </Typography>
                       </Grid>
                     </Grid>

@@ -409,6 +409,17 @@ describe("enviarRespuestas", () => {
     expect(body.questions).toEqual(questions);
   });
 
+  it("envía answer null para quitar una respuesta ya administrada", async () => {
+    vi.mocked(fetch).mockResolvedValue(mockFetchResponse({}, true, 200));
+
+    await enviarRespuestas("ev-1", "area-1", [{ id: "q-1", answer: null }]);
+
+    const body = JSON.parse(
+      (vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string
+    );
+    expect(body.questions).toEqual([{ id: "q-1", answer: null }]);
+  });
+
   it("lanza error con mensaje del servidor", async () => {
     vi.mocked(fetch).mockResolvedValue(
       mockFetchResponse({ error: { description: "Respuestas inválidas" } }, false, 400)

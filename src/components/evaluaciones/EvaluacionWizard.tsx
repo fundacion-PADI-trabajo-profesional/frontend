@@ -32,6 +32,7 @@ import {
     enviarRespuestas,
     type PreguntaBase
 } from "../../api/evaluaciones"
+import { paletaBotonRespuesta, respuestaSumaPunto } from "../../utils/respuestas"
 
 const Transition = React.forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -292,6 +293,26 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
         }
     };
 
+    /** Quita la respuesta de la pregunta actual (vuelve a "sin responder") sin avanzar. */
+    const handleClearAnswer = async () => {
+        const preguntaActual = preguntas[currentQuestionIndex];
+        const anterior = respuestas[preguntaActual.id];
+        if (anterior !== 0 && anterior !== 1) return;
+        setRespuestas(prev => ({ ...prev, [preguntaActual.id]: null }));
+        setSaving(true);
+
+        try {
+            await enviarRespuestas(evaluacionId, areaId, [{ id: preguntaActual.id, answer: null }]);
+            setAllPreviouslyAnswered(false);
+        } catch (e) {
+            console.error("Error al quitar la respuesta:", e);
+            setRespuestas(prev => ({ ...prev, [preguntaActual.id]: anterior }));
+            setSaveError("Fallo al quitar la respuesta. Revisá tu conexión.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleSkip = () => {
         const nextIndex = currentQuestionIndex + 1;
         if (nextIndex >= preguntas.length) {
@@ -321,6 +342,9 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
     if (!open) return null
 
     const preguntaActual = preguntas[currentQuestionIndex];
+    // Verde = esa respuesta suma punto. En preguntas invertidas es el NO el que suma.
+    const paletaNo = paletaBotonRespuesta(0, preguntaActual?.puntaje_invertido);
+    const paletaSi = paletaBotonRespuesta(1, preguntaActual?.puntaje_invertido);
     const progressPercent = (currentQuestionIndex / preguntas.length) * 100;
     const unansweredCount = preguntas.filter(p => respuestas[p.id] !== 0 && respuestas[p.id] !== 1).length;
 
@@ -492,12 +516,13 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                         {/* Indicador de respuesta actual (modo corrección) */}
                                         {(respuestas[preguntaActual.id] === 1 || respuestas[preguntaActual.id] === 0) && (
                                             <Alert
-                                                severity={
-                                                    preguntaActual.puntaje_invertido
-                                                        ? respuestas[preguntaActual.id] === 0 ? "success" : "warning"
-                                                        : respuestas[preguntaActual.id] === 1 ? "success" : "error"
-                                                }
+                                                severity={respuestaSumaPunto(respuestas[preguntaActual.id], preguntaActual.puntaje_invertido) ? "success" : "error"}
                                                 sx={{ mb: 2 }}
+                                                action={
+                                                    <Button color="inherit" size="small" onClick={handleClearAnswer} disabled={saving} sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}>
+                                                        Quitar respuesta
+                                                    </Button>
+                                                }
                                             >
                                                 Respuesta actual: <strong>{respuestas[preguntaActual.id] === 1 ? '"Sí"' : '"No"'}</strong>
                                                 {preguntaActual.puntaje_invertido && (
@@ -557,9 +582,9 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                                 onClick={() => handleAnswer(0)}
                                                 disabled={saving}
                                                 sx={{
-                                                    py: 2, borderColor: '#fee2e2', color: '#ef4444',
+                                                    py: 2, borderColor: paletaNo.borderColor, color: paletaNo.color,
                                                     display: 'flex', flexDirection: 'column',
-                                                    '&:hover': { bgcolor: '#fef2f2', borderColor: '#ef4444' }
+                                                    '&:hover': { bgcolor: paletaNo.hoverBg, borderColor: paletaNo.color }
                                                 }}
                                             >
                                                 <HighlightOffIcon sx={{ fontSize: 30, mb: 0.5 }} />
@@ -573,9 +598,9 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                                 onClick={() => handleAnswer(1)}
                                                 disabled={saving}
                                                 sx={{
-                                                    py: 2, borderColor: '#dcfce7', color: '#22c55e',
+                                                    py: 2, borderColor: paletaSi.borderColor, color: paletaSi.color,
                                                     display: 'flex', flexDirection: 'column',
-                                                    '&:hover': { bgcolor: '#f0fdf4', borderColor: '#22c55e' }
+                                                    '&:hover': { bgcolor: paletaSi.hoverBg, borderColor: paletaSi.color }
                                                 }}
                                             >
                                                 <CheckCircleOutlineIcon sx={{ fontSize: 30, mb: 0.5 }} />

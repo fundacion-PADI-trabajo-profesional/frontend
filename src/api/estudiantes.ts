@@ -285,6 +285,8 @@ export interface EstudianteBulkRow {
     escuela_id: string | null;
     colegio_aula_label: string | null;
     aula_id: string | null;
+    /** La etiqueta apuntaba a un aula de otra sala: el backend la rechazaría. Solo para la vista previa. */
+    aula_incompatible?: boolean;
     estado?: "nuevo" | "promovido" | "repite" | "retroceso" | "reactivado";
     old_sala_id?: number | null;
 }

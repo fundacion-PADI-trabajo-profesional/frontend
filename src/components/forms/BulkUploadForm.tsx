@@ -19,6 +19,7 @@ import { getEscuelas } from '../../api/escuelas';
 import { getAulas, type Aula } from '../../api/aulas';
 import { normalizarDni, ID_INTERNO, dnisRepetidos } from '../../utils/dni';
 import { normalizarGenero } from '../../utils/genero';
+import { etiquetaAula, etiquetaAulaAnterior, resolverAula, type AulaCandidata } from '../../utils/cargaMasiva';
 
 interface BulkDryRunResult {
     nuevos: { dni: string }[];
@@ -111,9 +112,9 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
             for (const escuela of escuelas) {
                 combinedEntries.push(escuela.nombre);
                 const aulas = (aulasPorEscuela.get(String(escuela.id)) || [])
-                    .sort((a, b) => `${a.comision}${a.turno}`.localeCompare(`${b.comision}${b.turno}`));
+                    .sort((a, b) => (a.sala_id - b.sala_id) || `${a.comision}${a.turno}`.localeCompare(`${b.comision}${b.turno}`));
                 for (const aula of aulas) {
-                    combinedEntries.push(`${escuela.nombre} - ${aula.comision} - ${aula.turno}`);
+                    combinedEntries.push(etiquetaAula(escuela.nombre, aula));
                 }
             }
 
@@ -250,13 +251,18 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                 // schoolOnlyMap: escuela nombre → escuela_id
                 const schoolOnlyMap = new Map(escuelas.map((e) => [e.nombre, String(e.id)]));
 
-                // schoolAulaMap: "Escuela - Comision - Turno" → { escuela_id, aula_id }
-                const schoolAulaMap = new Map<string, { escuela_id: string; aula_id: string }>();
+                // schoolAulaMap: etiqueta → aulas candidatas. Se registran la etiqueta actual (con sala) y la
+                // anterior (sin sala): esta última se repite entre las salas de un mismo turno, y se desempata
+                // con el SalaID de la fila.
+                const schoolAulaMap = new Map<string, AulaCandidata[]>();
                 for (const aula of todasLasAulas) {
                     const escuela = escuelas.find((e) => String(e.id) === String(aula.escuela_id));
-                    if (escuela) {
-                        const label = `${escuela.nombre} - ${aula.comision} - ${aula.turno}`;
-                        schoolAulaMap.set(label, { escuela_id: String(aula.escuela_id), aula_id: aula.id });
+                    if (!escuela) continue;
+                    const candidata: AulaCandidata = { escuela_id: String(aula.escuela_id), aula_id: aula.id, sala_id: Number(aula.sala_id) };
+                    for (const label of [etiquetaAula(escuela.nombre, aula), etiquetaAulaAnterior(escuela.nombre, aula)]) {
+                        const lista = schoolAulaMap.get(label) ?? [];
+                        lista.push(candidata);
+                        schoolAulaMap.set(label, lista);
                     }
                 }
 
@@ -287,11 +293,14 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                     let escuela_id: string | null = null;
                     let aula_id: string | null = null;
 
+                    const salaFila = row["SalaID"] ? Number(row["SalaID"]) : null;
+                    let aula_incompatible = false;
                     if (colegioAula) {
-                        const aulaMatch = schoolAulaMap.get(colegioAula);
+                        const aulaMatch = resolverAula(schoolAulaMap.get(colegioAula) ?? [], salaFila);
                         if (aulaMatch) {
                             escuela_id = aulaMatch.escuela_id;
                             aula_id = aulaMatch.aula_id;
+                            aula_incompatible = aulaMatch.incompatible;
                         } else {
                             escuela_id = schoolOnlyMap.get(colegioAula) ?? null;
                         }
@@ -305,10 +314,11 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                         fecha_nacimiento: finalDate,
                         genero_id: generoNormalizado && idsGenero.includes(generoNormalizado) ? generoNormalizado : null,
                         genero_texto: row["Genero"] ? String(row["Genero"]).trim() : null,
-                        sala_id: row["SalaID"] ? Number(row["SalaID"]) : null,
+                        sala_id: salaFila,
                         escuela_id,
                         colegio_aula_label: colegioAula,
                         aula_id,
+                        aula_incompatible,
                     };
                 });
 
@@ -338,11 +348,13 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
         const sinGenero = filasCon(e => !e.genero_id);
         const sinEscuela = filasCon(e => !e.escuela_id);
         const sinFecha = filasCon(e => !e.fecha_nacimiento);
+        const aulaOtraSala = filasCon(e => !!e.aula_incompatible);
         if (sinDni) problemas.push(`sin DNI / ID interno (${sinDni})`);
         if (sinNombre) problemas.push(`sin nombre (${sinNombre})`);
         if (sinGenero) problemas.push(`con género inválido, usá ${generoIds.join(", ")} (${sinGenero})`);
         if (sinEscuela) problemas.push(`sin colegio válido (${sinEscuela})`);
         if (sinFecha) problemas.push(`con fecha de nacimiento inválida (${sinFecha})`);
+        if (aulaOtraSala) problemas.push(`con un aula de otra sala, elegí el aula de su sala o solo el colegio (${aulaOtraSala})`);
         for (const rep of dnisRepetidos(excelRows.map(e => e.dni))) {
             problemas.push(`con el DNI / ID interno ${rep.dni} repetido (${rep.filas.join(", ")})`);
         }
@@ -514,14 +526,14 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                                 </TableHead>
                                 <TableBody>
                                     {excelRows.map((row, i) => {
-                                        const isInvalid = !row.dni || !row.nombre || !row.genero_id || !row.escuela_id || !row.fecha_nacimiento;
+                                        const isInvalid = !row.dni || !row.nombre || !row.genero_id || !row.escuela_id || !row.fecha_nacimiento || !!row.aula_incompatible;
                                         return (
                                             <TableRow key={i} sx={{ bgcolor: isInvalid ? "#fff3f3" : "inherit" }}>
                                                 <TableCell sx={{ color: "#888" }}>{i + 1}</TableCell>
                                                 <TableCell>{row.dni || <span style={{ color: "#c62828" }}>Falta</span>}</TableCell>
                                                 <TableCell>{row.nombre} {row.apellido}</TableCell>
                                                 <TableCell>{row.genero_id || <span style={{ color: "#c62828" }}>{row.genero_texto ? `Inválido: ${row.genero_texto}` : "Falta"}</span>}</TableCell>
-                                                <TableCell>{row.colegio_aula_label}</TableCell>
+                                                <TableCell>{row.colegio_aula_label}{row.aula_incompatible && <span style={{ color: "#c62828" }}> (aula de otra sala)</span>}</TableCell>
                                                 <TableCell>{row.sala_id || "—"}</TableCell>
                                                 {step === 'preview' && (
                                                     <TableCell>

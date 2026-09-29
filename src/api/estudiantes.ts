@@ -279,6 +279,8 @@ export interface EstudianteBulkRow {
     apellido: string | null;
     fecha_nacimiento: string | null;
     genero_id: string | null;
+    /** Lo que decía la celda Genero, para mostrar por qué una fila es inválida. No lo usa el backend. */
+    genero_texto?: string | null;
     sala_id: number | null;
     escuela_id: string | null;
     colegio_aula_label: string | null;

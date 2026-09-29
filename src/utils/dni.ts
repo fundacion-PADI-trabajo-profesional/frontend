@@ -40,3 +40,33 @@ export function etiquetaDni(dni: string | null | undefined): string {
     if (!dni) return "Sin DNI";
     return esIdentificadorInterno(dni) ? `ID interno: ${dni}` : `DNI: ${dni}`;
 }
+
+/**
+ * Convención para armar el identificador interno cuando el alumno no tiene DNI,
+ * acordada con la Fundación (ADR-0017). La app no la valida: es solo la guía
+ * que se muestra en el alta individual y en la plantilla de carga masiva.
+ */
+export const ID_INTERNO = {
+    ejemplo: "SM040621RM",
+    pasos: [
+        "Las letras del jardín, asignadas por PADI (ej. SM para Santa María).",
+        "La fecha de nacimiento como día, mes y año de dos cifras cada uno (ej. 4 de junio de 2021 → 040621).",
+        "La inicial del nombre y la inicial del apellido (ej. Ramiro Martínez → RM).",
+    ],
+    resumen: "letras del jardín + fecha de nacimiento como DDMMAA + inicial del nombre e inicial del apellido, todo junto, sin espacios ni guiones y en mayúsculas",
+    ayuda: "letras del jardín + fecha de nacimiento DDMMAA + inicial del nombre e inicial del apellido, ej. SM040621RM",
+} as const;
+
+/** Identificadores que aparecen más de una vez en una lista, con las posiciones (desde 1) en que aparecen. */
+export function dnisRepetidos(dnis: (string | null | undefined)[]): { dni: string; filas: number[] }[] {
+    const posiciones = new Map<string, number[]>();
+    dnis.forEach((dni, i) => {
+        if (!dni) return;
+        const lista = posiciones.get(dni) ?? [];
+        lista.push(i + 1);
+        posiciones.set(dni, lista);
+    });
+    return Array.from(posiciones.entries())
+        .filter(([, filas]) => filas.length > 1)
+        .map(([dni, filas]) => ({ dni, filas }));
+}

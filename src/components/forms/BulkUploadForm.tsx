@@ -14,10 +14,11 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
-import { bulkCreateEstudiantes, type EstudianteBulkRow } from '../../api/estudiantes';
+import { bulkCreateEstudiantes, getGeneros, type EstudianteBulkRow } from '../../api/estudiantes';
 import { getEscuelas } from '../../api/escuelas';
 import { getAulas, type Aula } from '../../api/aulas';
-import { normalizarDni } from '../../utils/dni';
+import { normalizarDni, ID_INTERNO, dnisRepetidos } from '../../utils/dni';
+import { normalizarGenero } from '../../utils/genero';
 
 interface BulkDryRunResult {
     nuevos: { dni: string }[];
@@ -25,6 +26,24 @@ interface BulkDryRunResult {
     repitentes: { dni: string }[];
     retrocesos: { dni: string; old_sala_id: number | null }[];
     reactivados?: { dni: string }[];
+}
+
+/** Respuesta del backend al confirmar: filas guardadas y filas que fallaron con su motivo. */
+interface BulkResult {
+    procesados: EstudianteBulkRow[];
+    errores: { fila: { dni: string | null; nombre: string | null; apellido: string | null }; motivo: string }[];
+}
+
+/** Ids de género si el catálogo no responde (coinciden con la semilla de la base). */
+const GENEROS_FALLBACK = ["M", "F", "X"];
+
+async function getGeneroIds(): Promise<string[]> {
+    try {
+        const ids = (await getGeneros()).map((g) => String(g.id).toUpperCase());
+        return ids.length > 0 ? ids : GENEROS_FALLBACK;
+    } catch {
+        return GENEROS_FALLBACK;
+    }
 }
 
 interface BulkUploadProps {
@@ -38,8 +57,10 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
     const [excelRows, setExcelRows] = useState<EstudianteBulkRow[]>([]);
     const [excelError, setExcelError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [step, setStep] = useState<'upload' | 'preview'>('upload');
+    const [step, setStep] = useState<'upload' | 'preview' | 'resultado'>('upload');
     const [stats, setStats] = useState<BulkDryRunResult | null>(null);
+    const [resultado, setResultado] = useState<BulkResult | null>(null);
+    const [generoIds, setGeneroIds] = useState<string[]>(GENEROS_FALLBACK);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const resetState = () => {
@@ -48,9 +69,18 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
         setSuccessMessage(null);
         setStep('upload');
         setStats(null);
+        setResultado(null);
+    };
+
+    /** Cierra la pantalla de resultado: si algo se cargó, la página refresca el listado. */
+    const handleCerrarResultado = () => {
+        const creados = resultado?.procesados ?? [];
+        resetState();
+        if (creados.length > 0) onSuccess(creados); else onCancel();
     };
 
     const handleClose = () => {
+        if (step === 'resultado') { handleCerrarResultado(); return; }
         resetState();
         onCancel();
     };
@@ -61,9 +91,10 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
             setBulkLoading(true);
             setExcelError(null);
 
-            const [escuelas, todasLasAulas] = await Promise.all([
+            const [escuelas, todasLasAulas, idsGenero] = await Promise.all([
                 getEscuelas(),
                 getAulas(),
+                getGeneroIds(),
             ]);
 
             // Aulas agrupadas por escuela_id (para ordenar por escuela)
@@ -91,7 +122,7 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
 
             // 1. Columnas — una sola columna G para colegio y/o aula
             ws.columns = [
-                { header: "DNI", key: "dni", width: 14 },
+                { header: "DNI / ID interno", key: "dni", width: 18 },
                 { header: "Nombre", key: "nombre", width: 18 },
                 { header: "Apellido", key: "apellido", width: 18 },
                 { header: "Fecha Nacimiento", key: "fecha_nac", width: 18 },
@@ -114,10 +145,10 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                 ws.getCell(`E${row}`).dataValidation = {
                     type: "list",
                     allowBlank: true,
-                    formulae: ['"M,F"'],
+                    formulae: [`"${idsGenero.join(",")}"`],
                     showErrorMessage: true,
                     errorTitle: "Valor inválido",
-                    error: 'Ingresá "M" o "F"',
+                    error: `Ingresá ${idsGenero.join(", ")}`,
                 };
 
                 ws.getCell(`F${row}`).dataValidation = {
@@ -142,6 +173,27 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
             }
 
             ws.views = [{ state: "frozen", ySplit: 1 }];
+
+            // Nota en el encabezado de DNI y hoja "Instrucciones". Va después de la hoja de datos
+            // porque el lector del archivo toma siempre la primera hoja.
+            ws.getCell("A1").note = `Si el alumno no tiene DNI, cargá el identificador interno: ${ID_INTERNO.resumen}. Ej: ${ID_INTERNO.ejemplo}`;
+            const wsInst = wb.addWorksheet("Instrucciones");
+            wsInst.columns = [{ header: "Cómo completar la planilla", key: "texto", width: 120 }];
+            wsInst.getRow(1).font = { bold: true, size: 13 };
+            const lineas = [
+                "Una fila por alumno. Descargá esta plantilla cada vez: el desplegable de colegios y aulas se arma con los datos actuales.",
+                "",
+                "DNI / ID interno: el DNI del alumno, solo números. Si no tiene DNI, un identificador interno armado así:",
+                ...ID_INTERNO.pasos.map((p, i) => `    ${i + 1}. ${p}`),
+                `    Ejemplo: ${ID_INTERNO.ejemplo}. Todo junto, sin espacios ni guiones, en mayúsculas.`,
+                "    El identificador es del alumno para siempre: el año que viene cargalo con el mismo. Cuando consigas el DNI real, reemplazalo desde la ficha del alumno.",
+                "",
+                "Fecha Nacimiento: día/mes/año, por ejemplo 25/05/2018.",
+                `Genero: ${idsGenero.join(", ")}.`,
+                "SalaID: 3, 4 o 5.",
+                "Colegio / Aula: elegí una opción del desplegable. Si elegís solo el colegio, el alumno queda sin aula asignada.",
+            ];
+            lineas.forEach((texto) => wsInst.addRow({ texto }));
 
             // 3. Hoja oculta: Datos_soporte con la lista combinada
             const wsSupport = wb.addWorksheet("Datos_soporte", { state: 'hidden' });
@@ -184,12 +236,16 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                 const data = XLSX.utils.sheet_to_json(ws, { raw: false, defval: null });
 
                 const rawRows = data as Record<string, unknown>[];
-                const validRows = rawRows.filter((row) => row["DNI"] || row["Nombre"] || row["Apellido"]);
+                // La plantilla nueva titula la columna "DNI / ID interno"; las viejas, "DNI"
+                const leerDni = (row: Record<string, unknown>) => row["DNI / ID interno"] ?? row["DNI"];
+                const validRows = rawRows.filter((row) => leerDni(row) || row["Nombre"] || row["Apellido"]);
 
-                const [escuelas, todasLasAulas] = await Promise.all([
+                const [escuelas, todasLasAulas, idsGenero] = await Promise.all([
                     getEscuelas(),
                     getAulas(),
+                    getGeneroIds(),
                 ]);
+                setGeneroIds(idsGenero);
 
                 // schoolOnlyMap: escuela nombre → escuela_id
                 const schoolOnlyMap = new Map(escuelas.map((e) => [e.nombre, String(e.id)]));
@@ -241,12 +297,14 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                         }
                     }
 
+                    const generoNormalizado = normalizarGenero(row["Genero"]);
                     return {
-                        dni: normalizarDni(row["DNI"]),
+                        dni: normalizarDni(leerDni(row)),
                         nombre: row["Nombre"] ? String(row["Nombre"]).trim() : null,
                         apellido: row["Apellido"] ? String(row["Apellido"]).trim() : null,
                         fecha_nacimiento: finalDate,
-                        genero_id: row["Genero"] ? String(row["Genero"]).trim() : null,
+                        genero_id: generoNormalizado && idsGenero.includes(generoNormalizado) ? generoNormalizado : null,
+                        genero_texto: row["Genero"] ? String(row["Genero"]).trim() : null,
                         sala_id: row["SalaID"] ? Number(row["SalaID"]) : null,
                         escuela_id,
                         colegio_aula_label: colegioAula,
@@ -271,8 +329,25 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
         setBulkLoading(true);
         setExcelError(null);
 
-        if (excelRows.some(e => !e.escuela_id) || excelRows.some(e => !e.fecha_nacimiento)) {
-            setExcelError("Hay alumnos sin colegio válido o con fechas inválidas.");
+        // Todo lo que haría fallar la fila en el backend se frena acá, con el número de fila de la vista previa
+        const filasCon = (pred: (e: EstudianteBulkRow) => boolean) =>
+            excelRows.map((e, i) => (pred(e) ? i + 1 : 0)).filter(Boolean).join(", ");
+        const problemas: string[] = [];
+        const sinDni = filasCon(e => !e.dni);
+        const sinNombre = filasCon(e => !e.nombre);
+        const sinGenero = filasCon(e => !e.genero_id);
+        const sinEscuela = filasCon(e => !e.escuela_id);
+        const sinFecha = filasCon(e => !e.fecha_nacimiento);
+        if (sinDni) problemas.push(`sin DNI / ID interno (${sinDni})`);
+        if (sinNombre) problemas.push(`sin nombre (${sinNombre})`);
+        if (sinGenero) problemas.push(`con género inválido, usá ${generoIds.join(", ")} (${sinGenero})`);
+        if (sinEscuela) problemas.push(`sin colegio válido (${sinEscuela})`);
+        if (sinFecha) problemas.push(`con fecha de nacimiento inválida (${sinFecha})`);
+        for (const rep of dnisRepetidos(excelRows.map(e => e.dni))) {
+            problemas.push(`con el DNI / ID interno ${rep.dni} repetido (${rep.filas.join(", ")})`);
+        }
+        if (problemas.length > 0) {
+            setExcelError(`Corregí el Excel antes de continuar. Filas (columna #) ${problemas.join("; ")}.`);
             setBulkLoading(false);
             return;
         }
@@ -313,12 +388,22 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
 
         try {
             const response = await bulkCreateEstudiantes({ estudiantes: excelRows, dryRun: false });
-            setSuccessMessage(`Operación exitosa.`);
+            const data: BulkResult = {
+                procesados: response.data?.procesados ?? [],
+                errores: response.data?.errores ?? [],
+            };
+            setResultado(data);
 
-            setTimeout(() => {
-                onSuccess(response.data);
-                resetState();
-            }, 1500);
+            if (data.errores.length === 0) {
+                setSuccessMessage(`Se cargaron ${data.procesados.length} alumno(s).`);
+                setTimeout(() => {
+                    onSuccess(data.procesados);
+                    resetState();
+                }, 1500);
+            } else {
+                // El backend responde "éxito" aunque fallen filas: acá se muestran con su motivo
+                setStep('resultado');
+            }
 
         } catch (err: unknown) {
             const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -347,7 +432,7 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                             <br /><br />
                             <strong>Importante:</strong> El formato de la Fecha de Nacimiento debe ser <strong>DD/MM/AAAA</strong> (ej: 25/05/2018).
                             <br /><br />
-                            <strong>Sin DNI:</strong> si un alumno no tiene DNI, en la columna DNI cargá el identificador interno del colegio: el código del colegio seguido de un número correlativo, sin espacios ni guiones y en mayúsculas (ej: <strong>SM000001</strong>). Cada identificador es de un solo alumno y se mantiene todos los años.
+                            <strong>Sin DNI:</strong> si un alumno no tiene DNI, en la columna <strong>DNI / ID interno</strong> cargá el identificador interno: {ID_INTERNO.resumen} (ej: <strong>{ID_INTERNO.ejemplo}</strong>). Es del alumno para siempre: el año que viene cargalo con el mismo. La plantilla trae una hoja "Instrucciones" con el detalle.
                         </Alert>
 
                         <Box onClick={() => !bulkLoading && fileInputRef.current?.click()} sx={{ border: "2px dashed #65944F", borderRadius: 3, p: 4, textAlign: "center", cursor: bulkLoading ? "not-allowed" : "pointer", bgcolor: "#f9fdf6", transition: "0.2s", "&:hover": { bgcolor: bulkLoading ? "#f9fdf6" : "#f0faec" }, mb: 2 }}>
@@ -365,6 +450,34 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                 {excelError && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{excelError}</Alert>}
                 {successMessage && <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }} icon={<CheckCircleIcon fontSize="inherit" />}><strong>¡Éxito!</strong> {successMessage}</Alert>}
 
+                {step === 'resultado' && resultado && (
+                    <>
+                        <Alert severity={resultado.procesados.length > 0 ? "warning" : "error"} sx={{ mb: 2, borderRadius: 2 }}>
+                            <strong>Se cargaron {resultado.procesados.length} de {resultado.procesados.length + resultado.errores.length} alumnos.</strong> Los siguientes no se pudieron cargar. Corregí el Excel y volvé a subir solo esas filas.
+                        </Alert>
+                        <TableContainer component={Paper} elevation={0} sx={{ maxHeight: 320, border: "1px solid #e0e0e0", borderRadius: 2, mb: 2 }}>
+                            <Table size="small" stickyHeader>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell sx={{ fontWeight: 700 }}>DNI / ID interno</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Nombre</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Motivo</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {resultado.errores.map((e, i) => (
+                                        <TableRow key={i} sx={{ bgcolor: "#fff3f3" }}>
+                                            <TableCell>{e.fila?.dni || "—"}</TableCell>
+                                            <TableCell>{e.fila?.nombre} {e.fila?.apellido}</TableCell>
+                                            <TableCell sx={{ color: "#c62828" }}>{e.motivo}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    </>
+                )}
+
                 {step === 'preview' && stats && !successMessage && (
                     <Alert severity={stats.retrocesos.length > 0 ? "warning" : "info"} icon={stats.retrocesos.length > 0 ? <WarningAmberIcon /> : undefined} sx={{ mb: 3, borderRadius: 2 }}>
                         <strong>Análisis Alumnos:</strong> Se detectaron {stats.nuevos.length} ingresos nuevos, {stats.promovidos.length} pases de año y {stats.repitentes.length} que repiten sala.
@@ -381,7 +494,7 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                     </Alert>
                 )}
 
-                {excelRows.length > 0 && !successMessage && (
+                {excelRows.length > 0 && !successMessage && step !== 'resultado' && (
                     <>
                         <Typography variant="subtitle2" fontWeight={700} mb={1} color="#333">
                             Vista previa — {excelRows.length} estudiante(s)
@@ -390,8 +503,10 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                             <Table size="small" stickyHeader>
                                 <TableHead>
                                     <TableRow>
+                                        <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
                                         <TableCell sx={{ fontWeight: 700 }}>DNI / ID interno</TableCell>
                                         <TableCell sx={{ fontWeight: 700 }}>Nombre</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Género</TableCell>
                                         <TableCell sx={{ fontWeight: 700 }}>Colegio / Aula</TableCell>
                                         <TableCell sx={{ fontWeight: 700 }}>Sala</TableCell>
                                         {step === 'preview' && <TableCell sx={{ fontWeight: 700 }}>Estado</TableCell>}
@@ -399,11 +514,13 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
                                 </TableHead>
                                 <TableBody>
                                     {excelRows.map((row, i) => {
-                                        const isInvalid = !row.dni || !row.nombre || !row.escuela_id || !row.fecha_nacimiento;
+                                        const isInvalid = !row.dni || !row.nombre || !row.genero_id || !row.escuela_id || !row.fecha_nacimiento;
                                         return (
                                             <TableRow key={i} sx={{ bgcolor: isInvalid ? "#fff3f3" : "inherit" }}>
+                                                <TableCell sx={{ color: "#888" }}>{i + 1}</TableCell>
                                                 <TableCell>{row.dni || <span style={{ color: "#c62828" }}>Falta</span>}</TableCell>
                                                 <TableCell>{row.nombre} {row.apellido}</TableCell>
+                                                <TableCell>{row.genero_id || <span style={{ color: "#c62828" }}>{row.genero_texto ? `Inválido: ${row.genero_texto}` : "Falta"}</span>}</TableCell>
                                                 <TableCell>{row.colegio_aula_label}</TableCell>
                                                 <TableCell>{row.sala_id || "—"}</TableCell>
                                                 {step === 'preview' && (
@@ -426,9 +543,17 @@ export default function BulkUploadForm({ open, onCancel, onSuccess }: BulkUpload
             </DialogContent>
 
             <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-                <Button onClick={handleClose} sx={{ textTransform: "none", color: "#666" }} disabled={bulkLoading}>
-                    Cancelar
-                </Button>
+                {step !== 'resultado' && (
+                    <Button onClick={handleClose} sx={{ textTransform: "none", color: "#666" }} disabled={bulkLoading}>
+                        Cancelar
+                    </Button>
+                )}
+
+                {step === 'resultado' && (
+                    <Button variant="contained" onClick={handleCerrarResultado} sx={{ bgcolor: "#65944F", textTransform: "none", borderRadius: 2, "&:hover": { bgcolor: "#558040" } }}>
+                        Cerrar
+                    </Button>
+                )}
 
                 {!successMessage && step === 'upload' && (
                     <Button

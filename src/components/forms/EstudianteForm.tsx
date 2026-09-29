@@ -29,7 +29,7 @@ import {
 import { getEscuelas, type Escuela } from "../../api/escuelas"
 import { getAulasPorEscuela, type Aula } from "../../api/aulas";
 import { filtrarAulasParaEstudiante } from "../../utils/docentes-aulas";
-import { normalizarDni } from "../../utils/dni"
+import { normalizarDni, ID_INTERNO } from "../../utils/dni"
 
 interface EstudianteFormProps {
     onCancel: () => void
@@ -233,7 +233,9 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
                 onSuccess(nuevo)
             }
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Error al procesar la solicitud")
+            const msg = err instanceof Error ? err.message : "Error al procesar la solicitud"
+            // El backend habla de "DNI"; el campo también admite el identificador interno
+            setError(msg.includes("ese DNI") ? msg.replace("ese DNI", "ese DNI o identificador interno") : msg)
         } finally {
             setLoading(false)
         }
@@ -274,7 +276,7 @@ export default function EstudianteForm({ onCancel, onSuccess, estudianteAEditar,
             <Grid container spacing={3}>
                 {/* DATOS PERSONALES */}
                 <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="DNI" name="dni" variant="filled" value={formData.dni} onChange={handleChange} error={!!errors.dni} helperText={errors.dni || "Si no tiene DNI, ingresá el identificador interno del colegio, ej. SM000001"} />
+                    <TextField fullWidth label="DNI" name="dni" variant="filled" value={formData.dni} onChange={handleChange} error={!!errors.dni} helperText={errors.dni || `Sin DNI: ${ID_INTERNO.ayuda}`} />
                 </Grid>
                 <Grid item xs={12} sm={6}>
                     <TextField fullWidth label="Fecha de Nacimiento" name="fecha_nacimiento" type="date" variant="filled" InputLabelProps={{ shrink: true }} value={formData.fecha_nacimiento} onChange={handleChange} error={!!errors.fecha_nacimiento} helperText={errors.fecha_nacimiento} />

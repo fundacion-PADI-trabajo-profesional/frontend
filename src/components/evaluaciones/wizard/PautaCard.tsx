@@ -16,7 +16,6 @@ interface Props {
     indice: number;
     total: number;
     respuestas: Respuestas;
-    guardando: boolean;
     onResponder: (preguntaId: string, valor: 0 | 1 | null) => void;
     onAnterior: () => void;
     onSiguiente: () => void;
@@ -25,7 +24,7 @@ interface Props {
 const AYUDA_QUITAR = "Para quitar una respuesta, tocá de nuevo la opción marcada.";
 
 /** La pantalla de una pauta: cabecera, cuerpo simple o con desglose, y pie de navegación. Sin estado propio. */
-export default function PautaCard({ pauta, indice, total, respuestas, guardando, onResponder, onAnterior, onSiguiente }: Props) {
+export default function PautaCard({ pauta, indice, total, respuestas, onResponder, onAnterior, onSiguiente }: Props) {
     const r = estadoPauta(pauta, respuestas);
     const esSimple = r.total === 1;
     const esUltima = indice === total - 1;
@@ -46,7 +45,6 @@ export default function PautaCard({ pauta, indice, total, respuestas, guardando,
                 fullWidth
                 variant="outlined"
                 size="large"
-                disabled={guardando}
                 onClick={() => onResponder(simple.id, alternarRespuesta(respuestaSimple, valor))}
                 aria-pressed={marcada}
                 data-valor={valor}
@@ -128,7 +126,7 @@ export default function PautaCard({ pauta, indice, total, respuestas, guardando,
             ) : (
                 <CardContent sx={{ p: { xs: 1.5, sm: 3.5 }, pt: { xs: 2, sm: 2.5 }, display: "flex", flexDirection: "column", gap: 1.5 }}>
                     {pauta.partes.map((parte, i) => (
-                        <ParteFila key={parte.id} parte={parte} etiqueta={`${numero}.${i + 1}`} respuesta={respuestas[parte.id]} guardando={guardando} onResponder={onResponder} />
+                        <ParteFila key={parte.id} parte={parte} etiqueta={`${numero}.${i + 1}`} respuesta={respuestas[parte.id]} onResponder={onResponder} />
                     ))}
                     <Typography variant="caption" sx={{ color: "#6b7280", textAlign: "center" }}>Cada parte se guarda al tocarla. {AYUDA_QUITAR}</Typography>
                 </CardContent>
@@ -142,7 +140,7 @@ export default function PautaCard({ pauta, indice, total, respuestas, guardando,
                 <Button
                     variant="text"
                     onClick={onAnterior}
-                    disabled={indice === 0 || guardando}
+                    disabled={indice === 0}
                     data-anterior="si"
                     startIcon={<ChevronLeftIcon />}
                     sx={{ textTransform: "none", fontWeight: 700, color: "#374151", minHeight: 44, flex: { xs: 1, sm: "none" } }}
@@ -152,7 +150,6 @@ export default function PautaCard({ pauta, indice, total, respuestas, guardando,
                 <Button
                     variant={avance === "saltar" ? "outlined" : "contained"}
                     onClick={onSiguiente}
-                    disabled={guardando}
                     data-avance={avance}
                     endIcon={<ChevronRightIcon />}
                     sx={{

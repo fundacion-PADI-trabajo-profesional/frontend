@@ -12,12 +12,11 @@ interface Props {
     /** "6.1", "6.2"… */
     etiqueta: string;
     respuesta: number | null | undefined;
-    guardando: boolean;
     onResponder: (preguntaId: string, valor: 0 | 1 | null) => void;
 }
 
 /** Una parte de una pauta con desglose: consigna, criterio y sus botones Sí/No. Volver a tocar la opción marcada la quita. */
-export default function ParteFila({ parte, etiqueta, respuesta, guardando, onResponder }: Props) {
+export default function ParteFila({ parte, etiqueta, respuesta, onResponder }: Props) {
     const respondida = respuesta === 0 || respuesta === 1;
 
     const boton = (valor: 0 | 1, texto: string, Icono: typeof CheckIcon) => {
@@ -26,7 +25,6 @@ export default function ParteFila({ parte, etiqueta, respuesta, guardando, onRes
         return (
             <Button
                 variant="outlined"
-                disabled={guardando}
                 onClick={() => onResponder(parte.id, alternarRespuesta(respuesta, valor))}
                 aria-label={`${texto}, parte ${etiqueta}${marcada ? " (marcada, tocar para quitar)" : ""}`}
                 aria-pressed={marcada}

@@ -7,6 +7,7 @@ import AssignmentIcon from "@mui/icons-material/Assignment";
 
 import { enviarRespuestas, getPreguntasArea, type PreguntaBase } from "../../api/evaluaciones";
 import { agruparPautas, estadoPauta, pautaRecienCompletada, siguientePautaPendiente, type Respuestas } from "../../utils/pautas";
+import { crearColaGuardado } from "../../utils/colaGuardado";
 import SeguimientoPautas from "./wizard/SeguimientoPautas";
 import PautaCard from "./wizard/PautaCard";
 
@@ -28,7 +29,7 @@ interface Props {
 type WizardStep = "INTRO" | "QUESTIONS" | "FINISH";
 
 const CLAVE_AVANZAR_SOLA = "padi.wizard.avanzarSola";
-const DEMORA_AVANCE_MS = 650;
+const DEMORA_AVANCE_MS = 500;
 
 function leerAvanzarSola(): boolean {
     try { return localStorage.getItem(CLAVE_AVANZAR_SOLA) !== "no"; } catch { return true; }
@@ -41,7 +42,7 @@ function guardarAvanzarSola(valor: boolean) {
 export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, areaNombre }: Props) {
     const [step, setStep] = useState<WizardStep>("INTRO");
     const [loading, setLoading] = useState(false);
-    const [guardando, setGuardando] = useState(false);
+    const [guardadosPendientes, setGuardadosPendientes] = useState(0);
     const [saveError, setSaveError] = useState<string | null>(null);
     const [preguntas, setPreguntas] = useState<PreguntaBase[]>([]);
     const [respuestas, setRespuestas] = useState<Respuestas>({});
@@ -51,9 +52,30 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
 
     const pautaIdxRef = useRef(0);
     const avanceRef = useRef<number | null>(null);
+    // Copia síncrona de las respuestas: la cola y el avance deciden con el valor más nuevo,
+    // sin esperar al próximo render.
+    const respuestasRef = useRef<Respuestas>({});
     pautaIdxRef.current = pautaIdx;
 
     const pautas = useMemo(() => agruparPautas(preguntas), [preguntas]);
+
+    const actualizarRespuestas = (nuevas: Respuestas) => {
+        respuestasRef.current = nuevas;
+        setRespuestas(nuevas);
+    };
+
+    // Guardado por detrás: la pantalla no se bloquea; si un envío falla, se restauran esas partes.
+    const cola = useMemo(() => crearColaGuardado({
+        enviar: (items) => enviarRespuestas(evaluacionId, areaId, items),
+        onCambio: setGuardadosPendientes,
+        onError: (fallidos, error) => {
+            console.error("Error al guardar respuestas:", error);
+            const restauradas: Respuestas = { ...respuestasRef.current };
+            fallidos.forEach((f) => { restauradas[f.id] = f.anterior; });
+            actualizarRespuestas(restauradas);
+            setSaveError("Fallo al guardar la respuesta. Revisá tu conexión.");
+        },
+    }), [evaluacionId, areaId]);
 
     const materialesNecesarios = Array.from(new Set(
         preguntas.map((p) => p.materiales).filter((m): m is string => !!m && m.trim() !== "" && m.trim() !== "-"),
@@ -67,7 +89,7 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
         setStep("INTRO");
         setSaveError(null);
         setPreguntas([]);
-        setRespuestas({});
+        actualizarRespuestas({});
         setPautaIdx(0);
         setTodasCompletasAlAbrir(false);
         setLoading(true);
@@ -77,7 +99,7 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                 const mapa: Respuestas = {};
                 (data.respuestas || []).forEach((r) => { mapa[r.pregunta_id] = r.respuesta; });
                 setPreguntas(lista);
-                setRespuestas(mapa);
+                actualizarRespuestas(mapa);
                 const primeraPendiente = siguientePautaPendiente(agruparPautas(lista), mapa, -1);
                 setPautaIdx(primeraPendiente ?? 0);
                 setTodasCompletasAlAbrir(primeraPendiente === null && lista.length > 0);
@@ -111,27 +133,20 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
         if (avanceRef.current !== null) { window.clearTimeout(avanceRef.current); avanceRef.current = null; }
     };
 
-    const responder = async (preguntaId: string, valor: 0 | 1 | null) => {
-        // Cualquier toque invalida un avance ya programado: si se quita una respuesta dentro de
-        // los 650 ms, la pauta deja de estar completa y no debe saltar.
+    const responder = (preguntaId: string, valor: 0 | 1 | null) => {
+        // Cualquier toque invalida un avance ya programado: si se quita una respuesta antes de
+        // que venza, la pauta deja de estar completa y no debe saltar.
         cancelarAvance();
-        const anterior = respuestas[preguntaId] ?? null;
-        const nuevas: Respuestas = { ...respuestas, [preguntaId]: valor };
+        const antes = respuestasRef.current;
+        const anterior = antes[preguntaId] ?? null;
+        const nuevas: Respuestas = { ...antes, [preguntaId]: valor };
         const desde = pautaIdx;
-        setRespuestas(nuevas);
-        setGuardando(true);
+        actualizarRespuestas(nuevas);
         setSaveError(null);
-        try {
-            await enviarRespuestas(evaluacionId, areaId, [{ id: preguntaId, answer: valor }]);
-            // Avanza solo cuando la pauta pasa de incompleta a completa, no al corregir una ya completa.
-            if (avanzarSola && pautaRecienCompletada(pautas[desde], respuestas, nuevas)) programarAvance(desde, nuevas);
-        } catch (e) {
-            console.error("Error al guardar la respuesta:", e);
-            setRespuestas((prev) => ({ ...prev, [preguntaId]: anterior }));
-            setSaveError("Fallo al guardar la respuesta. Revisá tu conexión.");
-        } finally {
-            setGuardando(false);
-        }
+        cola.encolar(preguntaId, valor, anterior);
+        // La pantalla ya muestra la respuesta: el avance cuenta desde el toque, no desde el servidor,
+        // y solo cuando la pauta pasa de incompleta a completa.
+        if (avanzarSola && pautaRecienCompletada(pautas[desde], antes, nuevas)) programarAvance(desde, nuevas);
     };
 
     const cambiarAvanzarSola = (valor: boolean) => { setAvanzarSola(valor); guardarAvanzarSola(valor); };
@@ -155,12 +170,17 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
     return (
         <Dialog fullScreen open={open} onClose={onClose} TransitionComponent={Transition}>
             <Box sx={{ px: 2, py: 1, display: "flex", alignItems: "center", gap: 1, borderBottom: "1px solid #eee", flexShrink: 0 }}>
-                <IconButton edge="start" color="inherit" onClick={onClose} aria-label="Cerrar evaluación" disabled={guardando}>
+                <IconButton edge="start" color="inherit" onClick={onClose} aria-label="Cerrar evaluación" disabled={guardadosPendientes > 0}>
                     <CloseIcon />
                 </IconButton>
                 <Typography sx={{ ml: 1, flex: 1, fontWeight: 700 }} variant="h6" noWrap>{areaNombre}</Typography>
+                {guardadosPendientes > 0 && (
+                    <Typography variant="caption" sx={{ color: "#5c7cfa", display: "flex", alignItems: "center", gap: 0.75, whiteSpace: "nowrap" }}>
+                        <CircularProgress size={12} color="inherit" /> Guardando…
+                    </Typography>
+                )}
                 {step === "QUESTIONS" && pautas.length > 0 && (
-                    <Typography variant="body2" sx={{ color: "#4b5563", fontWeight: 600, whiteSpace: "nowrap" }}>
+                    <Typography variant="body2" sx={{ color: "#4b5563", fontWeight: 600, whiteSpace: "nowrap", ml: 1 }}>
                         Pauta {pautaActual?.numero ?? pautaIdx + 1} de {pautas.length}
                     </Typography>
                 )}
@@ -221,16 +241,10 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                     indice={pautaIdx}
                                     total={pautas.length}
                                     respuestas={respuestas}
-                                    guardando={guardando}
                                     onResponder={responder}
                                     onAnterior={anterior}
                                     onSiguiente={siguiente}
                                 />
-                                {guardando && (
-                                    <Typography variant="caption" sx={{ display: "block", mt: 1, textAlign: "center", color: "#5c7cfa" }}>
-                                        Guardando... <CircularProgress size={10} color="inherit" />
-                                    </Typography>
-                                )}
                             </Box>
                         </Box>
                     )}
@@ -257,8 +271,8 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                     sx={{ textTransform: "none", borderRadius: 2, borderColor: "#5c7cfa", color: "#5c7cfa" }}>
                                     Revisar respuestas
                                 </Button>
-                                <Button variant="contained" size="large" onClick={onClose} sx={{ bgcolor: "#111827", borderRadius: 2, textTransform: "none" }}>
-                                    Cerrar
+                                <Button variant="contained" size="large" onClick={onClose} disabled={guardadosPendientes > 0} sx={{ bgcolor: "#111827", borderRadius: 2, textTransform: "none" }}>
+                                    {guardadosPendientes > 0 ? "Guardando…" : "Cerrar"}
                                 </Button>
                             </Box>
                         </Card>

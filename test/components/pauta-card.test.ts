@@ -7,7 +7,7 @@ import { SALA4_CL, SE_RECEPTIVIDAD } from "../fixtures/preguntas";
 
 const render = (props: Partial<Parameters<typeof PautaCard>[0]> & { pauta: Parameters<typeof PautaCard>[0]["pauta"] }) =>
   renderToStaticMarkup(createElement(PautaCard, {
-    indice: 0, total: 8, respuestas: {}, guardando: false,
+    indice: 0, total: 8, respuestas: {},
     onResponder: vi.fn(), onAnterior: vi.fn(), onSiguiente: vi.fn(), ...props,
   }));
 
@@ -53,12 +53,11 @@ describe("PautaCard", () => {
     expect(render({ pauta: pautas[7], indice: 7 })).toContain('data-avance="finalizar"');
   });
 
-  it("anterior deshabilitado en la primera pauta; todo deshabilitado mientras guarda", () => {
+  it("anterior deshabilitado en la primera pauta; los botones de respuesta nunca se bloquean", () => {
     const primera = render({ pauta: pautas[0], indice: 0 });
     const anterior = primera.match(/<button[^>]*data-anterior[^>]*>/)?.[0] ?? "";
     expect(anterior).toContain("disabled");
-    const guardando = render({ pauta: pautas[5], indice: 5, guardando: true });
-    expect(botonesRespuesta(guardando).every((b) => b.includes("disabled"))).toBe(true);
+    expect(botonesRespuesta(render({ pauta: pautas[5], indice: 5 })).some((b) => b.includes("disabled"))).toBe(false);
   });
 });
 

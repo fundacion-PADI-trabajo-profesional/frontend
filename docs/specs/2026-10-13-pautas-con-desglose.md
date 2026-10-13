@@ -143,13 +143,18 @@ suma", sea Sí o No (regla ya vigente desde el PR #21).
 
 ## 5. Comportamiento
 
-- **Responder una parte** guarda de inmediato con `enviarRespuestas(evaluacionId, areaId, [{ id,
-  answer }])`, igual que hoy. La interfaz se actualiza antes de la respuesta del servidor; si falla,
-  se restaura el valor anterior y se muestra el error ya existente de "Fallo al guardar".
+- **Responder una parte** marca la respuesta al instante y la manda al backend por una **cola de
+  guardado** (`src/utils/colaGuardado.ts`) sin bloquear la pantalla: los envíos salen de a uno y en
+  orden, los que llegan mientras hay uno en vuelo salen juntos después, y si la misma parte se toca
+  varias veces antes de salir se manda solo el último valor. Un indicador "Guardando…" discreto
+  acompaña; la X de cerrar y "Cerrar" del final esperan a que la cola termine. Si un envío falla, se
+  restaura el valor anterior de esas partes y se muestra "Fallo al guardar", aunque ya se esté en
+  otra pauta.
 - **Quitar** una respuesta es tocar de nuevo la opción marcada: envía `answer: null`. El backend ya lo
   acepta y recalcula el área como incompleta.
-- **Avance automático**: con la casilla activa, al completar la pauta actual se pasa a la siguiente
-  pauta después de 650 ms, el tiempo de ver el círculo cambiar. Si era la última y quedan pautas
+- **Avance automático**: con la casilla activa, cuando la pauta actual pasa de incompleta a completa
+  se pasa a la siguiente pauta 500 ms después del toque, sin esperar al servidor: el tiempo de ver
+  el círculo cambiar. Si era la última y quedan pautas
   pendientes, se va a la primera pendiente; si no quedan, se muestra el cierre. La casilla viene
   activa, se guarda en `localStorage` como preferencia del dispositivo y se lee con `try/catch`.
 - **Navegación manual**: "Anterior", el botón de avance y los círculos funcionan siempre, esté o no

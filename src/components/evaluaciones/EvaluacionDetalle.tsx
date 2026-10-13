@@ -10,7 +10,11 @@ import {
     CircularProgress,
     Button,
     Paper,
-    Alert
+    Alert,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions
 } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import ChevronRightIcon from "@mui/icons-material/ChevronRight"
@@ -22,6 +26,7 @@ import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import SchoolIcon from '@mui/icons-material/School';
 
 import { getEvaluacionInstanciaById, type EvaluacionInstancia } from "../../api/evaluaciones"
+import { datosRevisionDeArea } from "../../utils/revision"
 import EvaluacionWizard from "./EvaluacionWizard"
 import EvaluacionRevision from "./EvaluacionRevision";
 import { esIdentificadorInterno } from "../../utils/dni";
@@ -97,14 +102,21 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
     const [revisionOpen, setRevisionOpen] = useState(false);
     const [revisionData, setRevisionData] = useState<{ id: string, nombre: string, score: number, total: number, statusId: string } | null>(null);
 
+    // Desde dónde se abrió el wizard: define a dónde se vuelve al cerrarlo
+    const [wizardOrigen, setWizardOrigen] = useState<"ficha" | "revision">("ficha");
+    // Elección de destino pendiente después de corregir desde la revisión
+    const [postCorreccion, setPostCorreccion] = useState<{ areaId: string; nombre: string } | null>(null);
+
     // Carga inicial y recarga
-    const loadEvaluationData = async () => {
+    const loadEvaluationData = async (): Promise<EvaluacionInstancia | null> => {
         try {
             setLoading(true)
             const res = await getEvaluacionInstanciaById(evaluacionId)
             setData(res)
+            return res
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : "Error al cargar la evaluación")
+            return null
         } finally {
             setLoading(false)
         }
@@ -132,6 +144,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
         }
         // Si el alumno está dado de baja, no se puede iniciar/continuar evaluación
         if (isReadOnly) return;
+        setWizardOrigen("ficha");
         setSelectedArea({ id: areaId, nombre: areaNombre });
         setWizardOpen(true);
     }
@@ -140,8 +153,17 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
     const handleCorrectFromRevision = () => {
         if (!revisionData || isReadOnly) return;
         setRevisionOpen(false);
+        setWizardOrigen("revision");
         setSelectedArea({ id: revisionData.id, nombre: revisionData.nombre });
         setWizardOpen(true);
+    }
+
+    // Reabre la revisión de un área con los datos ya recargados
+    const abrirRevisionDeArea = (fresco: EvaluacionInstancia | null, areaId: string) => {
+        const datos = datosRevisionDeArea(fresco, areaId);
+        if (!datos) return;
+        setRevisionData(datos);
+        setRevisionOpen(true);
     }
 
     if (loading) return <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
@@ -356,10 +378,14 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
             {/* WIZARD MODAL */}
             <EvaluacionWizard
                 open={wizardOpen}
-                onClose={() => {
+                onClose={async () => {
                     setWizardOpen(false);
+                    const areaCerrada = selectedArea;
                     setSelectedArea(null);
-                    loadEvaluationData();
+                    const fresco = await loadEvaluationData();
+                    if (wizardOrigen === "revision" && areaCerrada && fresco) {
+                        setPostCorreccion({ areaId: areaCerrada.id, nombre: areaCerrada.nombre });
+                    }
                 }}
                 evaluacionId={evaluacionId}
                 areaId={selectedArea?.id || ""}
@@ -384,6 +410,26 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                     statusId={revisionData.statusId}
                 />
             )}
+
+            {/* Al cerrar una corrección abierta desde la revisión: ¿volver a la revisión o quedarse en la ficha? */}
+            <Dialog open={!!postCorreccion} onClose={() => setPostCorreccion(null)} PaperProps={{ sx: { borderRadius: 3 } }}>
+                <DialogTitle sx={{ fontWeight: 700 }}>¿A dónde querés volver?</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" color="text.secondary">Las correcciones ya quedaron guardadas.</Typography>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2, gap: 1, flexWrap: "wrap" }}>
+                    <Button onClick={() => setPostCorreccion(null)} sx={{ textTransform: "none", color: "#666" }}>
+                        Ir a la ficha de la evaluación
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={() => { const destino = postCorreccion; setPostCorreccion(null); if (destino) abrirRevisionDeArea(data, destino.areaId); }}
+                        sx={{ bgcolor: "#5c7cfa", textTransform: "none", borderRadius: 2 }}
+                    >
+                        Volver a la revisión de {postCorreccion?.nombre}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     )
 }

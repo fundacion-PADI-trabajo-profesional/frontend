@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Box, Typography, IconButton, CircularProgress, Paper, Divider, List, ListItem, ListItemText, ListItemIcon, Chip, Alert, Dialog, Stack, Button } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import { Box, Typography, CircularProgress, Paper, Divider, List, ListItem, ListItemText, ListItemIcon, Chip, Alert, Dialog, Stack } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
-import EditIcon from '@mui/icons-material/Edit';
 
 import { getRespuestasParaRevision, type PreguntasResponse } from '../../api/evaluaciones';
+import { agruparPautas, estadoPauta, type Respuestas } from '../../utils/pautas';
+import BarraRevision from './BarraRevision';
 
 interface Props {
     open: boolean;
@@ -43,82 +43,26 @@ export default function EvaluacionRevision({ open, onClose, onCorrect, evaluacio
         return { text, icon, esCorrecta };
     };
 
-    const getGroupTitleFromQuestions = (preguntas: { titulo?: string }[], groupNumber: number) => {
-        // Todas las preguntas del grupo comparten el mismo título
-        return preguntas?.[0]?.titulo ?? `Grupo ${groupNumber}`;
-    };
-
-    // Agrupar preguntas por numero (grupo)
-    const grouped = useMemo(() => {
-        const preguntas = data?.preguntas ?? [];
-        const map = new Map<number, typeof preguntas>();
-
-        for (const p of preguntas) {
-            const key = Number(p.numero);
-            if (!map.has(key)) map.set(key, []);
-            map.get(key)!.push(p);
-        }
-
-        // orden por numero asc
-        return Array.from(map.entries()).sort(([a], [b]) => a - b);
+    // Misma agrupación y misma regla de aprobación que el wizard (src/utils/pautas.ts)
+    const pautas = useMemo(() => agruparPautas(data?.preguntas ?? []), [data]);
+    const respuestasMapa = useMemo<Respuestas>(() => {
+        const mapa: Respuestas = {};
+        (data?.respuestas ?? []).forEach((r) => { mapa[r.pregunta_id] = r.respuesta; });
+        return mapa;
     }, [data]);
-
-    // Stats por grupo (mayoría: ceil(total/2))
-    const getGroupStats = (preguntas: { id: string; puntaje_invertido?: boolean }[]) => {
-        const total = preguntas.length;
-
-        let answered = 0;
-        let correct = 0;
-
-        for (const p of preguntas) {
-            const r = data?.respuestas.find(x => x.pregunta_id === p.id)?.respuesta ?? null;
-            if (r !== null && r !== undefined) {
-                answered += 1;
-                const esCorrecta = p.puntaje_invertido ? r === 0 : r === 1;
-                if (esCorrecta) correct += 1;
-            }
-        }
-
-        const needed = Math.ceil(total / 2);
-        const aprobado = answered === total && correct >= needed;
-        const completo = answered === total;
-
-        return { total, answered, correct, needed, aprobado, completo };
-    };
 
     if (!open) return null;
 
     // Recalcular aciertos localmente respetando puntaje_invertido
-    const aciertosCalculados = grouped.reduce((acc, [, preguntas]) => {
-        const stats = getGroupStats(preguntas);
-        return acc + (stats.aprobado ? 1 : 0);
-    }, 0);
-    const totalGrupos = grouped.length || total;
+    const aciertosCalculados = pautas.reduce((acc, p) => acc + (estadoPauta(p, respuestasMapa).aprobada ? 1 : 0), 0);
+    const totalGrupos = pautas.length || total;
     const scoreEfectivo = data ? aciertosCalculados : score;
     const totalEfectivo = data ? totalGrupos : total;
     const puntajePorcentual = totalEfectivo > 0 ? (scoreEfectivo / totalEfectivo) * 100 : 0;
 
     return (
         <Dialog fullScreen open={open} onClose={onClose}>
-            <Box sx={{ px: 2, py: 1, display: 'flex', alignItems: 'center', borderBottom: '1px solid #eee' }}>
-                <IconButton edge="start" color="inherit" onClick={onClose} aria-label="close">
-                    <CloseIcon />
-                </IconButton>
-                <Typography sx={{ ml: 2, flex: 1, fontWeight: 700 }} variant="h6">
-                    Revisión: {areaNombre}
-                </Typography>
-                {onCorrect && (
-                    <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<EditIcon />}
-                        onClick={onCorrect}
-                        sx={{ textTransform: 'none', borderColor: '#5c7cfa', color: '#5c7cfa' }}
-                    >
-                        Corregir respuestas
-                    </Button>
-                )}
-            </Box>
+            <BarraRevision areaNombre={areaNombre} onClose={onClose} onCorrect={onCorrect} />
 
             <Box sx={{ p: 3, maxWidth: 800, mx: 'auto' }}>
                 <Alert severity={statusId === 'A' ? 'success' : statusId === 'D' ? 'error' : 'info'} sx={{ mb: 3 }}>
@@ -136,11 +80,12 @@ export default function EvaluacionRevision({ open, onClose, onCorrect, evaluacio
                     <Alert severity="error">{error}</Alert>
                 ) : (
                     <Stack spacing={2}>
-                        {grouped.map(([groupNumber, preguntasDelGrupo]) => {
-                            const stats = getGroupStats(preguntasDelGrupo);
+                        {pautas.map((pauta) => {
+                            const r = estadoPauta(pauta, respuestasMapa);
+                            const preguntasDelGrupo = pauta.partes;
 
                             return (
-                                <Paper key={groupNumber} elevation={1} sx={{ borderRadius: 2, overflow: "hidden" }}>
+                                <Paper key={pauta.clave} elevation={1} sx={{ borderRadius: 2, overflow: "hidden" }}>
                                     {/* Header del grupo */}
                                     <Box
                                         sx={{
@@ -155,17 +100,19 @@ export default function EvaluacionRevision({ open, onClose, onCorrect, evaluacio
                                     >
                                         <Box>
                                             <Typography sx={{ fontWeight: 800 }}>
-                                                {getGroupTitleFromQuestions(preguntasDelGrupo, groupNumber)}
+                                                {pauta.titulo}
                                             </Typography>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Se aprueba con {stats.needed}/{stats.total} puntos correctos
-                                            </Typography>
+                                            {r.total > 1 && (
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Se aprueba con {r.necesarias} de {r.total}
+                                                </Typography>
+                                            )}
                                         </Box>
 
                                         <Stack direction="row" spacing={1} alignItems="center">
                                             <Chip
                                                 size="small"
-                                                label={`${stats.correct}/${stats.total}`}
+                                                label={`${r.correctas}/${r.total}`}
                                                 sx={{
                                                     bgcolor: "#EEF2FF",
                                                     color: "#4A78C2",
@@ -175,13 +122,13 @@ export default function EvaluacionRevision({ open, onClose, onCorrect, evaluacio
                                             <Chip
                                                 size="small"
                                                 label={
-                                                    !stats.completo ? "Incompleto" : stats.aprobado ? "Sección aprobada" : "Sección no aprobada"
+                                                    !r.completa ? "Incompleta" : r.aprobada ? "Pauta aprobada" : "Pauta no aprobada"
                                                 }
                                                 sx={{
                                                     fontWeight: 700,
-                                                    ...(!stats.completo
+                                                    ...(!r.completa
                                                         ? { bgcolor: "#FFF7E6", color: "#B26A00" }  // N pastel
-                                                        : stats.aprobado
+                                                        : r.aprobada
                                                             ? { bgcolor: "#ECF7F0", color: "#4F8A5B" } // A pastel
                                                             : { bgcolor: "#FDEFF0", color: "#C05A63" } // D pastel
                                                     )

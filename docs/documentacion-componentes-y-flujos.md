@@ -204,6 +204,23 @@ Estas vistas funcionan como pasos intermedios en la navegación jerárquica dent
 - [EvaluacionForm.tsx](../src/components/forms/EvaluacionForm.tsx)
 - [EvaluacionDetalle.tsx](../src/components/evaluaciones/EvaluacionDetalle.tsx)
 - [EvaluacionRevision.tsx](../src/components/evaluaciones/EvaluacionRevision.tsx)
+- [BarraRevision.tsx](../src/components/evaluaciones/BarraRevision.tsx)
+
+#### Wizard de evaluación por pautas — [src/components/evaluaciones/wizard/](../src/components/evaluaciones/wizard/)
+
+Desde octubre de 2026 el wizard muestra **una pantalla por pauta**. Una pauta es el grupo de
+preguntas que comparten `numero` (`agruparPautas`, [src/utils/pautas.ts](../src/utils/pautas.ts));
+si tiene varias partes se responden todas en la misma pantalla y aprueba con la mitad o más de
+partes correctas (`estadoPauta`). Componentes:
+
+- [PautaCard.tsx](../src/components/evaluaciones/wizard/PautaCard.tsx): cabecera, cuerpo (simple o con desglose) y pie de navegación. Sin estado.
+- [ParteFila.tsx](../src/components/evaluaciones/wizard/ParteFila.tsx): una parte con sus botones Sí/No. Volver a tocar la opción marcada la quita.
+- [SeguimientoPautas.tsx](../src/components/evaluaciones/wizard/SeguimientoPautas.tsx): un círculo por pauta (`circuloPauta`): número si no se tocó, "1/3" en ámbar a medias, ✓ o ✗ al completar. En pautas simples el ícono dice la respuesta y el color si aprueba.
+- [EvaluacionWizard.tsx](../src/components/evaluaciones/EvaluacionWizard.tsx): estado, carga, guardado por detrás con una cola que no bloquea la pantalla ([src/utils/colaGuardado.ts](../src/utils/colaGuardado.ts)) y avance automático 500 ms después de completar la pauta (preferencia `padi.wizard.avanzarSola` en localStorage).
+
+Al cerrar una corrección abierta desde la revisión, `EvaluacionDetalle` ofrece volver a esa revisión
+o a la ficha (`datosRevisionDeArea`, [src/utils/revision.ts](../src/utils/revision.ts)).
+Especificación: [docs/specs/2026-10-13-pautas-con-desglose.md](./specs/2026-10-13-pautas-con-desglose.md).
 
 ### Formularios — [src/components/forms/](../src/components/forms/)
 

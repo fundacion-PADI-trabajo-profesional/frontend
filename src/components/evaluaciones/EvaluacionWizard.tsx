@@ -1,38 +1,15 @@
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Alert, Box, Button, Card, Checkbox, CircularProgress, Dialog, FormControlLabel, IconButton, Slide, Typography } from "@mui/material";
+import type { TransitionProps } from "@mui/material/transitions";
+import CloseIcon from "@mui/icons-material/Close";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import AssignmentIcon from "@mui/icons-material/Assignment";
 
-import { useState, useEffect, useRef } from "react"
-import {
-    Box,
-    Typography,
-    Button,
-    Card,
-    CardContent,
-    IconButton,
-    CircularProgress,
-    LinearProgress,
-    Dialog,
-    Slide,
-    Alert,
-    Tooltip,
-    Paper
-} from "@mui/material"
-import { TransitionProps } from '@mui/material/transitions';
-import CloseIcon from "@mui/icons-material/Close"
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline"
-import HighlightOffIcon from "@mui/icons-material/HighlightOff"
-import ArrowBackIcon from "@mui/icons-material/ArrowBack"
-import CheckIcon from "@mui/icons-material/Check"
-import AssignmentIcon from "@mui/icons-material/Assignment"
-import VisibilityIcon from "@mui/icons-material/Visibility"
-import WarningAmberIcon from "@mui/icons-material/WarningAmber"
-import BuildIcon from "@mui/icons-material/Build"
-import React from "react"
-
-import {
-    getPreguntasArea,
-    enviarRespuestas,
-    type PreguntaBase
-} from "../../api/evaluaciones"
-import { paletaBotonRespuesta, respuestaSumaPunto } from "../../utils/respuestas"
+import { enviarRespuestas, getPreguntasArea, type PreguntaBase } from "../../api/evaluaciones";
+import { agruparPautas, estadoPauta, pautaRecienCompletada, siguientePautaPendiente, type Respuestas } from "../../utils/pautas";
+import { crearColaGuardado } from "../../utils/colaGuardado";
+import SeguimientoPautas from "./wizard/SeguimientoPautas";
+import PautaCard from "./wizard/PautaCard";
 
 const Transition = React.forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -42,636 +19,260 @@ const Transition = React.forwardRef(function Transition(
 });
 
 interface Props {
-    open: boolean
-    onClose: () => void
-    evaluacionId: string
-    areaId: string
-    areaNombre: string
+    open: boolean;
+    onClose: () => void;
+    evaluacionId: string;
+    areaId: string;
+    areaNombre: string;
 }
 
-type WizardStep = "INTRO" | "QUESTIONS" | "FINISH"
+type WizardStep = "INTRO" | "QUESTIONS" | "FINISH";
 
-function SidebarPanel({
-    preguntas,
-    respuestas,
-    currentIndex,
-    onJump,
-}: {
-    preguntas: PreguntaBase[];
-    respuestas: Record<string, number | null>;
-    currentIndex: number;
-    onJump: (idx: number) => void;
-}) {
-    const answeredCount = preguntas.filter(
-        p => respuestas[p.id] === 0 || respuestas[p.id] === 1
-    ).length;
+const CLAVE_AVANZAR_SOLA = "padi.wizard.avanzarSola";
+const DEMORA_AVANCE_MS = 500;
 
-    return (
-        <Paper elevation={2} sx={{
-            width: 168,
-            flexShrink: 0,
-            p: 1.5,
-            borderRadius: 3,
-            alignSelf: 'flex-start',
-            position: 'sticky',
-            top: 16,
-            display: { xs: 'none', sm: 'block' }
-        }}>
-            <Typography variant="caption" sx={{ fontWeight: 700, display: 'block', color: '#374151' }}>
-                Respondidas
-            </Typography>
-            <Typography variant="caption" sx={{ display: 'block', mb: 1.5, color: '#6b7280', fontWeight: 600 }}>
-                {answeredCount} / {preguntas.length}
-            </Typography>
-
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-                {preguntas.map((p, idx) => {
-                    const answer = respuestas[p.id];
-                    const isCurrent = idx === currentIndex;
-                    const isAnswered = answer === 0 || answer === 1;
-                    // Para preguntas invertidas, NO=correcto; para normales, SÍ=correcto
-                    const isCorrecta = p.puntaje_invertido ? answer === 0 : answer === 1;
-                    const isIncorrecta = p.puntaje_invertido ? answer === 1 : answer === 0;
-
-                    return (
-                        <Tooltip
-                            key={p.id}
-                            title={`P${idx + 1}: ${answer === 1 ? 'Sí' : answer === 0 ? 'No' : 'Sin responder'}${isAnswered ? (isCorrecta ? ' ✓' : ' ✗') : ''}`}
-                            placement="top"
-                        >
-                            <Box
-                                onClick={() => onJump(idx)}
-                                sx={{
-                                    width: 34,
-                                    height: 34,
-                                    borderRadius: '50%',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: isAnswered ? '0.85rem' : '0.75rem',
-                                    fontWeight: 700,
-                                    cursor: 'pointer',
-                                    border: isCurrent ? '2.5px solid #5c7cfa' : '2px solid transparent',
-                                    bgcolor: isCorrecta ? '#dcfce7' : isIncorrecta ? '#fee2e2' : '#f3f4f6',
-                                    color: isCurrent ? '#5c7cfa' : isCorrecta ? '#16a34a' : isIncorrecta ? '#ef4444' : '#9ca3af',
-                                    boxShadow: isCurrent ? '0 0 0 2px #c7d2fe' : 'none',
-                                    transition: 'all 0.15s',
-                                    '&:hover': { opacity: 0.8, transform: 'scale(1.05)' }
-                                }}
-                            >
-                                {isCorrecta ? <CheckIcon sx={{ fontSize: '1rem' }} /> : isIncorrecta ? <CloseIcon sx={{ fontSize: '1rem' }} /> : idx + 1}
-                            </Box>
-                        </Tooltip>
-                    );
-                })}
-            </Box>
-
-            <Box sx={{ mt: 1.5, pt: 1.5, borderTop: '1px solid #e5e7eb' }}>
-                {[
-                    { color: '#dcfce7', border: '#16a34a', label: 'Sí' },
-                    { color: '#fee2e2', border: '#ef4444', label: 'No' },
-                    { color: '#f3f4f6', border: '#9ca3af', label: 'Sin resp.' },
-                ].map(item => (
-                    <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                        <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: item.color, border: `1px solid ${item.border}` }} />
-                        <Typography variant="caption" color="text.secondary">{item.label}</Typography>
-                    </Box>
-                ))}
-            </Box>
-        </Paper>
-    );
+function leerAvanzarSola(): boolean {
+    try { return localStorage.getItem(CLAVE_AVANZAR_SOLA) !== "no"; } catch { return true; }
+}
+function guardarAvanzarSola(valor: boolean) {
+    try { localStorage.setItem(CLAVE_AVANZAR_SOLA, valor ? "si" : "no"); } catch { /* sin almacenamiento disponible */ }
 }
 
-function MobileCircleRow({
-    preguntas,
-    respuestas,
-    currentIndex,
-    onJump,
-}: {
-    preguntas: PreguntaBase[];
-    respuestas: Record<string, number | null>;
-    currentIndex: number;
-    onJump: (idx: number) => void;
-}) {
-    const currentRef = useRef<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-        currentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    }, [currentIndex]);
-
-    return (
-        <Box sx={{ position: 'relative', display: { xs: 'block', sm: 'none' }, mb: 2 }}>
-            <Box sx={{
-                display: 'flex',
-                overflowX: 'auto',
-                gap: 0.75,
-                pb: 1,
-                '&::-webkit-scrollbar': { display: 'none' },
-                scrollbarWidth: 'none',
-            }}>
-                {preguntas.map((p, idx) => {
-                    const answer = respuestas[p.id];
-                    const isCurrent = idx === currentIndex;
-                    const isAnswered = answer === 0 || answer === 1;
-                    const isCorrecta = p.puntaje_invertido ? answer === 0 : answer === 1;
-                    const isIncorrecta = p.puntaje_invertido ? answer === 1 : answer === 0;
-
-                    return (
-                        <Box
-                            key={p.id}
-                            ref={isCurrent ? currentRef : null}
-                            onClick={() => onJump(idx)}
-                            sx={{
-                                width: 32,
-                                height: 32,
-                                flexShrink: 0,
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: isAnswered ? '0.8rem' : '0.7rem',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                                border: isCurrent ? '2.5px solid #5c7cfa' : '2px solid transparent',
-                                bgcolor: isCorrecta ? '#dcfce7' : isIncorrecta ? '#fee2e2' : '#f3f4f6',
-                                color: isCurrent ? '#5c7cfa' : isCorrecta ? '#16a34a' : isIncorrecta ? '#ef4444' : '#9ca3af',
-                                boxShadow: isCurrent ? '0 0 0 2px #c7d2fe' : 'none',
-                            }}
-                        >
-                            {isCorrecta ? <CheckIcon sx={{ fontSize: '1rem' }} /> : isIncorrecta ? <CloseIcon sx={{ fontSize: '1rem' }} /> : idx + 1}
-                        </Box>
-                    );
-                })}
-            </Box>
-            <Box sx={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 40, background: 'linear-gradient(to right, transparent, #f5f5f5)', pointerEvents: 'none' }} />
-        </Box>
-    );
-}
-
+/** Wizard de evaluación de un área: una pantalla por pauta. */
 export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, areaNombre }: Props) {
-    const [step, setStep] = useState<WizardStep>("INTRO")
-    const [loading, setLoading] = useState(false)
-    const [saving, setSaving] = useState(false)
-    const [saveError, setSaveError] = useState<string | null>(null)
-    const [allPreviouslyAnswered, setAllPreviouslyAnswered] = useState(false)
+    const [step, setStep] = useState<WizardStep>("INTRO");
+    const [loading, setLoading] = useState(false);
+    const [guardadosPendientes, setGuardadosPendientes] = useState(0);
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const [preguntas, setPreguntas] = useState<PreguntaBase[]>([]);
+    const [respuestas, setRespuestas] = useState<Respuestas>({});
+    const [pautaIdx, setPautaIdx] = useState(0);
+    const [avanzarSola, setAvanzarSola] = useState<boolean>(leerAvanzarSola);
+    const [todasCompletasAlAbrir, setTodasCompletasAlAbrir] = useState(false);
 
-    const [preguntas, setPreguntas] = useState<PreguntaBase[]>([])
-    const [respuestas, setRespuestas] = useState<Record<string, number | null>>({})
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
+    const pautaIdxRef = useRef(0);
+    const avanceRef = useRef<number | null>(null);
+    // Copia síncrona de las respuestas: la cola y el avance deciden con el valor más nuevo,
+    // sin esperar al próximo render.
+    const respuestasRef = useRef<Respuestas>({});
+    pautaIdxRef.current = pautaIdx;
 
-    const materialesNecesarios = Array.from(
-        new Set(
-            preguntas
-                .map((p) => p.materiales)
-                .filter((m) => m && m.trim() !== "")
-        )
-    );
+    const pautas = useMemo(() => agruparPautas(preguntas), [preguntas]);
+
+    const actualizarRespuestas = (nuevas: Respuestas) => {
+        respuestasRef.current = nuevas;
+        setRespuestas(nuevas);
+    };
+
+    // Guardado por detrás: la pantalla no se bloquea; si un envío falla, se restauran esas partes.
+    const cola = useMemo(() => crearColaGuardado({
+        enviar: (items) => enviarRespuestas(evaluacionId, areaId, items),
+        onCambio: setGuardadosPendientes,
+        onError: (fallidos, error) => {
+            console.error("Error al guardar respuestas:", error);
+            const restauradas: Respuestas = { ...respuestasRef.current };
+            fallidos.forEach((f) => { restauradas[f.id] = f.anterior; });
+            actualizarRespuestas(restauradas);
+            setSaveError("Fallo al guardar la respuesta. Revisá tu conexión.");
+        },
+    }), [evaluacionId, areaId]);
+
+    const materialesNecesarios = Array.from(new Set(
+        preguntas.map((p) => p.materiales).filter((m): m is string => !!m && m.trim() !== "" && m.trim() !== "-"),
+    ));
 
     useEffect(() => {
-        if (open && evaluacionId && areaId) {
-            setStep("INTRO")
-            setAllPreviouslyAnswered(false)
-            setLoading(true)
-            getPreguntasArea(evaluacionId, areaId)
-                .then((data) => {
-                    setPreguntas(data.preguntas || [])
+        if (!(open && evaluacionId && areaId)) return;
+        // Se descarta todo lo del área anterior antes de cargar, así una carga fallida no deja
+        // preguntas de otra área bajo el nombre de esta.
+        if (avanceRef.current !== null) { window.clearTimeout(avanceRef.current); avanceRef.current = null; }
+        setStep("INTRO");
+        setSaveError(null);
+        setPreguntas([]);
+        actualizarRespuestas({});
+        setPautaIdx(0);
+        setTodasCompletasAlAbrir(false);
+        setLoading(true);
+        getPreguntasArea(evaluacionId, areaId)
+            .then((data) => {
+                const lista = data.preguntas || [];
+                const mapa: Respuestas = {};
+                (data.respuestas || []).forEach((r) => { mapa[r.pregunta_id] = r.respuesta; });
+                setPreguntas(lista);
+                actualizarRespuestas(mapa);
+                const primeraPendiente = siguientePautaPendiente(agruparPautas(lista), mapa, -1);
+                setPautaIdx(primeraPendiente ?? 0);
+                setTodasCompletasAlAbrir(primeraPendiente === null && lista.length > 0);
+            })
+            .catch((err) => {
+                console.error("Error cargando preguntas:", err);
+                setSaveError("No se pudieron cargar las preguntas del área. Cerrá y volvé a intentar.");
+            })
+            .finally(() => setLoading(false));
+    }, [open, evaluacionId, areaId]);
 
-                    const map: Record<string, number | null> = {}
-                        ; (data.respuestas || []).forEach((r) => {
-                            map[r.pregunta_id] = r.respuesta;
-                        });
-                    setRespuestas(map);
+    // Cancela un avance programado si el diálogo se cierra o se desmonta.
+    useEffect(() => () => { if (avanceRef.current !== null) window.clearTimeout(avanceRef.current); }, []);
 
-                    const allIds = data.preguntas.map(p => p.id);
-                    const firstUnansweredId = allIds.find(id => map[id] !== 0 && map[id] !== 1);
-
-                    if (firstUnansweredId) {
-                        const index = allIds.indexOf(firstUnansweredId);
-                        setCurrentQuestionIndex(index >= 0 ? index : 0);
-                        setAllPreviouslyAnswered(false);
-                    } else if (data.preguntas.length > 0) {
-                        // Todas respondidas: modo revisión/corrección
-                        setCurrentQuestionIndex(0);
-                        setAllPreviouslyAnswered(true);
-                    } else {
-                        setCurrentQuestionIndex(0);
-                    }
-                })
-                .catch(err => console.error("Error cargando preguntas:", err))
-                .finally(() => setLoading(false))
-        }
-    }, [open, evaluacionId, areaId])
-
-    const checkAllAnswered = (r: Record<string, number | null>) =>
-        preguntas.every(p => r[p.id] === 0 || r[p.id] === 1);
-
-    const handleAnswer = async (value: number) => {
-        const preguntaActual = preguntas[currentQuestionIndex];
-        const newRespuestas = { ...respuestas, [preguntaActual.id]: value };
-        setRespuestas(newRespuestas);
-        setSaving(true);
-
-        try {
-            await enviarRespuestas(evaluacionId, areaId, [{ id: preguntaActual.id, answer: value }]);
-
-            const nextIndex = currentQuestionIndex + 1;
-            if (nextIndex >= preguntas.length) {
-                if (checkAllAnswered(newRespuestas)) {
-                    setStep("FINISH");
-                } else {
-                    const firstUnanswered = preguntas.findIndex(p => newRespuestas[p.id] !== 0 && newRespuestas[p.id] !== 1);
-                    setCurrentQuestionIndex(firstUnanswered >= 0 ? firstUnanswered : 0);
-                }
-            } else {
-                setCurrentQuestionIndex(nextIndex);
-            }
-        } catch (e) {
-            console.error("Error al guardar la respuesta:", e);
-            setSaveError("Fallo al guardar la respuesta. Revisá tu conexión.");
-        } finally {
-            setSaving(false);
-        }
+    const irDespuesDe = (desde: number, resp: Respuestas) => {
+        if (desde < pautas.length - 1) { setPautaIdx(desde + 1); return; }
+        const pendiente = siguientePautaPendiente(pautas, resp, desde);
+        if (pendiente === null) setStep("FINISH"); else setPautaIdx(pendiente);
     };
 
-    /** Quita la respuesta de la pregunta actual (vuelve a "sin responder") sin avanzar. */
-    const handleClearAnswer = async () => {
-        const preguntaActual = preguntas[currentQuestionIndex];
-        const anterior = respuestas[preguntaActual.id];
-        if (anterior !== 0 && anterior !== 1) return;
-        setRespuestas(prev => ({ ...prev, [preguntaActual.id]: null }));
-        setSaving(true);
-
-        try {
-            await enviarRespuestas(evaluacionId, areaId, [{ id: preguntaActual.id, answer: null }]);
-            setAllPreviouslyAnswered(false);
-        } catch (e) {
-            console.error("Error al quitar la respuesta:", e);
-            setRespuestas(prev => ({ ...prev, [preguntaActual.id]: anterior }));
-            setSaveError("Fallo al quitar la respuesta. Revisá tu conexión.");
-        } finally {
-            setSaving(false);
-        }
+    const programarAvance = (desde: number, resp: Respuestas) => {
+        if (avanceRef.current !== null) window.clearTimeout(avanceRef.current);
+        avanceRef.current = window.setTimeout(() => {
+            avanceRef.current = null;
+            if (pautaIdxRef.current !== desde) return; // la docente ya se movió
+            irDespuesDe(desde, resp);
+        }, DEMORA_AVANCE_MS);
     };
 
-    const handleSkip = () => {
-        const nextIndex = currentQuestionIndex + 1;
-        if (nextIndex >= preguntas.length) {
-            const firstUnanswered = preguntas.findIndex(
-                (p, idx) => idx !== currentQuestionIndex && (respuestas[p.id] !== 0 && respuestas[p.id] !== 1)
-            );
-            if (firstUnanswered >= 0) {
-                setCurrentQuestionIndex(firstUnanswered);
-            } else if (checkAllAnswered(respuestas)) {
-                setStep("FINISH");
-            } else {
-                setCurrentQuestionIndex(0);
-            }
-        } else {
-            setCurrentQuestionIndex(nextIndex);
-        }
+    const cancelarAvance = () => {
+        if (avanceRef.current !== null) { window.clearTimeout(avanceRef.current); avanceRef.current = null; }
     };
 
-    const handleGoBack = () => {
-        setCurrentQuestionIndex(prev => Math.max(0, prev - 1));
+    const responder = (preguntaId: string, valor: 0 | 1 | null) => {
+        // Cualquier toque invalida un avance ya programado: si se quita una respuesta antes de
+        // que venza, la pauta deja de estar completa y no debe saltar.
+        cancelarAvance();
+        const antes = respuestasRef.current;
+        const anterior = antes[preguntaId] ?? null;
+        const nuevas: Respuestas = { ...antes, [preguntaId]: valor };
+        const desde = pautaIdx;
+        actualizarRespuestas(nuevas);
+        setSaveError(null);
+        cola.encolar(preguntaId, valor, anterior);
+        // La pantalla ya muestra la respuesta: el avance cuenta desde el toque, no desde el servidor,
+        // y solo cuando la pauta pasa de incompleta a completa.
+        if (avanzarSola && pautaRecienCompletada(pautas[desde], antes, nuevas)) programarAvance(desde, nuevas);
     };
 
-    const handleJumpTo = (idx: number) => {
-        setCurrentQuestionIndex(idx);
-    };
+    const cambiarAvanzarSola = (valor: boolean) => { setAvanzarSola(valor); guardarAvanzarSola(valor); };
+    const irA = (i: number) => { cancelarAvance(); setPautaIdx(i); };
+    const siguiente = () => { if (pautaIdx < pautas.length - 1) irA(pautaIdx + 1); else { cancelarAvance(); setStep("FINISH"); } };
+    const anterior = () => irA(Math.max(0, pautaIdx - 1));
 
-    if (!open) return null
+    if (!open) return null;
 
-    const preguntaActual = preguntas[currentQuestionIndex];
-    // Verde = esa respuesta suma punto. En preguntas invertidas es el NO el que suma.
-    const paletaNo = paletaBotonRespuesta(0, preguntaActual?.puntaje_invertido);
-    const paletaSi = paletaBotonRespuesta(1, preguntaActual?.puntaje_invertido);
-    const progressPercent = (currentQuestionIndex / preguntas.length) * 100;
-    const unansweredCount = preguntas.filter(p => respuestas[p.id] !== 0 && respuestas[p.id] !== 1).length;
+    const pautaActual = pautas[pautaIdx];
+    const pendientes = pautas.filter((p) => !estadoPauta(p, respuestas).completa).length;
+    const introButtonLabel = todasCompletasAlAbrir ? "Revisar / Corregir respuestas" : pendientes < pautas.length ? "Continuar evaluación" : "Comenzar evaluación";
 
-    const introButtonLabel = allPreviouslyAnswered
-        ? 'Revisar / Corregir respuestas'
-        : unansweredCount < preguntas.length
-            ? 'Continuar evaluación'
-            : 'Comenzar evaluación';
+    const casillaAvanzarSola = (
+        <FormControlLabel
+            control={<Checkbox checked={avanzarSola} onChange={(e) => cambiarAvanzarSola(e.target.checked)} sx={{ color: "#65944F", "&.Mui-checked": { color: "#65944F" } }} />}
+            label={<Typography variant="body2">Avanzar sola al completar la pauta</Typography>}
+        />
+    );
 
     return (
         <Dialog fullScreen open={open} onClose={onClose} TransitionComponent={Transition}>
-            {/* HEADER */}
-            <Box sx={{ px: 2, py: 1, display: 'flex', alignItems: 'center', borderBottom: '1px solid #eee', flexShrink: 0 }}>
-                <IconButton edge="start" color="inherit" onClick={onClose} aria-label="close" disabled={saving}>
+            <Box sx={{ px: 2, py: 1, display: "flex", alignItems: "center", gap: 1, borderBottom: "1px solid #eee", flexShrink: 0 }}>
+                <IconButton edge="start" color="inherit" onClick={onClose} aria-label="Cerrar evaluación" disabled={guardadosPendientes > 0}>
                     <CloseIcon />
                 </IconButton>
-                <Typography sx={{ ml: 2, flex: 1, fontWeight: 700 }} variant="h6">
-                    {areaNombre}
-                </Typography>
-                {step === "QUESTIONS" && (
-                    <Button
-                        color="inherit"
-                        onClick={handleGoBack}
-                        disabled={currentQuestionIndex === 0 || saving}
-                        startIcon={<ArrowBackIcon />}
-                        sx={{ textTransform: 'none' }}
-                    >
-                        Atrás
-                    </Button>
+                <Typography sx={{ ml: 1, flex: 1, fontWeight: 700 }} variant="h6" noWrap>{areaNombre}</Typography>
+                {guardadosPendientes > 0 && (
+                    <Typography variant="caption" sx={{ color: "#5c7cfa", display: "flex", alignItems: "center", gap: 0.75, whiteSpace: "nowrap" }}>
+                        <CircularProgress size={12} color="inherit" /> Guardando…
+                    </Typography>
+                )}
+                {step === "QUESTIONS" && pautas.length > 0 && (
+                    <Typography variant="body2" sx={{ color: "#4b5563", fontWeight: 600, whiteSpace: "nowrap", ml: 1 }}>
+                        Pauta {pautaActual?.numero ?? pautaIdx + 1} de {pautas.length}
+                    </Typography>
                 )}
             </Box>
 
             {saveError && (
-                <Alert severity="error" onClose={() => setSaveError(null)} sx={{ mx: 2, mt: 1 }}>
-                    {saveError}
-                </Alert>
+                <Alert severity="error" onClose={() => setSaveError(null)} sx={{ mx: 2, mt: 1 }}>{saveError}</Alert>
             )}
 
             {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
-                    <CircularProgress />
-                </Box>
+                <Box sx={{ display: "flex", justifyContent: "center", mt: 10 }}><CircularProgress /></Box>
             ) : (
-                <Box sx={{ flex: 1, bgcolor: '#f5f5f5', p: 2, overflow: 'auto' }}>
+                <Box sx={{ flex: 1, bgcolor: "#f5f5f5", p: { xs: 1.5, sm: 2 }, overflow: "auto" }}>
 
-                    {/* VISTA 1: INTRO */}
                     {step === "INTRO" && (
-                        <Card sx={{ maxWidth: 600, mx: 'auto', mt: 4, borderRadius: 4, p: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-                            <Typography variant="h5" gutterBottom sx={{ fontWeight: 700, color: '#111827' }}>
-                                {allPreviouslyAnswered ? 'Revisar respuestas' : 'Antes de comenzar'}
+                        <Card sx={{ maxWidth: 600, mx: "auto", mt: 4, borderRadius: 4, p: 4, boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}>
+                            <Typography variant="h5" gutterBottom sx={{ fontWeight: 700, color: "#111827" }}>
+                                {todasCompletasAlAbrir ? "Revisar respuestas" : "Antes de comenzar"}
                             </Typography>
                             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                                {allPreviouslyAnswered
+                                {todasCompletasAlAbrir
                                     ? <>El área <strong>{areaNombre}</strong> ya fue completada. Podés revisar y corregir las respuestas.</>
-                                    : <>Vas a evaluar el área: <strong>{areaNombre}</strong>. Asegurate de estar en un ambiente tranquilo con el niño/a.</>
-                                }
+                                    : <>Vas a evaluar el área: <strong>{areaNombre}</strong>. Asegurate de estar en un ambiente tranquilo con el niño/a.</>}
                             </Typography>
-                            {!allPreviouslyAnswered && (
+                            {!todasCompletasAlAbrir && (
                                 <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                                    Podés saltear preguntas y volver a ellas más tarde usando el panel de progreso lateral.
+                                    Cada pantalla es una pauta. Las que tienen varias partes se responden todas en la misma pantalla. Podés saltear pautas y volver con los círculos del seguimiento.
                                 </Typography>
                             )}
-
                             {materialesNecesarios.length > 0 && (
-                                <Box sx={{ mb: 4, p: 2, bgcolor: '#eef2ff', borderRadius: 2, borderLeft: '4px solid #5c7cfa' }}>
-                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#373a40', mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                        <AssignmentIcon sx={{ fontSize: '1rem' }} /> Materiales necesarios para esta sala y área:
+                                <Box sx={{ mb: 3, p: 2, bgcolor: "#eef2ff", borderRadius: 2, borderLeft: "4px solid #5c7cfa" }}>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#373a40", mb: 1, display: "flex", alignItems: "center", gap: 0.5 }}>
+                                        <AssignmentIcon sx={{ fontSize: "1rem" }} /> Materiales necesarios para esta sala y área:
                                     </Typography>
-                                    <ul style={{ margin: 0, paddingLeft: '20px', color: '#495057' }}>
-                                        {materialesNecesarios.map((material, idx) => (
-                                            <li key={idx}>
-                                                <Typography variant="body2">{material}</Typography>
-                                            </li>
-                                        ))}
+                                    <ul style={{ margin: 0, paddingLeft: 20, color: "#495057" }}>
+                                        {materialesNecesarios.map((m) => <li key={m}><Typography variant="body2">{m}</Typography></li>)}
                                     </ul>
                                 </Box>
                             )}
-
-                            <Button
-                                fullWidth
-                                variant="contained"
-                                size="large"
-                                onClick={() => setStep("QUESTIONS")}
-                                sx={{ bgcolor: '#111827', py: 1.5, borderRadius: 2, textTransform: 'none', fontSize: '1.1rem' }}
-                            >
+                            <Box sx={{ mb: 2 }}>{casillaAvanzarSola}</Box>
+                            <Button fullWidth variant="contained" size="large" onClick={() => setStep("QUESTIONS")} disabled={pautas.length === 0}
+                                sx={{ bgcolor: "#111827", py: 1.5, borderRadius: 2, textTransform: "none", fontSize: "1.1rem" }}>
                                 {introButtonLabel}
                             </Button>
                         </Card>
                     )}
 
-                    {/* VISTA 2: PREGUNTAS */}
-                    {step === "QUESTIONS" && preguntas.length > 0 && preguntaActual && (
-                        <Box sx={{ display: 'flex', gap: 2, maxWidth: 920, mx: 'auto', mt: 2, alignItems: 'flex-start' }}>
-
-                            {/* Área principal de pregunta */}
-                            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '80vh' }}>
-
-                                {/* Barra de progreso */}
-                                <Box sx={{ mb: 3 }}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                        <Typography variant="caption" color="text.secondary">
-                                            Pregunta {currentQuestionIndex + 1} de {preguntas.length}
-                                        </Typography>
-                                        {unansweredCount > 0 && (
-                                            <Typography variant="caption" sx={{ color: '#f59e0b', fontWeight: 600 }}>
-                                                {unansweredCount} pendiente{unansweredCount !== 1 ? 's' : ''}
-                                            </Typography>
-                                        )}
-                                    </Box>
-                                    <LinearProgress
-                                        variant="determinate"
-                                        value={progressPercent}
-                                        sx={{ height: 8, borderRadius: 4, bgcolor: '#e5e7eb', '& .MuiLinearProgress-bar': { bgcolor: '#5c7cfa' } }}
-                                    />
-                                </Box>
-
-                                {/* Círculos de navegación (solo mobile) */}
-                                <MobileCircleRow
-                                    preguntas={preguntas}
-                                    respuestas={respuestas}
-                                    currentIndex={currentQuestionIndex}
-                                    onJump={handleJumpTo}
-                                />
-
-                                {/* Tarjeta de pregunta */}
-                                <Card sx={{ flex: 1, borderRadius: 4, display: 'flex', flexDirection: 'column', mb: 2 }}>
-                                    <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 4 }}>
-
-                                        <Box sx={{ mb: 3, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                            {preguntaActual.tipoPregunta && (
-                                                <Box component="span" sx={{
-                                                    display: 'inline-flex',
-                                                    alignItems: 'center',
-                                                    gap: 0.75,
-                                                    px: 2,
-                                                    py: 0.75,
-                                                    borderRadius: 2,
-                                                    fontSize: '0.875rem',
-                                                    fontWeight: 700,
-                                                    letterSpacing: 0.2,
-                                                    bgcolor: preguntaActual.tipoPregunta === 'Evaluable' ? '#DBEAFE' : '#FEF3C7',
-                                                    color: preguntaActual.tipoPregunta === 'Evaluable' ? '#1D4ED8' : '#B45309',
-                                                    border: `1.5px solid ${preguntaActual.tipoPregunta === 'Evaluable' ? '#93C5FD' : '#FCD34D'}`,
-                                                }}>
-                                                    {preguntaActual.tipoPregunta === 'Evaluable' ? <AssignmentIcon sx={{ fontSize: '1rem' }} /> : <VisibilityIcon sx={{ fontSize: '1rem' }} />}
-                                                    {preguntaActual.tipoPregunta}
-                                                </Box>
-                                            )}
-                                            {preguntaActual.puntaje_invertido && (
-                                                <Box component="span" sx={{
-                                                    display: 'inline-flex',
-                                                    alignItems: 'center',
-                                                    gap: 0.75,
-                                                    px: 2,
-                                                    py: 0.75,
-                                                    borderRadius: 2,
-                                                    fontSize: '0.875rem',
-                                                    fontWeight: 700,
-                                                    letterSpacing: 0.2,
-                                                    bgcolor: '#FEF2F2',
-                                                    color: '#991B1B',
-                                                    border: '1.5px solid #FECACA',
-                                                }}>
-                                                    <WarningAmberIcon sx={{ fontSize: '1rem' }} /> Aprueba si responde NO
-                                                </Box>
-                                            )}
-                                        </Box>
-
-                                        {/* Indicador de respuesta actual (modo corrección) */}
-                                        {(respuestas[preguntaActual.id] === 1 || respuestas[preguntaActual.id] === 0) && (
-                                            <Alert
-                                                severity={respuestaSumaPunto(respuestas[preguntaActual.id], preguntaActual.puntaje_invertido) ? "success" : "error"}
-                                                sx={{ mb: 2 }}
-                                                action={
-                                                    <Button color="inherit" size="small" onClick={handleClearAnswer} disabled={saving} sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}>
-                                                        Quitar respuesta
-                                                    </Button>
-                                                }
-                                            >
-                                                Respuesta actual: <strong>{respuestas[preguntaActual.id] === 1 ? '"Sí"' : '"No"'}</strong>
-                                                {preguntaActual.puntaje_invertido && (
-                                                    <> — {respuestas[preguntaActual.id] === 0 ? <><CheckIcon sx={{ fontSize: '1rem', verticalAlign: 'middle' }} /> suma punto</> : <><CloseIcon sx={{ fontSize: '1rem', verticalAlign: 'middle' }} /> no suma punto</>}</>
-                                                )}
-                                                . Podés modificarla.
-                                            </Alert>
-                                        )}
-
-                                        <Typography variant="h5" sx={{ fontWeight: 600, mb: 4, lineHeight: 1.4 }}>
-                                            {preguntaActual.consigna || preguntaActual.titulo || "¿Cumple con el criterio?"}
-                                        </Typography>
-
-                                        {preguntaActual.signed_url && (
-                                            <Box sx={{ mb: 2, textAlign: 'center' }}>
-                                                <img
-                                                    src={preguntaActual.signed_url}
-                                                    alt="Material de la pregunta"
-                                                    style={{
-                                                        maxWidth: '100%',
-                                                        maxHeight: 280,
-                                                        borderRadius: 8,
-                                                        objectFit: 'contain',
-                                                    }}
-                                                />
-                                            </Box>
-                                        )}
-
-                                        <Box sx={{ mb: 2, p: 1.5, bgcolor: '#f0fdf4', borderRadius: 2, border: '1px solid #bbf7d0' }}>
-                                            <Typography variant="body1" sx={{ fontWeight: 600, color: '#166534', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                <CheckIcon sx={{ fontSize: '1rem' }} /> Criterio de Aprobación: {preguntaActual.aprueba_con}
-                                            </Typography>
-                                        </Box>
-
-                                        {preguntaActual.detalle && (
-                                            <Alert severity="info" sx={{ mb: 2, bgcolor: '#e0f7fa', color: '#006064' }}>
-                                                <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.95rem' }}>
-                                                    Nota: {preguntaActual.detalle}
-                                                </Typography>
-                                            </Alert>
-                                        )}
-
-                                        {preguntaActual.materiales && preguntaActual.materiales !== '-' && (
-                                            <Typography variant="body2" sx={{ fontWeight: 500, bgcolor: '#fffbeb', p: 1, borderRadius: 1, color: '#d97706', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                <BuildIcon sx={{ fontSize: '1rem' }} /> Materiales: {preguntaActual.materiales}
-                                            </Typography>
-                                        )}
-                                    </CardContent>
-
-                                    {/* Botones de respuesta + Saltear */}
-                                    <Box sx={{ p: 3, borderTop: '1px solid #f0f0f0' }}>
-                                        <Box sx={{ display: 'flex', gap: 2, mb: 1.5 }}>
-                                            <Button
-                                                fullWidth
-                                                variant="outlined"
-                                                size="large"
-                                                onClick={() => handleAnswer(0)}
-                                                disabled={saving}
-                                                sx={{
-                                                    py: 2, borderColor: paletaNo.borderColor, color: paletaNo.color,
-                                                    display: 'flex', flexDirection: 'column',
-                                                    '&:hover': { bgcolor: paletaNo.hoverBg, borderColor: paletaNo.color }
-                                                }}
-                                            >
-                                                <HighlightOffIcon sx={{ fontSize: 30, mb: 0.5 }} />
-                                                No
-                                            </Button>
-
-                                            <Button
-                                                fullWidth
-                                                variant="outlined"
-                                                size="large"
-                                                onClick={() => handleAnswer(1)}
-                                                disabled={saving}
-                                                sx={{
-                                                    py: 2, borderColor: paletaSi.borderColor, color: paletaSi.color,
-                                                    display: 'flex', flexDirection: 'column',
-                                                    '&:hover': { bgcolor: paletaSi.hoverBg, borderColor: paletaSi.color }
-                                                }}
-                                            >
-                                                <CheckCircleOutlineIcon sx={{ fontSize: 30, mb: 0.5 }} />
-                                                Sí
-                                            </Button>
-                                        </Box>
-
-                                        <Button
-                                            fullWidth
-                                            variant="text"
-                                            onClick={handleSkip}
-                                            disabled={saving}
-                                            sx={{ color: '#6b7280', textTransform: 'none', fontSize: '0.875rem' }}
-                                        >
-                                            Siguiente pregunta →
-                                        </Button>
-                                    </Box>
-                                </Card>
-
-                                {saving && (
-                                    <Typography variant="caption" sx={{ mt: 1, textAlign: 'center', color: '#5c7cfa' }}>
-                                        Guardando... <CircularProgress size={10} color="inherit" />
-                                    </Typography>
-                                )}
-
-                                {/* Botón finalizar manual (cuando no quedan pendientes) */}
-                                {unansweredCount === 0 && (
-                                    <Button
-                                        variant="contained"
-                                        onClick={() => setStep("FINISH")}
-                                        sx={{ mt: 1, bgcolor: '#111827', textTransform: 'none' }}
-                                    >
-                                        Finalizar evaluación del área
-                                    </Button>
-                                )}
+                    {step === "QUESTIONS" && pautaActual && (
+                        <Box sx={{ display: "flex", gap: 3, maxWidth: 1040, mx: "auto", alignItems: "flex-start" }}>
+                            <Box sx={{ display: { xs: "none", sm: "block" } }}>
+                                <SeguimientoPautas variante="panel" pautas={pautas} respuestas={respuestas} actual={pautaIdx} onIr={irA} />
+                                <Box sx={{ mt: 1.5, px: 0.5 }}>{casillaAvanzarSola}</Box>
                             </Box>
-
-                            {/* Panel lateral de progreso */}
-                            <SidebarPanel
-                                preguntas={preguntas}
-                                respuestas={respuestas}
-                                currentIndex={currentQuestionIndex}
-                                onJump={handleJumpTo}
-                            />
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                                <SeguimientoPautas variante="fila" pautas={pautas} respuestas={respuestas} actual={pautaIdx} onIr={irA} />
+                                <PautaCard
+                                    pauta={pautaActual}
+                                    indice={pautaIdx}
+                                    total={pautas.length}
+                                    respuestas={respuestas}
+                                    onResponder={responder}
+                                    onAnterior={anterior}
+                                    onSiguiente={siguiente}
+                                />
+                            </Box>
                         </Box>
                     )}
 
-                    {/* VISTA 3: FINALIZADO */}
                     {step === "FINISH" && (
-                        <Card sx={{ maxWidth: 600, mx: 'auto', mt: 8, borderRadius: 4, textAlign: 'center', p: 4 }}>
-                            <CheckCircleOutlineIcon sx={{ fontSize: 60, color: '#22c55e', mb: 2 }} />
+                        <Card sx={{ maxWidth: 600, mx: "auto", mt: 8, borderRadius: 4, textAlign: "center", p: 4 }}>
+                            <CheckCircleOutlineIcon sx={{ fontSize: 60, color: pendientes === 0 ? "#22c55e" : "#f59e0b", mb: 2 }} />
                             <Typography variant="h5" gutterBottom sx={{ fontWeight: 700 }}>
-                                ¡Área Completada!
+                                {pendientes === 0 ? "¡Área completada!" : "Área sin terminar"}
                             </Typography>
                             <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-                                Todas las respuestas del área <strong>{areaNombre}</strong> han sido guardadas. El sistema calculará los resultados finales si todas las secciones están completas.
+                                {pendientes === 0
+                                    ? <>Todas las pautas de <strong>{areaNombre}</strong> quedaron respondidas.</>
+                                    : <>Quedan <strong>{pendientes}</strong> pauta{pendientes !== 1 ? "s" : ""} sin completar en <strong>{areaNombre}</strong>. Podés terminar ahora o seguir más tarde.</>}
                             </Typography>
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                                <Button
-                                    variant="contained"
-                                    onClick={onClose}
-                                    sx={{ bgcolor: '#111827', textTransform: 'none' }}
-                                >
-                                    Volver a la evaluación
+                            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                                {pendientes > 0 && (
+                                    <Button variant="outlined" size="large" onClick={() => { const i = siguientePautaPendiente(pautas, respuestas, -1); if (i !== null) { irA(i); setStep("QUESTIONS"); } }}
+                                        sx={{ textTransform: "none", borderRadius: 2, borderColor: "#65944F", color: "#65944F" }}>
+                                        Ir a la primera pendiente
+                                    </Button>
+                                )}
+                                <Button variant="outlined" size="large" onClick={() => { irA(0); setStep("QUESTIONS"); }}
+                                    sx={{ textTransform: "none", borderRadius: 2, borderColor: "#5c7cfa", color: "#5c7cfa" }}>
+                                    Revisar respuestas
                                 </Button>
-                                <Button
-                                    variant="outlined"
-                                    onClick={() => { setCurrentQuestionIndex(0); setStep("QUESTIONS"); }}
-                                    sx={{ textTransform: 'none', color: '#5c7cfa', borderColor: '#5c7cfa' }}
-                                >
-                                    Corregir respuestas
+                                <Button variant="contained" size="large" onClick={onClose} disabled={guardadosPendientes > 0} sx={{ bgcolor: "#111827", borderRadius: 2, textTransform: "none" }}>
+                                    {guardadosPendientes > 0 ? "Guardando…" : "Cerrar"}
                                 </Button>
                             </Box>
                         </Card>
@@ -679,5 +280,5 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                 </Box>
             )}
         </Dialog>
-    )
+    );
 }

@@ -71,7 +71,12 @@ export default function SeguimientoPautas({ pautas, respuestas, actual, onIr, va
 
     if (variante === "fila") {
         return (
-            <Box ref={filaRef} sx={{ display: { xs: "flex", sm: "none" }, gap: 1, overflowX: "auto", pb: 1, mb: 1.5, scrollbarWidth: "none", "&::-webkit-scrollbar": { display: "none" } }}>
+            <Box ref={filaRef} sx={{
+                display: { xs: "flex", sm: "none" }, gap: 1, overflowX: "auto", py: 1, mb: 1,
+                // Fija arriba al scrollear la tarjeta, sobre el fondo de la pantalla
+                position: "sticky", top: -12, zIndex: 1, bgcolor: "#f5f5f5",
+                scrollbarWidth: "none", "&::-webkit-scrollbar": { display: "none" },
+            }}>
                 {pautas.map((p, i) => <Circulo key={p.clave} pauta={p} indice={i} respuestas={respuestas} esActual={i === actual} onIr={onIr} tamano={32} />)}
             </Box>
         );

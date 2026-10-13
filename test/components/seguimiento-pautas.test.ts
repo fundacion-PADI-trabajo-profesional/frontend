@@ -44,3 +44,12 @@ describe("SeguimientoPautas", () => {
     expect(b).toContain('data-color="verde"');
   });
 });
+
+describe("SeguimientoPautas en celular", () => {
+  it("la fila de círculos queda fija arriba al scrollear la tarjeta", () => {
+    const html = renderToStaticMarkup(createElement(SeguimientoPautas, {
+      pautas: agruparPautas(SALA4_CL), respuestas: {}, actual: 0, onIr: vi.fn(), variante: "fila",
+    }));
+    expect(html).toContain("position:sticky");
+  });
+});

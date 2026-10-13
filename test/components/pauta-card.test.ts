@@ -61,3 +61,11 @@ describe("PautaCard", () => {
     expect(botonesRespuesta(guardando).every((b) => b.includes("disabled"))).toBe(true);
   });
 });
+
+describe("PautaCard en celular", () => {
+  it("la tarjeta no recorta su contenido, así el pie sticky se apoya en el scroll de la pantalla", () => {
+    const html = render({ pauta: agruparPautas(SALA4_CL)[5], indice: 5 });
+    // El Card de MUI trae overflow:hidden por defecto, que anula position:sticky del pie en celular.
+    expect(html).toContain("overflow:visible");
+  });
+});

@@ -64,8 +64,9 @@ export default function PautaCard({ pauta, indice, total, respuestas, guardando,
         );
     };
 
+    // overflow visible: el Card de MUI trae overflow:hidden, que anularía el pie sticky en celular
     return (
-        <Card sx={{ borderRadius: 4, display: "flex", flexDirection: "column", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
+        <Card sx={{ borderRadius: 4, display: "flex", flexDirection: "column", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", overflow: "visible" }}>
             <CardContent sx={{ p: { xs: 2, sm: 3.5 }, pb: 0 }}>
                 <Typography variant="caption" sx={{ letterSpacing: ".06em", textTransform: "uppercase", color: "#4b5563", fontWeight: 700 }}>
                     Pauta {numero}

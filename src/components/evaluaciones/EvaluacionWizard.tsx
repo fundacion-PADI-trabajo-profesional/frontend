@@ -6,7 +6,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 
 import { enviarRespuestas, getPreguntasArea, type PreguntaBase } from "../../api/evaluaciones";
-import { agruparPautas, estadoPauta, siguientePautaPendiente, type Respuestas } from "../../utils/pautas";
+import { agruparPautas, estadoPauta, pautaRecienCompletada, siguientePautaPendiente, type Respuestas } from "../../utils/pautas";
 import SeguimientoPautas from "./wizard/SeguimientoPautas";
 import PautaCard from "./wizard/PautaCard";
 
@@ -61,8 +61,15 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
 
     useEffect(() => {
         if (!(open && evaluacionId && areaId)) return;
+        // Se descarta todo lo del área anterior antes de cargar, así una carga fallida no deja
+        // preguntas de otra área bajo el nombre de esta.
+        if (avanceRef.current !== null) { window.clearTimeout(avanceRef.current); avanceRef.current = null; }
         setStep("INTRO");
         setSaveError(null);
+        setPreguntas([]);
+        setRespuestas({});
+        setPautaIdx(0);
+        setTodasCompletasAlAbrir(false);
         setLoading(true);
         getPreguntasArea(evaluacionId, areaId)
             .then((data) => {
@@ -75,7 +82,10 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                 setPautaIdx(primeraPendiente ?? 0);
                 setTodasCompletasAlAbrir(primeraPendiente === null && lista.length > 0);
             })
-            .catch((err) => console.error("Error cargando preguntas:", err))
+            .catch((err) => {
+                console.error("Error cargando preguntas:", err);
+                setSaveError("No se pudieron cargar las preguntas del área. Cerrá y volvé a intentar.");
+            })
             .finally(() => setLoading(false));
     }, [open, evaluacionId, areaId]);
 
@@ -97,7 +107,14 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
         }, DEMORA_AVANCE_MS);
     };
 
+    const cancelarAvance = () => {
+        if (avanceRef.current !== null) { window.clearTimeout(avanceRef.current); avanceRef.current = null; }
+    };
+
     const responder = async (preguntaId: string, valor: 0 | 1 | null) => {
+        // Cualquier toque invalida un avance ya programado: si se quita una respuesta dentro de
+        // los 650 ms, la pauta deja de estar completa y no debe saltar.
+        cancelarAvance();
         const anterior = respuestas[preguntaId] ?? null;
         const nuevas: Respuestas = { ...respuestas, [preguntaId]: valor };
         const desde = pautaIdx;
@@ -106,7 +123,8 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
         setSaveError(null);
         try {
             await enviarRespuestas(evaluacionId, areaId, [{ id: preguntaId, answer: valor }]);
-            if (avanzarSola && estadoPauta(pautas[desde], nuevas).completa) programarAvance(desde, nuevas);
+            // Avanza solo cuando la pauta pasa de incompleta a completa, no al corregir una ya completa.
+            if (avanzarSola && pautaRecienCompletada(pautas[desde], respuestas, nuevas)) programarAvance(desde, nuevas);
         } catch (e) {
             console.error("Error al guardar la respuesta:", e);
             setRespuestas((prev) => ({ ...prev, [preguntaId]: anterior }));
@@ -117,8 +135,8 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
     };
 
     const cambiarAvanzarSola = (valor: boolean) => { setAvanzarSola(valor); guardarAvanzarSola(valor); };
-    const irA = (i: number) => { if (avanceRef.current !== null) { window.clearTimeout(avanceRef.current); avanceRef.current = null; } setPautaIdx(i); };
-    const siguiente = () => { if (pautaIdx < pautas.length - 1) irA(pautaIdx + 1); else setStep("FINISH"); };
+    const irA = (i: number) => { cancelarAvance(); setPautaIdx(i); };
+    const siguiente = () => { if (pautaIdx < pautas.length - 1) irA(pautaIdx + 1); else { cancelarAvance(); setStep("FINISH"); } };
     const anterior = () => irA(Math.max(0, pautaIdx - 1));
 
     if (!open) return null;
@@ -235,6 +253,10 @@ export default function EvaluacionWizard({ open, onClose, evaluacionId, areaId, 
                                         Ir a la primera pendiente
                                     </Button>
                                 )}
+                                <Button variant="outlined" size="large" onClick={() => { irA(0); setStep("QUESTIONS"); }}
+                                    sx={{ textTransform: "none", borderRadius: 2, borderColor: "#5c7cfa", color: "#5c7cfa" }}>
+                                    Revisar respuestas
+                                </Button>
                                 <Button variant="contained" size="large" onClick={onClose} sx={{ bgcolor: "#111827", borderRadius: 2, textTransform: "none" }}>
                                     Cerrar
                                 </Button>

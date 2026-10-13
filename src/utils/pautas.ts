@@ -120,6 +120,15 @@ export function siguientePautaPendiente(pautas: Pauta[], respuestas: Respuestas,
     return null;
 }
 
+/**
+ * `true` solo cuando la pauta pasa de incompleta a completa con la nueva respuesta.
+ * Es la condición del avance automático: ni al quitar una respuesta ni al corregir
+ * una pauta que ya estaba completa.
+ */
+export function pautaRecienCompletada(pauta: Pauta, antes: Respuestas, despues: Respuestas): boolean {
+    return !estadoPauta(pauta, antes).completa && estadoPauta(pauta, despues).completa;
+}
+
 /** Tocar la opción ya marcada la quita; tocar la otra la cambia. */
 export function alternarRespuesta(actual: number | null | undefined, tocada: 0 | 1): 0 | 1 | null {
     return actual === tocada ? null : tocada;

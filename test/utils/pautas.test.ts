@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { agruparPautas, estadoPauta, circuloPauta, siguientePautaPendiente, alternarRespuesta } from "../../src/utils/pautas";
+import { agruparPautas, estadoPauta, circuloPauta, siguientePautaPendiente, alternarRespuesta, pautaRecienCompletada } from "../../src/utils/pautas";
 import { SALA4_CL, SE_RECEPTIVIDAD, CL5_ABSURDO, pauta } from "../fixtures/preguntas";
 
 describe("agruparPautas", () => {
@@ -123,5 +123,25 @@ describe("alternarRespuesta", () => {
     expect(alternarRespuesta(1, 0)).toBe(0);
     expect(alternarRespuesta(null, 1)).toBe(1);
     expect(alternarRespuesta(undefined, 0)).toBe(0);
+  });
+});
+
+describe("pautaRecienCompletada", () => {
+  const intrusos = pauta(SALA4_CL, 6);
+
+  it("true solo cuando la pauta pasa de incompleta a completa", () => {
+    expect(pautaRecienCompletada(intrusos, { cl6a: 1, cl6b: 0 }, { cl6a: 1, cl6b: 0, cl6c: 1 })).toBe(true);
+  });
+
+  it("false al quitar una respuesta de una pauta completa", () => {
+    expect(pautaRecienCompletada(intrusos, { cl6a: 1, cl6b: 0, cl6c: 1 }, { cl6a: 1, cl6b: 0, cl6c: null })).toBe(false);
+  });
+
+  it("false al corregir una pauta que ya estaba completa", () => {
+    expect(pautaRecienCompletada(intrusos, { cl6a: 1, cl6b: 0, cl6c: 1 }, { cl6a: 0, cl6b: 0, cl6c: 1 })).toBe(false);
+  });
+
+  it("false si sigue incompleta", () => {
+    expect(pautaRecienCompletada(intrusos, {}, { cl6a: 1 })).toBe(false);
   });
 });

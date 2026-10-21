@@ -95,11 +95,8 @@ where p.titulo = 'Sonido Inicial' and p.consigna like '%de la palabra con%' and 
 group by 1;
 ```
 
-## Pendiente (cambio 4, backend + datos, PR aparte)
+## Cambio 4 (mínimo por pauta): hecho aparte
 
-- Columna `preguntas.minimo_aprobacion` (int, null = mitad redondeada arriba).
-- `apruebaPauta` (backend `src/utils/pautas.ts`, `calculateAreaScore`) y
-  `estadoPauta` (frontend) usan el mínimo de la pauta.
-- Cargar mínimos del template; renumerar sala 3 CL y regla 5/6.
-- Script de recálculo de `evaluaciones_estudiante_area.estado_id/puntaje` y
-  `evaluaciones_estudiante.estado_id` para todas las evaluaciones.
+Spec y scripts en el backend: `backend/docs/specs/2026-10-16-minimo-aprobacion-por-pauta.md`
+y `backend/scripts/sql/`. En este repo solo cambia `PreguntaBase.minimo_aprobacion` y
+`estadoPauta` (branch `feat/minimo-aprobacion-pauta`). ADR 0018.

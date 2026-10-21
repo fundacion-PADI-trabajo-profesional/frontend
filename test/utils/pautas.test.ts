@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { agruparPautas, estadoPauta, circuloPauta, siguientePautaPendiente, alternarRespuesta, pautaRecienCompletada, textosCompartidos, consignaEnPartes } from "../../src/utils/pautas";
+import { agruparPautas, estadoPauta, circuloPauta, siguientePautaPendiente, alternarRespuesta, pautaRecienCompletada, textosCompartidos, consignaEnPartes, minimoDePartes } from "../../src/utils/pautas";
 import { SALA4_CL, SE_RECEPTIVIDAD, CL5_ABSURDO, CL4_SONIDO_INICIAL, pauta } from "../fixtures/preguntas";
 
 describe("agruparPautas", () => {
@@ -179,5 +179,27 @@ describe("consignaEnPartes", () => {
   it("un solo párrafo no tiene resto; tolera espacios y líneas en blanco con espacios", () => {
     expect(consignaEnPartes("  Solo esto.  ")).toEqual({ principal: "Solo esto.", resto: null });
     expect(consignaEnPartes("Uno.\n  \nDos.")).toEqual({ principal: "Uno.", resto: "Dos." });
+  });
+});
+
+describe("estadoPauta con mínimo del cuadernillo", () => {
+  const intrusos5 = { ...pauta(SALA4_CL, 6), partes: pauta(SALA4_CL, 6).partes.map((p) => ({ ...p, minimo_aprobacion: 3 })) };
+
+  it("usa el mínimo de las partes en vez de la mitad", () => {
+    const r = estadoPauta(intrusos5, { cl6a: 1, cl6b: 1, cl6c: 0 });
+    expect(r.necesarias).toBe(3);
+    expect(r.estado).toBe("no_aprobada");
+    expect(estadoPauta(intrusos5, { cl6a: 1, cl6b: 1, cl6c: 1 }).estado).toBe("aprobada");
+  });
+
+  it("sin mínimo cargado sigue la mitad redondeada hacia arriba", () => {
+    const r = estadoPauta(pauta(SALA4_CL, 6), { cl6a: 1, cl6b: 1, cl6c: 0 });
+    expect(r.necesarias).toBe(2);
+    expect(r.estado).toBe("aprobada");
+  });
+
+  it("minimoDePartes: null si nadie trae valor; el más alto si difieren", () => {
+    expect(minimoDePartes([null, undefined])).toBeNull();
+    expect(minimoDePartes([null, 3, 2])).toBe(3);
   });
 });

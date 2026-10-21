@@ -3,7 +3,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import PautaCard from "../../src/components/evaluaciones/wizard/PautaCard";
 import { agruparPautas } from "../../src/utils/pautas";
-import { SALA4_CL, SE_RECEPTIVIDAD } from "../fixtures/preguntas";
+import { SALA4_CL, SE_RECEPTIVIDAD, CL4_SONIDO_INICIAL } from "../fixtures/preguntas";
 
 const render = (props: Partial<Parameters<typeof PautaCard>[0]> & { pauta: Parameters<typeof PautaCard>[0]["pauta"] }) =>
   renderToStaticMarkup(createElement(PautaCard, {
@@ -66,5 +66,33 @@ describe("PautaCard en celular", () => {
     const html = render({ pauta: agruparPautas(SALA4_CL)[5], indice: 5 });
     // El Card de MUI trae overflow:hidden por defecto, que anula position:sticky del pie en celular.
     expect(html).toContain("overflow:visible");
+  });
+});
+
+describe("PautaCard con consigna compartida", () => {
+  const sonidoInicial = agruparPautas(CL4_SONIDO_INICIAL)[0];
+  const veces = (html: string, texto: string) => html.split(texto).length - 1;
+
+  it("muestra la consigna y los materiales una sola vez, en la cabecera, y no en cada parte", () => {
+    const html = render({ pauta: sonidoInicial, indice: 4, total: 8 });
+    expect(veces(html, "Presente al niño las imágenes")).toBe(1);
+    expect(veces(html, "Cuadernillo de Estímulos")).toBe(1);
+    expect(html).toContain("Consigna");
+    // la frase para el chico queda a la vista; el resto va plegado en un <details>
+    expect(html.indexOf("Te voy a mostrar unos dibujos")).toBeLessThan(html.indexOf("<details"));
+    expect(html.indexOf("<details")).toBeLessThan(html.indexOf("Presente al niño las imágenes"));
+    expect(html).toContain("Cómo presentarla");
+    expect(html).not.toContain("Nota:");
+    expect(html).toContain("Diga: ooooso");
+    expect(html).toContain("Responde O");
+    expect(html).toContain("Se aprueba con 3 de 5");
+    expect(botonesRespuesta(html)).toHaveLength(10);
+  });
+
+  it("si las partes tienen detalles distintos, cada una conserva su nota", () => {
+    const partes = CL4_SONIDO_INICIAL.map((p, i) => ({ ...p, detalle: "nota " + i }));
+    const html = render({ pauta: { ...sonidoInicial, partes }, indice: 4, total: 8 });
+    expect(veces(html, "Nota:")).toBe(5);
+    expect(html).not.toContain(">Consigna<");
   });
 });

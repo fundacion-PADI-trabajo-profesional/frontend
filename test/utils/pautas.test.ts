@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { agruparPautas, estadoPauta, circuloPauta, siguientePautaPendiente, alternarRespuesta, pautaRecienCompletada } from "../../src/utils/pautas";
-import { SALA4_CL, SE_RECEPTIVIDAD, CL5_ABSURDO, pauta } from "../fixtures/preguntas";
+import { agruparPautas, estadoPauta, circuloPauta, siguientePautaPendiente, alternarRespuesta, pautaRecienCompletada, textosCompartidos, consignaEnPartes } from "../../src/utils/pautas";
+import { SALA4_CL, SE_RECEPTIVIDAD, CL5_ABSURDO, CL4_SONIDO_INICIAL, pauta } from "../fixtures/preguntas";
 
 describe("agruparPautas", () => {
   it("agrupa por numero conservando el orden del backend", () => {
@@ -143,5 +143,41 @@ describe("pautaRecienCompletada", () => {
 
   it("false si sigue incompleta", () => {
     expect(pautaRecienCompletada(intrusos, {}, { cl6a: 1 })).toBe(false);
+  });
+});
+
+describe("textosCompartidos", () => {
+  it("devuelve el detalle y los materiales cuando todas las partes los comparten", () => {
+    const t = textosCompartidos(pauta(CL4_SONIDO_INICIAL, 5));
+    expect(t.detalle).toBe(CL4_SONIDO_INICIAL[0].detalle);
+    expect(t.materiales).toBe("Cuadernillo de Estímulos");
+  });
+
+  it("no comparte nada si alguna parte difiere o está vacía", () => {
+    const partes = CL4_SONIDO_INICIAL.map((p, i) => (i === 2 ? { ...p, detalle: "otra cosa", materiales: "" } : p));
+    const t = textosCompartidos({ clave: "5", numero: 5, titulo: "Sonido Inicial", partes });
+    expect(t.detalle).toBeNull();
+    expect(t.materiales).toBeNull();
+  });
+
+  it("ignora materiales '-' y espacios; una pauta simple nunca comparte", () => {
+    const partes = CL4_SONIDO_INICIAL.map((p) => ({ ...p, materiales: " - " }));
+    expect(textosCompartidos({ clave: "5", numero: 5, titulo: "Sonido Inicial", partes }).materiales).toBeNull();
+    expect(textosCompartidos(pauta(SALA4_CL, 1)).detalle).toBeNull();
+    const simple = { ...SALA4_CL[0], detalle: "nota" };
+    expect(textosCompartidos({ clave: "1", numero: 1, titulo: "x", partes: [simple] }).detalle).toBeNull();
+  });
+});
+
+describe("consignaEnPartes", () => {
+  it("separa el primer párrafo del resto", () => {
+    const c = consignaEnPartes("\"Decí con qué letra empieza.\"\n\nPresente los ejemplos.\n\nLuego los demás.");
+    expect(c.principal).toBe("\"Decí con qué letra empieza.\"");
+    expect(c.resto).toBe("Presente los ejemplos.\n\nLuego los demás.");
+  });
+
+  it("un solo párrafo no tiene resto; tolera espacios y líneas en blanco con espacios", () => {
+    expect(consignaEnPartes("  Solo esto.  ")).toEqual({ principal: "Solo esto.", resto: null });
+    expect(consignaEnPartes("Uno.\n  \nDos.")).toEqual({ principal: "Uno.", resto: "Dos." });
   });
 });

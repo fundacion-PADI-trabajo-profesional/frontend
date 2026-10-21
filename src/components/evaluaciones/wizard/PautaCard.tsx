@@ -6,8 +6,9 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import BuildIcon from "@mui/icons-material/Build";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { paletaBotonRespuesta } from "../../../utils/respuestas";
-import { alternarRespuesta, estadoPauta, type Pauta, type Respuestas } from "../../../utils/pautas";
+import { alternarRespuesta, consignaEnPartes, estadoPauta, textosCompartidos, type Pauta, type Respuestas } from "../../../utils/pautas";
 import ParteFila from "./ParteFila";
 
 interface Props {
@@ -26,6 +27,8 @@ const AYUDA_QUITAR = "Para quitar una respuesta, tocá de nuevo la opción marca
 /** La pantalla de una pauta: cabecera, cuerpo simple o con desglose, y pie de navegación. Sin estado propio. */
 export default function PautaCard({ pauta, indice, total, respuestas, onResponder, onAnterior, onSiguiente }: Props) {
     const r = estadoPauta(pauta, respuestas);
+    const compartidos = textosCompartidos(pauta);
+    const consigna = compartidos.detalle ? consignaEnPartes(compartidos.detalle) : null;
     const esSimple = r.total === 1;
     const esUltima = indice === total - 1;
     const numero = pauta.numero ?? indice + 1;
@@ -65,7 +68,8 @@ export default function PautaCard({ pauta, indice, total, respuestas, onResponde
     // overflow visible: el Card de MUI trae overflow:hidden, que anularía el pie sticky en celular
     return (
         <Card sx={{ borderRadius: 4, display: "flex", flexDirection: "column", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", overflow: "visible" }}>
-            <CardContent sx={{ p: { xs: 2, sm: 3.5 }, pb: 0 }}>
+            {/* px/pt por separado: con `p` responsive, su media query pisaba el `pb: 0` y dejaba 28px de aire antes de las partes */}
+            <CardContent sx={{ px: { xs: 2, sm: 3.5 }, pt: { xs: 2, sm: 3.5 }, pb: 0 }}>
                 <Typography variant="caption" sx={{ letterSpacing: ".06em", textTransform: "uppercase", color: "#4b5563", fontWeight: 700 }}>
                     Pauta {numero}
                 </Typography>
@@ -84,6 +88,30 @@ export default function PautaCard({ pauta, indice, total, respuestas, onResponde
                             {r.respondidas} de {r.total} partes respondidas
                         </Typography>
                     </Box>
+                )}
+                {consigna && (
+                    <Box sx={{ mt: 2, p: { xs: 1.5, sm: 2 }, bgcolor: "#e0f7fa", border: "1px solid #b2ebf2", borderRadius: 2.5 }}>
+                        <Typography variant="caption" sx={{ display: "block", fontWeight: 700, color: "#006064", letterSpacing: ".06em", textTransform: "uppercase" }}>Consigna</Typography>
+                        <Typography sx={{ mt: 0.5, fontWeight: 600, color: "#004d56", lineHeight: 1.45, whiteSpace: "pre-line" }}>{consigna.principal}</Typography>
+                        {consigna.resto && (
+                            // <details> nativo: se pliega sin estado propio y el texto largo no tapa las partes
+                            <Box component="details" sx={{
+                                mt: 1,
+                                "& summary": { cursor: "pointer", listStyle: "none", display: "inline-flex", alignItems: "center", gap: 0.25, fontWeight: 700, fontSize: "0.85rem", color: "#006064", minHeight: 32 },
+                                "& summary::-webkit-details-marker": { display: "none" },
+                                "& summary svg": { transition: "transform .15s" },
+                                "&[open] summary svg": { transform: "rotate(180deg)" },
+                            }}>
+                                <Box component="summary"><ExpandMoreIcon fontSize="small" /> Cómo presentarla (ejemplos)</Box>
+                                <Typography variant="body2" sx={{ mt: 0.5, color: "#004d56", lineHeight: 1.55, whiteSpace: "pre-line" }}>{consigna.resto}</Typography>
+                            </Box>
+                        )}
+                    </Box>
+                )}
+                {compartidos.materiales && (
+                    <Typography variant="body2" sx={{ mt: 1.5, color: "#d97706", display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <BuildIcon sx={{ fontSize: "1rem" }} /> Materiales: {compartidos.materiales}
+                    </Typography>
                 )}
             </CardContent>
 
@@ -126,7 +154,7 @@ export default function PautaCard({ pauta, indice, total, respuestas, onResponde
             ) : (
                 <CardContent sx={{ p: { xs: 1.5, sm: 3.5 }, pt: { xs: 2, sm: 2.5 }, display: "flex", flexDirection: "column", gap: 1.5 }}>
                     {pauta.partes.map((parte, i) => (
-                        <ParteFila key={parte.id} parte={parte} etiqueta={`${numero}.${i + 1}`} respuesta={respuestas[parte.id]} onResponder={onResponder} />
+                        <ParteFila key={parte.id} parte={parte} etiqueta={`${numero}.${i + 1}`} respuesta={respuestas[parte.id]} onResponder={onResponder} mostrarDetalle={!compartidos.detalle} mostrarMateriales={!compartidos.materiales} />
                     ))}
                     <Typography variant="caption" sx={{ color: "#6b7280", textAlign: "center" }}>Cada parte se guarda al tocarla. {AYUDA_QUITAR}</Typography>
                 </CardContent>

@@ -13,10 +13,13 @@ interface Props {
     etiqueta: string;
     respuesta: number | null | undefined;
     onResponder: (preguntaId: string, valor: 0 | 1 | null) => void;
+    /** Falso cuando el detalle (o los materiales) ya se mostró una vez en la cabecera de la pauta. */
+    mostrarDetalle?: boolean;
+    mostrarMateriales?: boolean;
 }
 
 /** Una parte de una pauta con desglose: consigna, criterio y sus botones Sí/No. Volver a tocar la opción marcada la quita. */
-export default function ParteFila({ parte, etiqueta, respuesta, onResponder }: Props) {
+export default function ParteFila({ parte, etiqueta, respuesta, onResponder, mostrarDetalle = true, mostrarMateriales = true }: Props) {
     const respondida = respuesta === 0 || respuesta === 1;
 
     const boton = (valor: 0 | 1, texto: string, Icono: typeof CheckIcon) => {
@@ -63,10 +66,10 @@ export default function ParteFila({ parte, etiqueta, respuesta, onResponder }: P
                             <WarningAmberIcon sx={{ fontSize: 14 }} /> Aprueba si responde NO
                         </Typography>
                     )}
-                    {parte.detalle && (
+                    {mostrarDetalle && parte.detalle && (
                         <Typography variant="body2" sx={{ mt: 0.75, color: "#006064", bgcolor: "#e0f7fa", px: 1, py: 0.5, borderRadius: 1 }}>Nota: {parte.detalle}</Typography>
                     )}
-                    {parte.materiales && parte.materiales !== "-" && (
+                    {mostrarMateriales && parte.materiales && parte.materiales !== "-" && (
                         <Typography variant="body2" sx={{ mt: 0.75, color: "#d97706", display: "flex", alignItems: "center", gap: 0.5 }}>
                             <BuildIcon sx={{ fontSize: 14 }} /> Materiales: {parte.materiales}
                         </Typography>

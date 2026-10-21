@@ -30,6 +30,7 @@ import { datosRevisionDeArea } from "../../utils/revision"
 import EvaluacionWizard from "./EvaluacionWizard"
 import EvaluacionRevision from "./EvaluacionRevision";
 import { esIdentificadorInterno } from "../../utils/dni";
+import { formatearFechaLarga } from "../../utils/fechas";
 
 interface Props {
     evaluacionId: string
@@ -172,12 +173,7 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
     const evaluacion = data
     const overallStatus = getStatusColor(evaluacion.estadoId);
 
-    const fechaObj = evaluacion.createdAt;
-    const mesYAnio = fechaObj.toLocaleDateString('es-ES', {
-        month: 'long',
-        year: 'numeric',
-        timeZone: 'UTC' // Usar UTC si el backend envía ISO sin hora específica
-    });
+    const fechaEvaluacion = formatearFechaLarga(evaluacion.createdAt);
 
     return (
         <Box>
@@ -295,8 +291,8 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                                 <Typography variant="caption" sx={{ display: "block" }}>
                                     Fecha Evaluación
                                 </Typography>
-                                <Typography variant="body2" sx={{ fontWeight: 600, textTransform: "capitalize" }}>
-                                    {mesYAnio}
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                    {fechaEvaluacion}
                                 </Typography>
                             </Grid>
                         </Grid>

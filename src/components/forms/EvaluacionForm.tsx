@@ -23,6 +23,7 @@ import { getDocenteAulasConEstudiantes } from "../../api/aulas";
 import { useSearchParams } from "react-router-dom"
 import { useNavigate } from "react-router-dom";
 import { etiquetaDni } from "../../utils/dni";
+import { fechaLocalISO } from "../../utils/fechas";
 
 interface EvaluacionFormProps {
   onSuccess: (evaluacionId: string) => void;
@@ -32,12 +33,6 @@ interface EvaluacionFormProps {
   prefillEstudianteId?: string;
 }
 
-const getCurrentMonth = () => {
-  const now = new Date();
-  const month = (now.getMonth() + 1).toString().padStart(2, '0');
-  return `${now.getFullYear()}-${month}`;
-};
-
 export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, prefillEstudianteId }: EvaluacionFormProps) {
   const [formData, setFormData] = useState({
     estudianteId: "",
@@ -45,7 +40,6 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
     aulaId: "",
     tipoId: "inicial",
     estadoId: "N",
-    fechaCreacion: getCurrentMonth(),
   })
 
   const [loading, setLoading] = useState(false)
@@ -121,7 +115,6 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
         aulaId: evaluacionAEditar.aulaId || "",
         tipoId: evaluacionAEditar.tipoId,
         estadoId: evaluacionAEditar.estadoId,
-        fechaCreacion: getCurrentMonth(),
       });
       setSuccess(false);
       setError(null);
@@ -152,7 +145,6 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
       aulaId: "",
       tipoId: "inicial",
       estadoId: "N",
-      fechaCreacion: getCurrentMonth(),
     });
     setSelectedEstudiante(null);
   }
@@ -216,7 +208,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
           sala_id: Number.parseInt(formData.salaId),
           aula_id: formData.aulaId || undefined,
           tipo_id: formData.tipoId,             // snake_case: tipo_id
-          fecha_creacion: formData.fechaCreacion,
+          fecha_creacion: fechaLocalISO(), // siempre el día en que se carga, sin selector
         }
 
         // 3. Enviar
@@ -376,22 +368,6 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
               </TextField>
             </Grid>
 
-            {/* FECHA DE CREACIÓN --- */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Mes y Año de Evaluación"
-                name="fechaCreacion"
-                type="month" // Input nativo de navegador para mes/año
-                value={formData.fechaCreacion}
-                onChange={handleChange}
-                InputLabelProps={{
-                  shrink: true, // Necesario para que la etiqueta no tape el valor
-                }}
-                required
-                disabled={isLoading}
-              />
-            </Grid>
 
             {/* Estado - SE QUITA DEL FORMULARIO DE CREACIÓN */}
             {/* El estado inicial DEBE ser 'N' (No iniciada) y es definido en el backend */}

@@ -133,3 +133,38 @@ export function pautaRecienCompletada(pauta: Pauta, antes: Respuestas, despues: 
 export function alternarRespuesta(actual: number | null | undefined, tocada: 0 | 1): 0 | 1 | null {
     return actual === tocada ? null : tocada;
 }
+
+export interface TextosCompartidos {
+    detalle: string | null;
+    materiales: string | null;
+}
+
+/**
+ * Textos iguales en todas las partes de una pauta con desglose, para mostrarlos
+ * una sola vez en la cabecera en vez de repetirlos en cada parte (la consigna
+ * larga de Sonido inicial, los materiales). Una pauta simple no comparte nada.
+ */
+export function textosCompartidos(pauta: Pauta): TextosCompartidos {
+    if (pauta.partes.length < 2) return { detalle: null, materiales: null };
+    const comun = (valor: (p: PreguntaBase) => string | undefined): string | null => {
+        const textos = pauta.partes.map((p) => (valor(p) ?? "").trim());
+        const primero = textos[0];
+        if (!primero || primero === "-") return null;
+        return textos.every((t) => t === primero) ? primero : null;
+    };
+    return { detalle: comun((p) => p.detalle), materiales: comun((p) => p.materiales) };
+}
+
+export interface ConsignaEnPartes {
+    /** El primer párrafo: lo que se le dice al chico. Siempre visible. */
+    principal: string;
+    /** El resto (cómo presentarla, ejemplos), para mostrar plegado. `null` si no hay más. */
+    resto: string | null;
+}
+
+/** Separa una consigna larga por su primera línea en blanco, para no tapar la pantalla con texto. */
+export function consignaEnPartes(texto: string): ConsignaEnPartes {
+    const [principal, ...resto] = texto.trim().split(/\n\s*\n/);
+    const restoTexto = resto.join("\n\n").trim();
+    return { principal: principal.trim(), resto: restoTexto || null };
+}

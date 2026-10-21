@@ -1,5 +1,6 @@
 import { Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, Chip, Button } from "@mui/material"
 import type { EvaluacionInstancia } from "../../api/evaluaciones"
+import { formatearFecha } from "../../utils/fechas"
 
 function getEstadoColor(estado: string) {
   switch (estado) {
@@ -73,7 +74,7 @@ export default function EvaluacionesTable({ items, showEstudiante = false, onRow
                 />
               </TableCell>
               <TableCell align="right">{e.puntaje ?? "-"}</TableCell>
-              <TableCell>{e.createdAt.toLocaleString()}</TableCell>
+              <TableCell>{formatearFecha(e.createdAt)}</TableCell>
               {onDelete && (
                 <TableCell align="center">
                   <Button

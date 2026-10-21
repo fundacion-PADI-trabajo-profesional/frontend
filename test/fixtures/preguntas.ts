@@ -36,3 +36,15 @@ export const pauta = (preguntas: PreguntaBase[], numero: number) => {
   const partes = preguntas.filter((p) => p.numero === numero);
   return { clave: String(numero), numero, titulo: partes[0].titulo ?? "", partes };
 };
+
+const CONSIGNA_SONIDO_INICIAL = [
+  "\"Te voy a mostrar unos dibujos y me tenés que decir con qué letra empieza.\"",
+  "Presente al niño las imágenes del cuadernillo de estímulos y modele con los dos estímulos de ejemplo.",
+  "A continuación presente los demás estímulos y pídale que diga con qué letra empieza.",
+].join("\n\n");
+
+/** Sonido inicial, sala 4: cinco partes que comparten la consigna larga (en `detalle`) y los materiales. */
+export const CL4_SONIDO_INICIAL: PreguntaBase[] = [["ooooso", "O"], ["aaaaavión", "A"], ["eeeeestrella", "E"], ["uuuuva", "U"], ["aaaauto", "A"]].map(([palabra, letra], i) =>
+  base("si" + i, 5, "Sonido Inicial", "Diga: " + palabra, {
+    aprueba_con: "Responde " + letra, detalle: CONSIGNA_SONIDO_INICIAL, materiales: "Cuadernillo de Estímulos",
+  }));

@@ -21,6 +21,8 @@ export interface PreguntaBase {
   grupopregunta?: string;
   /** Si es true, el punto se otorga cuando la respuesta es NO (pregunta negativa) */
   puntaje_invertido?: boolean;
+  /** Partes correctas con las que se aprueba la pauta (mismo valor en todas sus partes). Null = la mitad redondeada hacia arriba. */
+  minimo_aprobacion?: number | null;
   /** URL firmada temporal generada por el backend para imágenes de Supabase Storage. Null si la pregunta no tiene imagen. */
   signed_url?: string | null;
 }

@@ -4,8 +4,9 @@
  * Una pauta es el conjunto de preguntas activas de un área que comparten
  * `numero`; es la misma agrupación con la que el backend calcula el puntaje
  * del área. Una pauta con una sola parte es "simple"; con dos o más tiene
- * "desglose" y aprueba cuando las partes correctas llegan a la mitad,
- * redondeando hacia arriba (3 → 2, 4 → 2, 5 → 3).
+ * "desglose" y aprueba cuando las partes correctas llegan al mínimo que trae
+ * cada parte (`minimo_aprobacion`, el del cuadernillo) o, si no hay, a la
+ * mitad redondeada hacia arriba (3 → 2, 4 → 2, 5 → 3).
  */
 import type { PreguntaBase } from "../api/evaluaciones";
 import { respuestaSumaPunto } from "./respuestas";
@@ -55,6 +56,12 @@ export function agruparPautas(preguntas: PreguntaBase[]): Pauta[] {
     });
 }
 
+/** El mínimo de una pauta a partir de sus partes: todas traen el mismo valor; si difieren, el más alto. */
+export function minimoDePartes(minimos: (number | null | undefined)[]): number | null {
+    const valores = minimos.filter((m): m is number => typeof m === "number");
+    return valores.length ? Math.max(...valores) : null;
+}
+
 export function estadoPauta(pauta: Pauta, respuestas: Respuestas): ResumenPauta {
     const total = pauta.partes.length;
     let respondidas = 0;
@@ -66,7 +73,7 @@ export function estadoPauta(pauta: Pauta, respuestas: Respuestas): ResumenPauta 
             if (respuestaSumaPunto(r, parte.puntaje_invertido)) correctas++;
         }
     }
-    const necesarias = Math.ceil(total / 2);
+    const necesarias = minimoDePartes(pauta.partes.map((p) => p.minimo_aprobacion)) ?? Math.ceil(total / 2);
     const completa = total > 0 && respondidas === total;
     const aprobada = completa && correctas >= necesarias;
     const estado: EstadoPauta = !completa

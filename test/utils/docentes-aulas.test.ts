@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { filtrarAulasDisponibles, filtrarAulasParaEstudiante } from "../../src/utils/docentes-aulas";
+import { filtrarAulasDisponibles, filtrarAulasParaEstudiante, etiquetaAula, resumenAsignaciones } from "../../src/utils/docentes-aulas";
 import type { Aula } from "../../src/api/aulas";
 
 const makeAula = (id: string, escuela_id: string): Aula => ({
@@ -128,5 +128,35 @@ describe("filtrarAulasParaEstudiante", () => {
     const aulas = [makeAula("a-1", "esc-1")];
 
     expect(filtrarAulasParaEstudiante(aulas, "", "")).toEqual([]);
+  });
+});
+
+// ─── etiquetaAula y resumenAsignaciones ──────────────────────────────────────
+
+describe("etiquetaAula", () => {
+  it("arma grado, comisión y turno; sin sala pone ?", () => {
+    expect(etiquetaAula({ comision: "A", turno: "Mañana", sala: { id: 4, nombre: "Sala de 4", grado: 4 } })).toBe("4° - A (Mañana)");
+    expect(etiquetaAula({ comision: "B", turno: "Tarde" })).toBe("?° - B (Tarde)");
+  });
+});
+
+describe("resumenAsignaciones", () => {
+  const ok: PromiseSettledResult<unknown> = { status: "fulfilled", value: undefined };
+  const mal: PromiseSettledResult<unknown> = { status: "rejected", reason: new Error("x") };
+
+  it("todo bien: sin mensaje de error", () => {
+    expect(resumenAsignaciones([ok, ok], ["4° - A (Mañana)", "4° - B (Tarde)"])).toEqual({ asignadas: 2, fallidas: [], mensajeError: null });
+  });
+
+  it("algunas fallan: dice cuántas salieron y cuáles no", () => {
+    const r = resumenAsignaciones([ok, mal, ok], ["A", "B", "C"]);
+    expect(r.asignadas).toBe(2);
+    expect(r.fallidas).toEqual(["B"]);
+    expect(r.mensajeError).toBe("Se asignaron 2 de 3 aulas. No se pudo asignar: B.");
+  });
+
+  it("todas fallan: lo dice en singular o plural", () => {
+    expect(resumenAsignaciones([mal], ["A"]).mensajeError).toBe("No se pudo asignar el aula: A.");
+    expect(resumenAsignaciones([mal, mal], ["A", "B"]).mensajeError).toBe("No se pudo asignar ninguna de las aulas: A, B.");
   });
 });

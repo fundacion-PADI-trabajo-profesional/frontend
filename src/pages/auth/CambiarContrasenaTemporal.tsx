@@ -14,6 +14,8 @@ import LockResetIcon from "@mui/icons-material/LockReset";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { useNavigate } from "react-router-dom";
 import { updatePasswordUser } from "../../api/auth";
+import { leerHashActivacion, type EstadoLinkActivacion } from "../../utils/activacion";
+import FormularioReenvioInvitacion from "../../components/auth/FormularioReenvioInvitacion";
 
 /**
  * Página de activación de cuenta para usuarios invitados por el Equipo PADI.
@@ -24,22 +26,16 @@ import { updatePasswordUser } from "../../api/auth";
 export default function CambiarContrasenaTemporal() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [tokens, setTokens] = useState({ access: "", refresh: "" });
+  // Hasta leer el hash se asume utilizable, para no mostrar un instante el aviso de vencido
+  const [link, setLink] = useState<EstadoLinkActivacion>({ access: "", refresh: "", utilizable: true, motivo: null });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
-  // Leer tokens del hash de la URL al cargar (Supabase los manda así en el link de invitación)
+  // Supabase vuelve con los tokens (o el error de link vencido) en el hash de la URL
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash) {
-      const params = new URLSearchParams(hash.replace("#", "?"));
-      setTokens({
-        access: params.get("access_token") || "",
-        refresh: params.get("refresh_token") || "",
-      });
-    }
+    setLink(leerHashActivacion(window.location.hash));
   }, []);
 
   const inputSx = {
@@ -73,8 +69,8 @@ export default function CambiarContrasenaTemporal() {
     e.preventDefault();
     setError("");
 
-    if (!tokens.access || !tokens.refresh) {
-      setError("El link de activación es inválido o ya expiró. Pedile al Equipo PADI que te reenvíe la invitación.");
+    if (!link.utilizable) {
+      setError("El link de activación es inválido o ya expiró. Pedí uno nuevo más abajo.");
       return;
     }
 
@@ -91,7 +87,7 @@ export default function CambiarContrasenaTemporal() {
     setIsLoading(true);
 
     try {
-      await updatePasswordUser(tokens.access, tokens.refresh, newPassword);
+      await updatePasswordUser(link.access, link.refresh, newPassword);
       setSuccess(true);
       setTimeout(() => navigate("/login"), 3000);
     } catch (err: unknown) {
@@ -178,6 +174,15 @@ export default function CambiarContrasenaTemporal() {
             <Typography variant="body2" color="#555" mt={1}>
               Serás redirigido al inicio de sesión en unos segundos...
             </Typography>
+          </Box>
+        ) : !link.utilizable ? (
+          <Box data-activacion="link-inutilizable">
+            <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
+              {link.motivo === "vencido"
+                ? "Este link de activación venció: los links duran 24 horas."
+                : "Este link de activación no es válido o ya se usó."}
+            </Alert>
+            <FormularioReenvioInvitacion descripcion="Pedí uno nuevo con tu correo: te llega en unos minutos, sin pasar por el Equipo PADI." />
           </Box>
         ) : (
           <form onSubmit={handleSubmit}>

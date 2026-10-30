@@ -246,10 +246,27 @@ export default function Login({ onLogin }: LoginProps) {
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "flex-end",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
                   mb: 1
                 }}
               >
+                <Button
+                  onClick={() => navigate("/reenviar-invitacion")}
+                  sx={{
+                    color: "#444",
+                    textTransform: "none",
+                    fontSize: "0.85rem",
+                    fontWeight: 500,
+                    "&:hover": {
+                      bgcolor: "transparent",
+                      color: "#000",
+                      textDecoration: "underline"
+                    },
+                  }}
+                >
+                  ¿No pudiste activar tu cuenta?
+                </Button>
                 <Button
                   onClick={() => navigate("/recuperar-password")}
                   sx={{

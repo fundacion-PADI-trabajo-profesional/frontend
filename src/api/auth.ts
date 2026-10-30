@@ -150,6 +150,7 @@ export function setupFetchInterceptor() {
         "/auth/refresh-token",
         "/auth/reset-password-request",
         "/auth/update-password",
+        "/auth/reenviar-invitacion",
       ];
       const urlPath = new URL(url, window.location.origin).pathname;
       if (AUTH_BYPASS_ENDPOINTS.some(endpoint => urlPath === endpoint || urlPath.endsWith(endpoint))) return response;
@@ -328,6 +329,15 @@ export async function updateProfileData(userId: string, nombre: string, apellido
  */
 export async function requestPasswordReset(email: string) {
   const response = await api.post("/auth/reset-password-request", { email });
+  return response.data;
+}
+
+/**
+ * Autoservicio del link de activación: pide que se reenvíe la invitación a ese correo.
+ * El backend responde el mismo mensaje exista o no la cuenta.
+ */
+export async function solicitarReenvioInvitacion(email: string): Promise<{ message?: string }> {
+  const response = await api.post("/auth/reenviar-invitacion", { email });
   return response.data;
 }
 

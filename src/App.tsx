@@ -14,6 +14,7 @@ import PanelControl from "./pages/PanelControl"
 import ActualizarContrasena from "./pages/auth/ActualizarContrasena"
 import SolicitarRecuperoPassword from "./pages/auth/SolicitarRecuperoPassword"
 import CambiarContrasenaTemporal from "./pages/auth/CambiarContrasenaTemporal"
+import ReenviarInvitacion from "./pages/auth/ReenviarInvitacion"
 import GestionUsuariosPage from "./pages/GestionUsuariosPage"
 import EstadisticasPadi from "./pages/estadisticas/EstadisticasPadi"
 import EstadisticasZona from "./pages/estadisticas/EstadisticasZona"
@@ -148,6 +149,8 @@ function App() {
 
         {/* Cambio de contraseña temporal (primer login) — accesible solo con token activo */}
         <Route path="/cambiar-contrasena-temporal" element={<CambiarContrasenaTemporal />} />
+        {/* Autoservicio del link de activación (vencido o no recibido) — pública */}
+        <Route path="/reenviar-invitacion" element={<ReenviarInvitacion />} />
 
         {/* Flujo de recuperación de contraseña — rutas públicas */}
         <Route path="/recuperar-password" element={<SolicitarRecuperoPassword />} />

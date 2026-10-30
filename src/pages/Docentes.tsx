@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Box, Container, Typography, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, CircularProgress, Alert, Button, Stack, Chip, MenuItem, TextField, InputAdornment, Menu, ListItemIcon } from "@mui/material"
+import { Box, Container, Typography, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, CircularProgress, Alert, Button, Stack, Chip, MenuItem, TextField, InputAdornment, Menu, ListItemIcon, Autocomplete } from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import SearchIcon from "@mui/icons-material/Search"
 import VisibilityIcon from "@mui/icons-material/Visibility"
@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom"
 import { asignarDocenteAEscuela, desasignarDocenteDeEscuela, getDocentes, type Docente } from "../api/docentes"
 import { getEscuelas, type Escuela } from "../api/escuelas"
 import { getAulas, asignarDocenteAula, desasignarDocenteAula, type Aula } from "../api/aulas"
-import { filtrarAulasDisponibles } from "../utils/docentes-aulas"
+import { filtrarAulasDisponibles, etiquetaAula, resumenAsignaciones } from "../utils/docentes-aulas"
 import { BuscadorPadi } from "../components/common/SearchBar";
 import BotonNuevo from "../components/common/BotonNuevo"
 import DocenteForm from "../components/forms/DocenteForm"
@@ -28,7 +28,7 @@ export default function DocentesPage() {
   const [busqueda, setBusqueda] = useState("")
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [selectedDocenteParaAula, setSelectedDocenteParaAula] = useState<Docente | null>(null)
-  const [selectedAulaId, setSelectedAulaId] = useState("")
+  const [selectedAulaIds, setSelectedAulaIds] = useState<string[]>([])
   const [aulasDisponibles, setAulasDisponibles] = useState<Aula[]>([])
   const [loadingAulas, setLoadingAulas] = useState(false)
   const [noEscuela, setNoEscuela] = useState(false)
@@ -126,7 +126,7 @@ export default function DocentesPage() {
       return
     }
     setSelectedDocenteParaAula(docente)
-    setSelectedAulaId("")
+    setSelectedAulaIds([])
     setLoadingAulas(true)
     try {
       const todasLasAulas = await getAulas()
@@ -141,19 +141,24 @@ export default function DocentesPage() {
 
   const handleCloseAsignarAula = () => {
     setSelectedDocenteParaAula(null)
-    setSelectedAulaId("")
+    setSelectedAulaIds([])
     setAulasDisponibles([])
   }
 
+  // Varias aulas de una: una llamada por aula (el backend valida permisos por aula) y un solo resumen
   const handleConfirmAsignarAula = async () => {
-    if (!selectedDocenteParaAula || !selectedAulaId) return
+    if (!selectedDocenteParaAula || selectedAulaIds.length === 0) return
+    const docenteId = selectedDocenteParaAula.id
+    const elegidas = aulasDisponibles.filter((a) => selectedAulaIds.includes(a.id))
     try {
       setSaving(true)
-      await asignarDocenteAula(selectedAulaId, selectedDocenteParaAula.id)
+      const resultados = await Promise.allSettled(elegidas.map((a) => asignarDocenteAula(a.id, docenteId)))
+      const resumen = resumenAsignaciones(resultados, elegidas.map(etiquetaAula))
+      if (resumen.mensajeError) setError(resumen.mensajeError)
       await loadData()
       handleCloseAsignarAula()
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Error al asignar aula")
+      setError(e instanceof Error ? e.message : "Error al asignar aulas")
     } finally {
       setSaving(false)
     }
@@ -485,24 +490,35 @@ export default function DocentesPage() {
                 <CircularProgress size={24} />
               </Box>
             ) : (
-              <TextField
-                select
-                fullWidth
-                size="small"
-                label="Aula"
-                value={selectedAulaId}
-                onChange={(e) => setSelectedAulaId(e.target.value)}
-                sx={{ mb: 2 }}
-              >
-                {aulasDisponibles.map((aula) => (
-                  <MenuItem key={aula.id} value={aula.id}>
-                    {`${aula.sala?.grado ?? "?"}° - ${aula.comision} (${aula.turno})`}
-                  </MenuItem>
-                ))}
-                {aulasDisponibles.length === 0 && (
-                  <MenuItem disabled>No hay aulas disponibles</MenuItem>
-                )}
-              </TextField>
+              <Box sx={{ mb: 2 }}>
+                <Autocomplete
+                  multiple
+                  disableCloseOnSelect
+                  size="small"
+                  options={aulasDisponibles}
+                  value={aulasDisponibles.filter((a) => selectedAulaIds.includes(a.id))}
+                  onChange={(_, elegidas) => setSelectedAulaIds(elegidas.map((a) => a.id))}
+                  getOptionLabel={(a) => etiquetaAula(a)}
+                  isOptionEqualToValue={(a, b) => a.id === b.id}
+                  noOptionsText="No hay aulas disponibles"
+                  renderInput={(params) => (
+                    <TextField {...params} label="Aulas" placeholder={selectedAulaIds.length === 0 ? "Elegí una o varias" : ""} />
+                  )}
+                />
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 0.5 }}>
+                  <Typography variant="caption" sx={{ color: "#888" }}>
+                    {selectedAulaIds.length === 0 ? "Podés elegir varias a la vez." : `${selectedAulaIds.length} de ${aulasDisponibles.length} elegidas`}
+                  </Typography>
+                  <Button
+                    size="small"
+                    onClick={() => setSelectedAulaIds(aulasDisponibles.map((a) => a.id))}
+                    disabled={aulasDisponibles.length === 0 || selectedAulaIds.length === aulasDisponibles.length}
+                    sx={{ textTransform: "none" }}
+                  >
+                    Seleccionar todas
+                  </Button>
+                </Box>
+              </Box>
             )}
 
             <Stack direction="row" spacing={1} justifyContent="flex-end">
@@ -512,9 +528,9 @@ export default function DocentesPage() {
               <Button
                 variant="contained"
                 onClick={handleConfirmAsignarAula}
-                disabled={!selectedAulaId || saving || loadingAulas}
+                disabled={selectedAulaIds.length === 0 || saving || loadingAulas}
               >
-                Asignar
+                {selectedAulaIds.length > 1 ? `Asignar ${selectedAulaIds.length} aulas` : "Asignar"}
               </Button>
             </Stack>
           </Box>

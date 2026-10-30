@@ -336,9 +336,10 @@ export async function requestPasswordReset(email: string) {
  * Autoservicio del link de activación: pide que se reenvíe la invitación a ese correo.
  * El backend responde el mismo mensaje exista o no la cuenta.
  */
-export async function solicitarReenvioInvitacion(email: string): Promise<{ message?: string }> {
+export async function solicitarReenvioInvitacion(email: string) {
   const response = await api.post("/auth/reenviar-invitacion", { email });
-  return response.data;
+  // Tipo declarado acá y no en la firma: el contract test del backend corta el bloque en la primera llave
+  return response.data as { message?: string };
 }
 
 /**

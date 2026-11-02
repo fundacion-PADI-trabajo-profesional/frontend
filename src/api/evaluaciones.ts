@@ -345,24 +345,6 @@ export async function cambiarTipoEvaluacion(id: string, tipo: TipoEvaluacion): P
   return mapToCamelCase(responseData.data as RawEvaluacionBackend)
 }
 
-/** Actualiza una instancia de evaluación existente. */
-export async function actualizarEvaluacionInstancia(
-  id: string,
-  data: Partial<Omit<EvaluacionInstancia, "id" | "createdAt">>,
-): Promise<EvaluacionInstancia> {
-  const res = await fetch(`${API_URL}/evaluaciones/${id}`, {
-    method: "PATCH",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(data),
-  })
-  const responseData = await res.json().catch(() => ({}))
-  if (!res.ok) {
-    const errorDescription = responseData.error?.description || responseData.message
-    throw new Error(errorDescription || "Error al actualizar la evaluación")
-  }
-  return mapToCamelCase(responseData.data as RawEvaluacionBackend)
-}
-
 /** Elimina una instancia de evaluación agregando contexto de usuario en query params. */
 export async function eliminarEvaluacionInstancia(
   id: string,

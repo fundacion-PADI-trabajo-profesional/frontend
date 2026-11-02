@@ -1,5 +1,4 @@
 import type React from "react"
-
 import { useEffect, useState } from "react"
 import {
   Box,
@@ -14,47 +13,56 @@ import {
   CircularProgress,
   Autocomplete,
   Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Link,
 } from "@mui/material"
 import SaveIcon from "@mui/icons-material/Save"
 import CancelIcon from "@mui/icons-material/Cancel"
-import { crearEvaluacionInstancia, actualizarEvaluacionInstancia, type EvaluacionInstancia } from "../../api/evaluaciones"; // <-- IMPORTA EL TIPO Y LA NUEVA FUNCIÓN
+import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom"
+import {
+  crearEvaluacionInstancia,
+  getEvaluacionesInstanciasByEstudiante,
+  EvaluacionApiError,
+} from "../../api/evaluaciones";
 import { getEstudiantes, type Estudiante } from "../../api/estudiantes";
 import { getDocenteAulasConEstudiantes } from "../../api/aulas";
-import { useSearchParams } from "react-router-dom"
-import { useNavigate } from "react-router-dom";
 import { etiquetaDni } from "../../utils/dni";
 import { fechaLocalISO } from "../../utils/fechas";
+import { ETIQUETA_TIPO, tipoPorDefecto, type SugerenciaTipo, type TipoEvaluacion } from "../../utils/tipo-evaluacion";
 
 interface EvaluacionFormProps {
   onSuccess: (evaluacionId: string) => void;
   onCancel: () => void;
-  evaluacionAEditar?: EvaluacionInstancia | null;
   profile: { id: string; rol: string; escuela_id?: string } | null;
   prefillEstudianteId?: string;
 }
 
-export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, prefillEstudianteId }: EvaluacionFormProps) {
+const SIN_SUGERENCIA: SugerenciaTipo = { tipo: "inicial", ayuda: null, aviso: null };
+
+export default function EvaluacionForm({ onSuccess, profile, prefillEstudianteId }: EvaluacionFormProps) {
   const [formData, setFormData] = useState({
     estudianteId: "",
     salaId: "",
     aulaId: "",
-    tipoId: "inicial",
-    estadoId: "N",
+    tipoId: "inicial" as TipoEvaluacion,
   })
-
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<{ mensaje: string; verHistorial: boolean } | null>(null)
   const [success, setSuccess] = useState(false)
+  const [confirmarAbierto, setConfirmarAbierto] = useState(false)
+  const [sugerencia, setSugerencia] = useState<SugerenciaTipo>(SIN_SUGERENCIA)
 
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [loadingEstudiantes, setLoadingEstudiantes] = useState(true);
-  // Este estado controla el valor del Autocomplete (el objeto estudiante completo)
   const [selectedEstudiante, setSelectedEstudiante] = useState<Estudiante | null>(null);
 
   const [searchParams] = useSearchParams();
-  const prefillSalaId = searchParams.get("salaId"); // Capturamos la sala
+  const prefillSalaId = searchParams.get("salaId");
   const prefillAulaId = searchParams.get("aulaId");
-
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -62,7 +70,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
       setFormData(prev => ({
         ...prev,
         estudianteId: prefillEstudianteId,
-        salaId: prefillSalaId || "", // Pre-cargamos la sala si viene en la URL
+        salaId: prefillSalaId || "",
         aulaId: prefillAulaId || "",
       }));
     }
@@ -70,6 +78,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
 
   useEffect(() => {
     if (!profile) return;
+
     const loadEstudiantes = async () => {
       try {
         const data = await getEstudiantes();
@@ -86,47 +95,22 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
             }
             setEstudiantes(Array.from(dedup.values()));
           } catch {
-            setError("Error al cargar la lista de estudiantes.");
+            setError({ mensaje: "Error al cargar la lista de estudiantes.", verHistorial: false });
           }
         } else {
-          setError("Error al cargar la lista de estudiantes.");
+          setError({ mensaje: "Error al cargar la lista de estudiantes.", verHistorial: false });
         }
       } finally {
         setLoadingEstudiantes(false);
       }
     };
+
     loadEstudiantes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.rol]);
 
   useEffect(() => {
-    // Solo se ejecuta si la evaluación a editar existe Y la lista de estudiantes ya se cargó
-    if (evaluacionAEditar && estudiantes.length > 0) {
-      // 1. Encontrar el objeto estudiante completo usando el ID
-      const estudiante = estudiantes.find(e => e.id === evaluacionAEditar.estudianteId) || null;
-
-      // 2. Setear el valor del Autocomplete
-      setSelectedEstudiante(estudiante);
-
-      // 3. Setear el resto del formulario
-      setFormData({
-        estudianteId: evaluacionAEditar.estudianteId,
-        salaId: String(evaluacionAEditar.salaId),
-        aulaId: evaluacionAEditar.aulaId || "",
-        tipoId: evaluacionAEditar.tipoId,
-        estadoId: evaluacionAEditar.estadoId,
-      });
-      setSuccess(false);
-      setError(null);
-    } else if (!evaluacionAEditar) {
-      // Si no hay nada para editar, limpia el formulario (modo "Crear")
-      handleClear();
-    }
-  }, [evaluacionAEditar, estudiantes]);
-
-  // Prefill si venimos desde Estudiantes (evaluarAhora)
-  useEffect(() => {
-    if (!evaluacionAEditar && prefillEstudianteId && estudiantes.length > 0) {
+    if (prefillEstudianteId && estudiantes.length > 0) {
       const estudiante = estudiantes.find(e => e.id === prefillEstudianteId) || null;
       setSelectedEstudiante(estudiante);
       setFormData((prev) => ({
@@ -136,18 +120,31 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
         aulaId: prev.aulaId || prefillAulaId || "",
       }));
     }
-  }, [prefillEstudianteId, estudiantes, evaluacionAEditar, prefillAulaId]);
+  }, [prefillEstudianteId, estudiantes, prefillAulaId]);
 
-  const handleClear = () => {
-    setFormData({
-      estudianteId: "",
-      salaId: "",
-      aulaId: "",
-      tipoId: "inicial",
-      estadoId: "N",
-    });
-    setSelectedEstudiante(null);
-  }
+  // Tipo por defecto según el historial del alumno en esa sala y este año.
+  // Si cambia el alumno o la sala con una consulta en vuelo, la respuesta vieja se descarta.
+  useEffect(() => {
+    const salaNum = Number(formData.salaId);
+    if (!formData.estudianteId || !salaNum) {
+      setSugerencia(SIN_SUGERENCIA);
+      return;
+    }
+    let cancelado = false;
+    getEvaluacionesInstanciasByEstudiante(formData.estudianteId)
+      .then((evs) => {
+        if (cancelado) return;
+        const r = tipoPorDefecto(evs, salaNum, new Date().getUTCFullYear());
+        setSugerencia(r);
+        setFormData((prev) => ({ ...prev, tipoId: r.tipo }));
+      })
+      .catch(() => {
+        if (!cancelado) setSugerencia(SIN_SUGERENCIA);
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [formData.estudianteId, formData.salaId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
     const name = e.target.name || (e.target as HTMLInputElement).name
@@ -160,92 +157,86 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
   }
 
   const handleCancel = () => {
-    // En lugar de ir a /home, navegamos a /evaluaciones 
-    // Esto recargará el componente Evaluaciones y mostrará la lista por defecto
     navigate("/evaluaciones", { replace: true });
   };
 
+  const nombreAlumno = selectedEstudiante
+    ? `${selectedEstudiante.personas.primer_apellido}, ${selectedEstudiante.personas.nombre}`
+    : "";
+  const rutaHistorial = `/historial-estudiante?${new URLSearchParams({
+    estudianteId: formData.estudianteId,
+    nombre: nombreAlumno,
+  }).toString()}`;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Paso 1: validar y pedir confirmación (el "double check" del tipo).
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setError(null)
     setSuccess(false)
 
+    if (!formData.estudianteId || !formData.salaId || !profile?.id) {
+      setError({ mensaje: "Por favor completa todos los campos requeridos (faltan datos del estudiante, sala o profesor)", verHistorial: false });
+      return;
+    }
+    if (!selectedEstudiante || !selectedEstudiante.personas || !selectedEstudiante.personas.dni) {
+      setError({ mensaje: "El estudiante seleccionado no tiene un DNI válido.", verHistorial: false });
+      return;
+    }
+    setConfirmarAbierto(true);
+  }
+
+  // Paso 2: crear, ya confirmado.
+  const crear = async () => {
+    const dni = selectedEstudiante?.personas?.dni;
+    if (!dni || !profile) return;
+    setLoading(true)
     try {
-
-      if (!formData.estudianteId || !formData.salaId || !profile?.id) {
-        throw new Error("Por favor completa todos los campos requeridos (faltan datos del estudiante, sala o profesor)")
+      const payloadBackend = {
+        dni,
+        profesor_id: profile.id,
+        sala_id: Number.parseInt(formData.salaId),
+        aula_id: formData.aulaId || undefined,
+        tipo_id: formData.tipoId,
+        fecha_creacion: fechaLocalISO(), // siempre el día en que se carga, sin selector
       }
-
-      const payload = {
-        estudianteId: formData.estudianteId,
-        profesorId: profile.id,
-        salaId: Number.parseInt(formData.salaId),
-        tipoId: formData.tipoId as "Evaluacion Inicial" | "Evaluacion de Cierre",
-        puntaje: null,
-        estadoId: formData.estadoId as "N" | "C" | "R",
-      }
-
-      let resultId: string;
-
-      if (evaluacionAEditar) {
-        // --- MODO EDITAR ---
-        const updated = await actualizarEvaluacionInstancia(evaluacionAEditar.id, payload);
-        resultId = updated.id;
-      } else {
-        // --- MODO CREAR ---
-
-        // 1. Obtener el DNI del estudiante seleccionado
-        if (!selectedEstudiante || !selectedEstudiante.personas || !selectedEstudiante.personas.dni) {
-          throw new Error("El estudiante seleccionado no tiene un DNI válido.");
-        }
-
-        // 2. Construir el payload EXACTAMENTE como lo pide el Backend (snake_case)
-        const payloadBackend = {
-          dni: selectedEstudiante.personas.dni, // Usamos DNI, no ID
-          profesor_id: profile.id,              // snake_case: profesor_id
-          sala_id: Number.parseInt(formData.salaId),
-          aula_id: formData.aulaId || undefined,
-          tipo_id: formData.tipoId,             // snake_case: tipo_id
-          fecha_creacion: fechaLocalISO(), // siempre el día en que se carga, sin selector
-        }
-
-        // 3. Enviar
-        const userInfo = {
-          userId: profile.id,
-          userRole: profile.rol
-        };
-        const result = await crearEvaluacionInstancia(payloadBackend, userInfo);
-        resultId = result.id;
-      }
-
+      const result = await crearEvaluacionInstancia(payloadBackend, { userId: profile.id, userRole: profile.rol });
+      setConfirmarAbierto(false)
       setSuccess(true)
-
       setTimeout(() => {
-        onSuccess(resultId)
+        onSuccess(result.id)
       }, 1500)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : (evaluacionAEditar ? "Error al actualizar" : "Error al crear"));
-      console.error("[v0] Error:", err);
+      setConfirmarAbierto(false)
+      const esDuplicado = err instanceof EvaluacionApiError && err.code === "TIPO_DUPLICADO";
+      setError({
+        mensaje: err instanceof Error ? err.message : "Error al crear",
+        verHistorial: esDuplicado,
+      });
     } finally {
       setLoading(false);
     }
   }
 
-  const isLoading = loading || loadingEstudiantes; // El formulario se bloquea si carga estudiantes O si está guardando
+  const isLoading = loading || loadingEstudiantes;
 
   return (
     <Card>
       <CardContent>
-        {/* --- TÍTULO DINÁMICO --- */}
         <Typography variant="h6" component="h2" sx={{ mb: 3, fontWeight: 700 }}>
-          {evaluacionAEditar ? "Editar Evaluación" : "Nueva Evaluación PADI"}
+          Nueva Evaluación PADI
         </Typography>
 
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
+            {error.mensaje}
+            {error.verHistorial && (
+              <>
+                {" "}
+                <Link component={RouterLink} to={rutaHistorial} underline="always">
+                  Ver la evaluación existente
+                </Link>
+              </>
+            )}
           </Alert>
         )}
 
@@ -273,27 +264,20 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
               </Grid>
             )}
 
-            {/* Estudiante ID */}
+            {/* Estudiante */}
             <Grid item xs={12}>
               <Autocomplete
                 id="estudiante-autocomplete"
-                // El valor es el objeto estudiante completo
                 value={selectedEstudiante}
-                // La lista de opciones
                 options={estudiantes}
                 loading={loadingEstudiantes}
                 disabled={isLoading}
-                // Cómo mostrar el nombre en el dropdown (Ej: "Gomez, Juan (DNI: 12345678)")
                 getOptionLabel={(option) =>
                   `${option.personas.primer_apellido}, ${option.personas.nombre} (${etiquetaDni(option.personas.dni)})`
                 }
-                // Para que la búsqueda funcione comparando IDs
                 isOptionEqualToValue={(option, value) => option.id === value.id}
-                // QUÉ HACER CUANDO SE SELECCIONA UN ALUMNO
                 onChange={(_event, newValue: Estudiante | null) => {
-                  // 1. Actualiza el valor del Autocomplete
                   setSelectedEstudiante(newValue);
-                  // 2. Actualiza el formData con el ID para el backend
                   setFormData((prev) => ({
                     ...prev,
                     estudianteId: newValue ? newValue.id : "",
@@ -301,7 +285,6 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
                     aulaId: newValue?.aula_asignada?.id || newValue?.aula_id || "",
                   }));
                 }}
-                // Cómo se ve el campo de texto
                 renderInput={(params) => (
                   <TextField
                     {...params}
@@ -318,7 +301,6 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
                     }}
                   />
                 )}
-                // Cómo se ve cada opción en el dropdown (para más claridad)
                 renderOption={(props, option) => (
                   <Box component="li" {...props} key={option.id}>
                     <Grid container alignItems="center">
@@ -352,7 +334,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
               />
             </Grid>
 
-            {/* Tipo de Evaluación */}
+            {/* Tipo de Evaluación: arranca según el historial del alumno; se puede cambiar */}
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -362,34 +344,21 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
                 value={formData.tipoId}
                 onChange={handleChange}
                 disabled={loading}
+                helperText={sugerencia.ayuda ?? undefined}
               >
-                <MenuItem value="inicial">Evaluacion Inicial</MenuItem>
-                <MenuItem value="cierre">Evaluacion de Cierre</MenuItem>
+                <MenuItem value="inicial">{ETIQUETA_TIPO.inicial}</MenuItem>
+                <MenuItem value="cierre">{ETIQUETA_TIPO.cierre}</MenuItem>
               </TextField>
             </Grid>
 
-
-            {/* Estado - SE QUITA DEL FORMULARIO DE CREACIÓN */}
-            {/* El estado inicial DEBE ser 'N' (No iniciada) y es definido en el backend */}
-            {/* Dejamos este campo visible si estamos EDITANDO, si no, se oculta */}
-            {evaluacionAEditar && (
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Estado"
-                  name="estadoId"
-                  value={formData.estadoId}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                >
-                  <MenuItem value="N">No iniciada</MenuItem>
-                  <MenuItem value="E">En Progreso</MenuItem>
-                  <MenuItem value="C">Completada</MenuItem>
-                  <MenuItem value="R">Revisada</MenuItem>
-                  <MenuItem value="A">Aprobada</MenuItem>
-                  <MenuItem value="D">Desaprobada</MenuItem>
-                </TextField>
+            {sugerencia.aviso && (
+              <Grid item xs={12}>
+                <Alert severity="warning">
+                  {sugerencia.aviso}{" "}
+                  <Link component={RouterLink} to={rutaHistorial} underline="always">
+                    Ver historial
+                  </Link>
+                </Alert>
               </Grid>
             )}
 
@@ -418,7 +387,7 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
                     "&:disabled": { bgcolor: "#ccc" },
                   }}
                 >
-                  {loading ? "Guardando..." : (evaluacionAEditar ? "Guardar Cambios" : "Crear Evaluación")}
+                  {loading ? "Guardando..." : "Crear Evaluación"}
                 </Button>
               </Box>
             </Grid>
@@ -432,6 +401,31 @@ export default function EvaluacionForm({ onSuccess, evaluacionAEditar, profile, 
             </Grid>
           </Grid>
         </form>
+
+        {/* Confirmación del tipo antes de crear */}
+        <Dialog open={confirmarAbierto} onClose={() => !loading && setConfirmarAbierto(false)}>
+          <DialogTitle>Confirmar evaluación</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Vas a crear una evaluación de <b>{ETIQUETA_TIPO[formData.tipoId].toUpperCase()}</b> de sala {formData.salaId} para{" "}
+              <b>{nombreAlumno}</b>.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button variant="outlined" onClick={() => setConfirmarAbierto(false)} disabled={loading} sx={{ textTransform: "none" }}>
+              Volver
+            </Button>
+            <Button
+              variant="contained"
+              onClick={crear}
+              disabled={loading}
+              startIcon={loading ? <CircularProgress size={18} /> : undefined}
+              sx={{ bgcolor: "#A3BE54", color: "#000", textTransform: "none", "&:hover": { bgcolor: "#8bc34a" } }}
+            >
+              Confirmar
+            </Button>
+          </DialogActions>
+        </Dialog>
       </CardContent>
     </Card>
   )

@@ -22,7 +22,7 @@ import EstadisticasEscuela from "./pages/estadisticas/EstadisticasEscuela"
 import EstadisticasDocente from "./pages/estadisticas/EstadisticasDocente"
 import ReporteEscuela from "./pages/reportes/ReporteEscuela"
 
-import type { PadiUser } from "./api/auth"
+import { refrescarPerfil, type PadiUser } from "./api/auth"
 import { permissions } from "./utils/permissions"
 
 function App() {
@@ -44,6 +44,23 @@ function App() {
       localStorage.removeItem("padiUser")
     }
   }, [currentUser])
+
+  // Al abrir la app con sesión guardada, el perfil se vuelve a pedir al servidor: el rol o la
+  // escuela pueden haber cambiado desde el último login y todas las pantallas leen la copia
+  // local. Si la sesión venció, api.get ya fuerza el logout; si no hay red, se sigue con la copia.
+  useEffect(() => {
+    if (!localStorage.getItem("token") || !localStorage.getItem("padiUser")) return
+    let vigente = true
+    refrescarPerfil()
+      .then((perfil) => {
+        if (!vigente) return
+        setCurrentUser((prev) =>
+          prev ? { ...prev, ...perfil, escuela_id: perfil.escuela_id ?? undefined } : prev
+        )
+      })
+      .catch(() => { /* sin red o error del servidor: se sigue con la copia local */ })
+    return () => { vigente = false }
+  }, [])
 
   const handleLogin = (user: PadiUser) => {
     setCurrentUser(user)

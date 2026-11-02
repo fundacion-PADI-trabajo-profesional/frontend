@@ -316,6 +316,31 @@ export async function register(
   return data.user;
 }
 
+/** Perfil tal como lo devuelve el servidor (lo mismo que `profile` en el login). */
+export type PerfilServidor = PadiProfile & {
+  id: string;
+  email?: string;
+  escuela_id?: string | null;
+  escuela?: { id?: string; nombre?: string };
+};
+
+/**
+ * Pide al servidor el perfil actual (rol, escuela, nombre) y reemplaza la copia local.
+ *
+ * Se llama al abrir la app con sesión guardada: el rol o la escuela pueden haber cambiado
+ * desde el último login (p. ej. Equipo PADI → docente) y el resto de la app lee la copia
+ * local (`padiProfile`, `userRole`, `padiUser`). Si la sesión venció, `api.get` ya fuerza
+ * el logout; cualquier otro error se propaga y la app sigue con la copia que tenía.
+ */
+export async function refrescarPerfil(): Promise<PerfilServidor> {
+  const response = await api.get("/auth/profile");
+  const perfil = response.data?.data as PerfilServidor | undefined;
+  if (!perfil?.rol) throw new Error("No se pudo leer el perfil.");
+  localStorage.setItem("padiProfile", JSON.stringify(perfil));
+  localStorage.setItem("userRole", perfil.rol);
+  return perfil;
+}
+
 /**
  * Actualiza el nombre y apellido del perfil del usuario autenticado.
  */

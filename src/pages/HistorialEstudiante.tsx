@@ -5,6 +5,8 @@ import { getEvaluacionesInstanciasByEstudiante, eliminarEvaluacionInstancia, typ
 import EvaluacionesTable from "../components/evaluaciones/EvaluacionesTable"
 import PageHeader from "../components/common/PageHeader"
 import EvaluacionDetalle from "../components/evaluaciones/EvaluacionDetalle"
+import ModalCambiarTipo from "../components/evaluaciones/ModalCambiarTipo"
+import { puedeCambiarTipo } from "../utils/tipo-evaluacion"
 
 export default function HistorialEstudiante() {
   const [searchParams] = useSearchParams()
@@ -17,15 +19,22 @@ export default function HistorialEstudiante() {
   const [error, setError] = useState<string | null>(null)
   const [items, setItems] = useState<EvaluacionInstancia[]>([])
   const [selectedEvaluacionId, setSelectedEvaluacionId] = useState<string | null>(null)
-  const [userRole, setUserRole] = useState("")
+  const [profile, setProfile] = useState<{ id?: string; rol?: string } | null>(null)
+  const [evaluacionACambiar, setEvaluacionACambiar] = useState<EvaluacionInstancia | null>(null)
 
   useEffect(() => {
     const stored = localStorage.getItem("padiUser")
     if (stored) {
-      try { setUserRole(JSON.parse(stored).rol || "") } catch { setUserRole("") }
+      try {
+        const u = JSON.parse(stored)
+        setProfile({ id: u.id, rol: u.rol || "" })
+      } catch {
+        setProfile(null)
+      }
     }
   }, [])
 
+  const userRole = profile?.rol ?? ""
   const canDelete = userRole === "encargado_zona" || userRole === "equipo_padi"
 
   const handleDeleteEvaluacion = async (evaluacion: EvaluacionInstancia) => {
@@ -115,10 +124,20 @@ export default function HistorialEstudiante() {
                   items={items}
                   onRowClick={(evaluacion) => setSelectedEvaluacionId(evaluacion.id)}
                   onDelete={canDelete ? handleDeleteEvaluacion : undefined}
+                  onCambiarTipo={setEvaluacionACambiar}
+                  puedeCambiarTipo={(evaluacion) => puedeCambiarTipo(profile, evaluacion)}
                 />
               )
             )}
           </Container>
+          <ModalCambiarTipo
+            evaluacion={evaluacionACambiar}
+            open={evaluacionACambiar !== null}
+            onClose={() => setEvaluacionACambiar(null)}
+            onGuardado={(actualizada) =>
+              setItems((prev) => prev.map((e) => (e.id === actualizada.id ? { ...e, tipoId: actualizada.tipoId } : e)))
+            }
+          />
         </>
       )}
     </Box>

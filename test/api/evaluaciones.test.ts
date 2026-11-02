@@ -16,7 +16,8 @@ import {
   getEvaluacionesInstanciasByProfesor,
   getPreguntasArea,
   enviarRespuestas,
-  actualizarEvaluacionInstancia,
+  cambiarTipoEvaluacion,
+  EvaluacionApiError,
   getRespuestasParaRevision,
 } from "../../src/api/evaluaciones";
 
@@ -272,36 +273,46 @@ describe("getEvaluacionesInstanciasByProfesor con opts", () => {
   });
 });
 
-describe("actualizarEvaluacionInstancia", () => {
-  it("llama a PATCH /evaluaciones/:id con los datos", async () => {
-    vi.mocked(fetch).mockResolvedValue(
-      mockFetchResponse({ data: rawEval })
-    );
+describe("cambiarTipoEvaluacion", () => {
+  it("llama a PATCH /evaluaciones/:id con { tipo_id } y devuelve la evaluación mapeada", async () => {
+    vi.mocked(fetch).mockResolvedValue(mockFetchResponse({ data: { ...rawEval, tipo_id: "cierre" } }));
 
-    await actualizarEvaluacionInstancia("ev-1", { estadoId: "A" });
+    const r = await cambiarTipoEvaluacion("ev-1", "cierre");
 
     const url = vi.mocked(fetch).mock.calls[0][0] as string;
-    expect(url).toContain(`${API}/evaluaciones/ev-1`);
     const options = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+    expect(url).toBe(`${API}/evaluaciones/ev-1`);
     expect(options.method).toBe("PATCH");
+    expect(JSON.parse(options.body as string)).toEqual({ tipo_id: "cierre" });
+    expect(r.tipoId).toBe("cierre");
   });
 
-  it("lanza error con description cuando está presente", async () => {
+  it("en error expone el mensaje del servidor y el código", async () => {
     vi.mocked(fetch).mockResolvedValue(
-      mockFetchResponse({ error: { description: "No permitido" } }, false, 403)
+      mockFetchResponse({ message: "ya tiene", error: { code: "TIPO_DUPLICADO" } }, false, 400)
     );
 
-    await expect(actualizarEvaluacionInstancia("ev-1", {})).rejects.toThrow("No permitido");
+    const err = await cambiarTipoEvaluacion("ev-1", "cierre").catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(EvaluacionApiError);
+    expect((err as EvaluacionApiError).message).toBe("ya tiene");
+    expect((err as EvaluacionApiError).code).toBe("TIPO_DUPLICADO");
   });
+});
 
-  it("lanza el mensaje por defecto cuando no hay error ni message", async () => {
+describe("crearEvaluacionInstancia - error con código", () => {
+  it("un 400 TIPO_DUPLICADO llega como EvaluacionApiError con code", async () => {
     vi.mocked(fetch).mockResolvedValue(
-      mockFetchResponse({}, false, 500)
+      mockFetchResponse({ message: "Este alumno ya tiene una evaluación inicial", error: { code: "TIPO_DUPLICADO" } }, false, 400)
     );
 
-    await expect(actualizarEvaluacionInstancia("ev-1", {})).rejects.toThrow(
-      "Error al actualizar la evaluación"
-    );
+    const err = await crearEvaluacionInstancia({
+      dni: "1", profesor_id: "p", sala_id: 4, tipo_id: "inicial", fecha_creacion: "2026-11-02",
+    }).catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(EvaluacionApiError);
+    expect((err as EvaluacionApiError).code).toBe("TIPO_DUPLICADO");
+    expect((err as EvaluacionApiError).message).toBe("Este alumno ya tiene una evaluación inicial");
   });
 });
 

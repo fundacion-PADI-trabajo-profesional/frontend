@@ -1,10 +1,24 @@
 // Archivo: frontend/src/api/evaluaciones.ts
 
 import { getAuthHeaders } from "./auth"
+import type { TipoEvaluacion } from "../utils/tipo-evaluacion"
 
 const API_URL = import.meta.env.VITE_API_URL
 
 const ESTADO_NO_INICIADA = "N"
+
+/**
+ * Error de la API de evaluaciones con el código estable que manda el backend
+ * (p. ej. "TIPO_DUPLICADO", "TIPO_INVALIDO"), para que la UI pueda reaccionar sin parsear el mensaje.
+ */
+export class EvaluacionApiError extends Error {
+  readonly code?: string
+  constructor(message: string, code?: string) {
+    super(message)
+    this.name = "EvaluacionApiError"
+    this.code = code
+  }
+}
 
 // --- 1. INTERFACES ---
 
@@ -276,7 +290,7 @@ export async function crearEvaluacionInstancia(
   });
 
   const responseData = await res.json();
-  if (!res.ok) throw new Error(responseData.message || "Error al crear la evaluación");
+  if (!res.ok) throw new EvaluacionApiError(responseData.message || "Error al crear la evaluación", responseData.error?.code);
 
   return mapToCamelCase(responseData.data as RawEvaluacionBackend);
 }
@@ -317,20 +331,16 @@ export async function getEvaluacionesInstanciasByProfesor(
   return (resData.data as RawEvaluacionBackend[] || []).map(mapToCamelCase)
 }
 
-/** Actualiza una instancia de evaluación existente. */
-export async function actualizarEvaluacionInstancia(
-  id: string,
-  data: Partial<Omit<EvaluacionInstancia, "id" | "createdAt">>,
-): Promise<EvaluacionInstancia> {
+/** Cambia solo el tipo (inicial/cierre) de una evaluación: PATCH /evaluaciones/:id { tipo_id }. */
+export async function cambiarTipoEvaluacion(id: string, tipo: TipoEvaluacion): Promise<EvaluacionInstancia> {
   const res = await fetch(`${API_URL}/evaluaciones/${id}`, {
     method: "PATCH",
     headers: getAuthHeaders(),
-    body: JSON.stringify(data),
+    body: JSON.stringify({ tipo_id: tipo }),
   })
   const responseData = await res.json().catch(() => ({}))
   if (!res.ok) {
-    const errorDescription = responseData.error?.description || responseData.message
-    throw new Error(errorDescription || "Error al actualizar la evaluación")
+    throw new EvaluacionApiError(responseData.message || "Error al cambiar el tipo de la evaluación", responseData.error?.code)
   }
   return mapToCamelCase(responseData.data as RawEvaluacionBackend)
 }

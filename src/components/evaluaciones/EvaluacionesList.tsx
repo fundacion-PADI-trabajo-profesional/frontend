@@ -21,9 +21,12 @@ import {
 } from "@mui/material"
 import DeleteIcon from "@mui/icons-material/Delete"
 import VisibilityIcon from "@mui/icons-material/Visibility"
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz"
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { getEvaluacionesInstancias, eliminarEvaluacionInstancia, getEvaluacionesInstanciasByProfesor, type EvaluacionInstancia } from "../../api/evaluaciones"
 import { permissions } from "../../utils/permissions"
+import { puedeCambiarTipo } from "../../utils/tipo-evaluacion"
+import ModalCambiarTipo from "./ModalCambiarTipo"
 import { TextField, MenuItem, Grid } from "@mui/material"
 import SinEscuelaAsignada from "../common/SinEscuelaAsignada"
 
@@ -47,6 +50,7 @@ export default function EvaluacionesList({
   const [profile, setProfile] = useState<{ id?: string; rol?: string; escuela_id?: string } | null>(null)
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
+  const [evaluacionACambiar, setEvaluacionACambiar] = useState<EvaluacionInstancia | null>(null)
   const [evaluacionToDelete, setEvaluacionToDelete] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
 
@@ -447,6 +451,22 @@ export default function EvaluacionesList({
                                   Ver
                                 </Button>
 
+                                {/* Botón Cambiar tipo (inicial/cierre) */}
+                                {puedeCambiarTipo(profile, evaluacion) && (
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="secondary"
+                                    startIcon={<SwapHorizIcon />}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setEvaluacionACambiar(evaluacion)
+                                    }}
+                                    sx={{ textTransform: "none", fontWeight: 600, borderRadius: '8px' }}
+                                  >
+                                    Cambiar tipo
+                                  </Button>
+                                )}
                                 {/* Botón Eliminar (Tachito) */}
                                 {permissions.deleteEvaluacion(profile?.rol ?? "") && (
                                   <Button
@@ -479,6 +499,14 @@ export default function EvaluacionesList({
         </Box >
       ))
       }
+      <ModalCambiarTipo
+        evaluacion={evaluacionACambiar}
+        open={evaluacionACambiar !== null}
+        onClose={() => setEvaluacionACambiar(null)}
+        onGuardado={(actualizada) =>
+          setEvaluaciones((prev) => prev.map((e) => (e.id === actualizada.id ? { ...e, tipoId: actualizada.tipoId } : e)))
+        }
+      />
       <Dialog
         open={openDeleteDialog}
         onClose={handleCloseDialog}

@@ -1,4 +1,4 @@
-import { Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, Chip, Button } from "@mui/material"
+import { Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, Chip, Button, Stack } from "@mui/material"
 import type { EvaluacionInstancia } from "../../api/evaluaciones"
 import { formatearFecha } from "../../utils/fechas"
 
@@ -26,8 +26,10 @@ function getEstadoLabel(estado: string) {
 }
 function getTipoLabel(tipo: string) {
   switch (tipo) {
+    case "inicial":
     case "Evaluacion Inicial": return "Evaluación Inicial"
-    case "Evaluacion de Cierre": return "Evaluacion de Cierre"
+    case "cierre":
+    case "Evaluacion de Cierre": return "Evaluación de Cierre"
     default: return tipo
   }
 }
@@ -37,9 +39,21 @@ interface Props {
   showEstudiante?: boolean
   onRowClick?: (evaluacion: EvaluacionInstancia) => void
   onDelete?: (evaluacion: EvaluacionInstancia) => void
+  /** Acción "Cambiar tipo" por fila. */
+  onCambiarTipo?: (evaluacion: EvaluacionInstancia) => void
+  /** Si se muestra "Cambiar tipo" en esa fila (por defecto, siempre que haya onCambiarTipo). */
+  puedeCambiarTipo?: (evaluacion: EvaluacionInstancia) => boolean
 }
 
-export default function EvaluacionesTable({ items, showEstudiante = false, onRowClick, onDelete }: Props) {
+export default function EvaluacionesTable({
+  items,
+  showEstudiante = false,
+  onRowClick,
+  onDelete,
+  onCambiarTipo,
+  puedeCambiarTipo = () => true,
+}: Props) {
+  const hayAcciones = !!onDelete || !!onCambiarTipo
   return (
     <TableContainer component={Paper}>
       <Table>
@@ -51,7 +65,7 @@ export default function EvaluacionesTable({ items, showEstudiante = false, onRow
             <TableCell sx={{ fontWeight: 700 }}>Estado</TableCell>
             <TableCell align="right" sx={{ fontWeight: 700 }}>Puntaje</TableCell>
             <TableCell sx={{ fontWeight: 700 }}>Fecha</TableCell>
-            {onDelete && <TableCell sx={{ fontWeight: 700 }} align="center">Acciones</TableCell>}
+            {hayAcciones && <TableCell sx={{ fontWeight: 700 }} align="center">Acciones</TableCell>}
           </TableRow>
         </TableHead>
         <TableBody>
@@ -75,24 +89,41 @@ export default function EvaluacionesTable({ items, showEstudiante = false, onRow
               </TableCell>
               <TableCell align="right">{e.puntaje ?? "-"}</TableCell>
               <TableCell>{formatearFecha(e.createdAt)}</TableCell>
-              {onDelete && (
+              {hayAcciones && (
                 <TableCell align="center">
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    sx={{
-                      textTransform: "none",
-                      borderColor: "#d32f2f",
-                      color: "#d32f2f",
-                      "&:hover": { bgcolor: "rgba(211, 47, 47, 0.04)", borderColor: "#d32f2f" },
-                    }}
-                    onClick={(ev) => {
-                      ev.stopPropagation()
-                      onDelete(e)
-                    }}
-                  >
-                    Eliminar
-                  </Button>
+                  <Stack direction="row" spacing={1} justifyContent="center">
+                    {onCambiarTipo && puedeCambiarTipo(e) && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        sx={{ textTransform: "none" }}
+                        onClick={(ev) => {
+                          ev.stopPropagation()
+                          onCambiarTipo(e)
+                        }}
+                      >
+                        Cambiar tipo
+                      </Button>
+                    )}
+                    {onDelete && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        sx={{
+                          textTransform: "none",
+                          borderColor: "#d32f2f",
+                          color: "#d32f2f",
+                          "&:hover": { bgcolor: "rgba(211, 47, 47, 0.04)", borderColor: "#d32f2f" },
+                        }}
+                        onClick={(ev) => {
+                          ev.stopPropagation()
+                          onDelete(e)
+                        }}
+                      >
+                        Eliminar
+                      </Button>
+                    )}
+                  </Stack>
                 </TableCell>
               )}
             </TableRow>

@@ -25,7 +25,10 @@ inicial a final si te equivocaste". Spec hermana del backend:
    - con inicial y sin cierre → `cierre`, con la ayuda "Ya tiene la inicial de sala 4
      (12/03/2026)";
    - con inicial y cierre → `cierre`, con aviso "Ya tiene inicial y cierre de sala 4" (el
-     backend va a rechazar el duplicado; se avisa antes).
+     backend va a rechazar el duplicado; se avisa antes);
+   - dos o más iniciales y sin cierre → `cierre`, con aviso "Tiene dos evaluaciones iniciales
+     de sala 4 (12/03 y 20/10): una de las dos es probablemente el cierre. Cambiale el tipo
+     desde el historial en vez de crear otra", con link al historial del alumno.
    La ayuda va debajo del selector. La persona puede cambiar el tipo igual; la regla solo elige
    el valor inicial. Si cambia de alumno o de sala, se recalcula. Si la consulta falla, el
    selector queda en `inicial` sin ayuda (como hoy), nada se bloquea.
@@ -37,8 +40,10 @@ inicial a final si te equivocaste". Spec hermana del backend:
    `error.code = "TIPO_DUPLICADO"`, se muestra el mensaje del servidor y un link "Ver la
    evaluación existente" al historial del alumno. No se reintenta.
 4. **Cambiar el tipo.** Acción "Cambiar tipo" en dos lugares: cada fila del historial del alumno
-   y cada fila de la lista de evaluaciones (al lado de "Eliminar", mismas reglas de visibilidad:
-   la docente solo en las suyas). Abre un diálogo chico con el selector (Inicial / Cierre),
+   y cada fila de la lista de evaluaciones. Visibilidad según la regla del backend, igual en
+   las dos pantallas: la docente solo en las filas con `profesorId === profile.id`; director,
+   encargado y equipo PADI en todas las que ven (el backend verifica el alcance). "Eliminar"
+   conserva su visibilidad actual; no se toca. Abre un diálogo chico con el selector (Inicial / Cierre),
    el alumno y la sala, y botón "Guardar". Llama `cambiarTipoEvaluacion(id, tipo)` →
    `PATCH /evaluaciones/:id { tipo_id }`. Al volver, recarga la lista. Si el backend responde
    `400` duplicado, se muestra el mensaje y el diálogo queda abierto.
@@ -62,8 +67,9 @@ del backend; por eso se mergea después.
 
 - Tests (vitest, entorno node): `src/utils/tipo-evaluacion.ts` con la función pura
   `tipoPorDefecto(evaluacionesDelAlumno, salaId, anio) → { tipo, ayuda, aviso }` cubriendo los
-  tres casos y "otra sala / otro año no cuentan"; `cambiarTipoEvaluacion` en `test/api`
-  (ruta, método, body, error).
+  cuatro casos y "otra sala / otro año no cuentan" (el año se compara en UTC, convención de
+  `utils/fechas.ts`); `puedeCambiarTipo(profile, evaluacion)` para la visibilidad;
+  `cambiarTipoEvaluacion` en `test/api` (ruta, método, body, error con `code`).
 - `npm run lint`, `npm run test:coverage` (umbral 70 % sobre `src/api` y `src/utils`),
   `npm run build`.
 - Manual en prod, después de los dos deploys: cargar una evaluación a un alumno con inicial

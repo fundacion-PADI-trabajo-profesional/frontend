@@ -42,6 +42,10 @@ interface EvaluacionFormProps {
 }
 
 const SIN_SUGERENCIA: SugerenciaTipo = { tipo: "inicial", ayuda: null, aviso: null };
+/** Texto del diálogo de confirmación: el tipo solo, en mayúsculas (sin repetir "evaluación"). */
+const TIPO_EN_MAYUSCULAS: Record<TipoEvaluacion, string> = { inicial: "INICIAL", cierre: "CIERRE" };
+/** Año del día de carga, el mismo que el backend lee de `fecha_creacion` (ver fechaLocalISO). */
+const anioDeCarga = () => Number(fechaLocalISO().slice(0, 4));
 
 export default function EvaluacionForm({ onSuccess, profile, prefillEstudianteId }: EvaluacionFormProps) {
   const [formData, setFormData] = useState({
@@ -55,6 +59,7 @@ export default function EvaluacionForm({ onSuccess, profile, prefillEstudianteId
   const [success, setSuccess] = useState(false)
   const [confirmarAbierto, setConfirmarAbierto] = useState(false)
   const [sugerencia, setSugerencia] = useState<SugerenciaTipo>(SIN_SUGERENCIA)
+  const [cargandoSugerencia, setCargandoSugerencia] = useState(false)
 
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [loadingEstudiantes, setLoadingEstudiantes] = useState(true);
@@ -123,23 +128,31 @@ export default function EvaluacionForm({ onSuccess, profile, prefillEstudianteId
   }, [prefillEstudianteId, estudiantes, prefillAulaId]);
 
   // Tipo por defecto según el historial del alumno en esa sala y este año.
-  // Si cambia el alumno o la sala con una consulta en vuelo, la respuesta vieja se descarta.
+  // Cada vez que cambia el alumno o la sala se vuelve a "inicial" (nunca se arrastra el tipo del
+  // alumno anterior); mientras la consulta está en vuelo, el selector y "Crear" quedan deshabilitados;
+  // si llega tarde (ya cambió el alumno), la respuesta se descarta; si falla, queda inicial sin ayuda.
   useEffect(() => {
     const salaNum = Number(formData.salaId);
+    setSugerencia(SIN_SUGERENCIA);
+    setFormData((prev) => (prev.tipoId === "inicial" ? prev : { ...prev, tipoId: "inicial" }));
     if (!formData.estudianteId || !salaNum) {
-      setSugerencia(SIN_SUGERENCIA);
+      setCargandoSugerencia(false);
       return;
     }
     let cancelado = false;
+    setCargandoSugerencia(true);
     getEvaluacionesInstanciasByEstudiante(formData.estudianteId)
       .then((evs) => {
         if (cancelado) return;
-        const r = tipoPorDefecto(evs, salaNum, new Date().getUTCFullYear());
+        const r = tipoPorDefecto(evs, salaNum, anioDeCarga());
         setSugerencia(r);
         setFormData((prev) => ({ ...prev, tipoId: r.tipo }));
       })
       .catch(() => {
-        if (!cancelado) setSugerencia(SIN_SUGERENCIA);
+        // Sin historial no hay sugerencia: queda "inicial" sin ayuda, nada se bloquea.
+      })
+      .finally(() => {
+        if (!cancelado) setCargandoSugerencia(false);
       });
     return () => {
       cancelado = true;
@@ -343,8 +356,8 @@ export default function EvaluacionForm({ onSuccess, profile, prefillEstudianteId
                 name="tipoId"
                 value={formData.tipoId}
                 onChange={handleChange}
-                disabled={loading}
-                helperText={sugerencia.ayuda ?? undefined}
+                disabled={loading || cargandoSugerencia}
+                helperText={cargandoSugerencia ? "Consultando el historial del alumno..." : (sugerencia.ayuda ?? undefined)}
               >
                 <MenuItem value="inicial">{ETIQUETA_TIPO.inicial}</MenuItem>
                 <MenuItem value="cierre">{ETIQUETA_TIPO.cierre}</MenuItem>
@@ -378,7 +391,7 @@ export default function EvaluacionForm({ onSuccess, profile, prefillEstudianteId
                   type="submit"
                   variant="contained"
                   startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
-                  disabled={loading}
+                  disabled={loading || cargandoSugerencia || success}
                   sx={{
                     bgcolor: "#A3BE54",
                     color: "#000",
@@ -407,7 +420,7 @@ export default function EvaluacionForm({ onSuccess, profile, prefillEstudianteId
           <DialogTitle>Confirmar evaluación</DialogTitle>
           <DialogContent>
             <DialogContentText>
-              Vas a crear una evaluación de <b>{ETIQUETA_TIPO[formData.tipoId].toUpperCase()}</b> de sala {formData.salaId} para{" "}
+              Vas a crear una evaluación de <b>{TIPO_EN_MAYUSCULAS[formData.tipoId] ?? String(formData.tipoId).toUpperCase()}</b> de sala {formData.salaId} para{" "}
               <b>{nombreAlumno}</b>.
             </DialogContentText>
           </DialogContent>

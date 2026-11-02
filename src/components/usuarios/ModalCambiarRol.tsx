@@ -93,6 +93,9 @@ export default function ModalCambiarRol({ usuario, onClose, onRolChanged }: Prop
             <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>
           ))}
         </TextField>
+        <Typography variant="caption" color="#777" sx={{ display: "block", mt: 1.5 }}>
+          La persona ve el cambio la próxima vez que abra la app (o al volver a iniciar sesión).
+        </Typography>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
         <Button onClick={onClose} sx={{ textTransform: "none", color: "#666" }}>

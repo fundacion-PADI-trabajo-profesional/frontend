@@ -103,7 +103,7 @@ export default function EvaluacionesList({
         data = await getEvaluacionesInstancias({
           escuela_id: user?.escuela_id,
           rol: user?.rol,
-          profesorId: user?.rol === "docente" ? user?.id : undefined,
+          // Sin profesorId: el alcance del docente (sus aulas + las que tomó) lo decide el backend.
         });
       }
 

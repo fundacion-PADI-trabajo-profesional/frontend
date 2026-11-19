@@ -4,7 +4,6 @@ import DashboardCard from "../../components/common/DashboardCard";
 import { hasPermission } from "../../utils/permissions";
 import { useEffect, useState } from "react";
 import SchoolIcon from "@mui/icons-material/School";
-import DescriptionIcon from "@mui/icons-material/Description";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import WavingHandIcon from "@mui/icons-material/WavingHand";
 
@@ -30,27 +29,17 @@ export default function DocenteDashboard() {
                 Hola, {nombreDocente} <WavingHandIcon sx={{ fontSize: "2rem" }} />
             </Typography>
             <Typography variant="body1" sx={{ mb: 4, color: "#666" }}>
-                Panel de estudiantes y evaluaciones.
+                Panel de estudiantes. Para evaluar, entrá a un estudiante.
             </Typography>
 
             <Grid container spacing={3}>
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard
                         title="Mis Estudiantes"
-                        description="Listado de estudiantes asignados"
+                        description="Listado de estudiantes asignados. Desde acá se evalúa."
                         icon={<SchoolIcon />}
                         color="#5c7cfa"
                         onClick={() => navigate("/estudiantes")}
-                    />
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                    <DashboardCard
-                        title="Mis Evaluaciones"
-                        description="Ver y gestionar las evaluaciones realizadas."
-                        icon={<DescriptionIcon />}
-                        color="#A3BE54"
-                        onClick={() => navigate("/evaluaciones")}
                     />
                 </Grid>
 

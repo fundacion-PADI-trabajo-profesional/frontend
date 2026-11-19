@@ -4,7 +4,6 @@ import DashboardCard from "../../components/common/DashboardCard";
 import { hasPermission } from "../../utils/permissions";
 import PersonIcon from "@mui/icons-material/Person";
 import BackpackIcon from "@mui/icons-material/Backpack";
-import AssignmentIcon from "@mui/icons-material/Assignment";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import SchoolIcon from "@mui/icons-material/School";
 
@@ -38,16 +37,6 @@ export default function DirectivoDashboard() {
                         icon={<BackpackIcon />}
                         color="#2196F3"
                         onClick={() => navigate("/estudiantes")}
-                    />
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                    <DashboardCard
-                        title="Evaluaciones"
-                        description="Ver y gestionar evaluaciones de tu escuela."
-                        icon={<AssignmentIcon />}
-                        color="#FF9800"
-                        onClick={() => navigate("/evaluaciones")}
                     />
                 </Grid>
 

@@ -2,7 +2,6 @@ import { Grid, Typography, Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import DashboardCard from "../../components/common/DashboardCard";
 import { permissions } from "../../utils/permissions";
-import AssignmentIcon from "@mui/icons-material/Assignment";
 import BackpackIcon from "@mui/icons-material/Backpack";
 import ExploreIcon from "@mui/icons-material/Explore";
 import SchoolIcon from "@mui/icons-material/School";
@@ -32,30 +31,6 @@ export default function AdminDashboard({ rol }: Props) {
             </Typography>
 
             <Grid container spacing={3}>
-                {isEncargado && (
-                    <Grid item xs={12} sm={6} md={4}>
-                        <DashboardCard
-                            title="Evaluaciones PADI"
-                            description="Gestión de evaluaciones del sistema con filtros por escuela, alumno y estado."
-                            icon={<AssignmentIcon />}
-                            color="#A3BE54"
-                            onClick={() => navigate("/evaluaciones")}
-                        />
-                    </Grid>
-                )}
-
-                {isEquipoPadi && (
-                    <Grid item xs={12} sm={6} md={4}>
-                        <DashboardCard
-                            title="Evaluaciones PADI"
-                            description="Gestión de evaluaciones del sistema con filtros por escuela, alumno y estado."
-                            icon={<AssignmentIcon />}
-                            color="#A3BE54"
-                            onClick={() => navigate("/evaluaciones")}
-                        />
-                    </Grid>
-                )}
-
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard
                         title="Estudiantes"

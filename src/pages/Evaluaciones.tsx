@@ -74,7 +74,8 @@ export default function Evaluaciones() {
   const handleVolverALista = () => {
     setEvaluacionSeleccionadaId(null);
     setRefreshKey(prev => prev + 1);
-    navigate("/evaluaciones", { replace: true });
+    // Si se llegó desde otra pantalla (alumnos, aula), se vuelve ahí: el listado general ya no es una sección.
+    navigate(searchParams.get("backTo") || "/evaluaciones", { replace: true });
   };
 
   const handleSuccessForm = (evaluacionId: string) => {

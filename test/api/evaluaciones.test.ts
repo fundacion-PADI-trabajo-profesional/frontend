@@ -17,6 +17,7 @@ import {
   getPreguntasArea,
   enviarRespuestas,
   cambiarTipoEvaluacion,
+  guardarDatosEvaluador,
   EvaluacionApiError,
   getRespuestasParaRevision,
 } from "../../src/api/evaluaciones";
@@ -439,5 +440,54 @@ describe("enviarRespuestas", () => {
     await expect(enviarRespuestas("ev-1", "area-1", [])).rejects.toThrow(
       "Respuestas inválidas"
     );
+  });
+});
+
+describe("datos del evaluador", () => {
+  it("el detalle mapea las cuatro respuestas; sin columnas o con valores raros quedan en null", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockFetchResponse({
+        data: { ...rawEval, tipo_id: "cierre", sesiones_completadas: "entre_5_y_9", en_tratamiento: true, tiene_cud: false, observaciones: "Algo" },
+      })
+    );
+    expect((await getEvaluacionInstanciaById("ev-1")).datosEvaluador).toEqual({
+      sesionesCompletadas: "entre_5_y_9",
+      enTratamiento: true,
+      tieneCud: false,
+      observaciones: "Algo",
+    });
+
+    vi.mocked(fetch).mockResolvedValue(mockFetchResponse({ data: { ...rawEval, sesiones_completadas: "muchas", observaciones: "" } }));
+    expect((await getEvaluacionInstanciaById("ev-1")).datosEvaluador).toEqual({
+      sesionesCompletadas: null,
+      enTratamiento: null,
+      tieneCud: null,
+      observaciones: null,
+    });
+  });
+
+  it("guardarDatosEvaluador llama a PUT /evaluaciones/:id/datos-evaluador en snake_case y devuelve la evaluación mapeada", async () => {
+    vi.mocked(fetch).mockResolvedValue(mockFetchResponse({ data: { ...rawEval, en_tratamiento: true, tiene_cud: true } }));
+
+    const r = await guardarDatosEvaluador("ev-1", { sesionesCompletadas: null, enTratamiento: true, tieneCud: true, observaciones: null });
+
+    const url = vi.mocked(fetch).mock.calls[0][0] as string;
+    const options = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+    expect(url).toBe(`${API}/evaluaciones/ev-1/datos-evaluador`);
+    expect(options.method).toBe("PUT");
+    expect(JSON.parse(options.body as string)).toEqual({ sesiones_completadas: null, en_tratamiento: true, tiene_cud: true, observaciones: null });
+    expect(r.datosEvaluador?.tieneCud).toBe(true);
+  });
+
+  it("guardarDatosEvaluador en error expone el mensaje del servidor y el código", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockFetchResponse({ message: "inválido", error: { code: "DATOS_EVALUADOR_INVALIDOS" } }, false, 400)
+    );
+
+    const err = await guardarDatosEvaluador("ev-1", { sesionesCompletadas: null, enTratamiento: null, tieneCud: null, observaciones: null }).catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(EvaluacionApiError);
+    expect((err as EvaluacionApiError).message).toBe("inválido");
+    expect((err as EvaluacionApiError).code).toBe("DATOS_EVALUADOR_INVALIDOS");
   });
 });

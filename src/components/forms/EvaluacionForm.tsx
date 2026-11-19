@@ -22,7 +22,7 @@ import {
 } from "@mui/material"
 import SaveIcon from "@mui/icons-material/Save"
 import CancelIcon from "@mui/icons-material/Cancel"
-import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom"
+import { Link as RouterLink, useSearchParams } from "react-router-dom"
 import {
   crearEvaluacionInstancia,
   getEvaluacionesInstanciasByEstudiante,
@@ -47,7 +47,7 @@ const TIPO_EN_MAYUSCULAS: Record<TipoEvaluacion, string> = { inicial: "INICIAL",
 /** Año del día de carga, el mismo que el backend lee de `fecha_creacion` (ver fechaLocalISO). */
 const anioDeCarga = () => Number(fechaLocalISO().slice(0, 4));
 
-export default function EvaluacionForm({ onSuccess, profile, prefillEstudianteId }: EvaluacionFormProps) {
+export default function EvaluacionForm({ onSuccess, onCancel, profile, prefillEstudianteId }: EvaluacionFormProps) {
   const [formData, setFormData] = useState({
     estudianteId: "",
     salaId: "",
@@ -68,7 +68,6 @@ export default function EvaluacionForm({ onSuccess, profile, prefillEstudianteId
   const [searchParams] = useSearchParams();
   const prefillSalaId = searchParams.get("salaId");
   const prefillAulaId = searchParams.get("aulaId");
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (prefillEstudianteId) {
@@ -170,7 +169,7 @@ export default function EvaluacionForm({ onSuccess, profile, prefillEstudianteId
   }
 
   const handleCancel = () => {
-    navigate("/evaluaciones", { replace: true });
+    onCancel();
   };
 
   const nombreAlumno = selectedEstudiante

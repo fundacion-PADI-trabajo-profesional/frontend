@@ -24,11 +24,14 @@ import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import SchoolIcon from '@mui/icons-material/School';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 
 import { getEvaluacionInstanciaById, type EvaluacionInstancia } from "../../api/evaluaciones"
 import { datosRevisionDeArea } from "../../utils/revision"
 import EvaluacionWizard from "./EvaluacionWizard"
 import EvaluacionRevision from "./EvaluacionRevision";
+import PreguntasEvaluador from "./PreguntasEvaluador";
+import { estadoDatosEvaluador, type EstadoDatosEvaluador } from "../../utils/datosEvaluador";
 import { esIdentificadorInterno } from "../../utils/dni";
 import { formatearFechaLarga } from "../../utils/fechas";
 
@@ -78,6 +81,13 @@ const getStatusColor = (estadoId: string) => {
     }
 }
 
+// La sección del evaluador no tiene puntaje: usa los mismos colores de chip que las áreas, sin aprobado/desaprobado.
+const ESTILO_DATOS_EVALUADOR: Record<EstadoDatosEvaluador, { bg: string; text: string; label: string }> = {
+    sin_iniciar: { bg: '#FEF3C7', text: '#D97706', label: 'No iniciada' },
+    en_progreso: { bg: '#DBEAFE', text: '#2563EB', label: 'En Progreso' },
+    completa: { bg: '#E0E7FF', text: '#4254B5', label: 'Completada' },
+}
+
 const getGeneroColor = (genero?: string) => {
     if (!genero) return "#9E9E9E"; // gris default
 
@@ -107,6 +117,9 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
     const [wizardOrigen, setWizardOrigen] = useState<"ficha" | "revision">("ficha");
     // Elección de destino pendiente después de corregir desde la revisión
     const [postCorreccion, setPostCorreccion] = useState<{ areaId: string; nombre: string } | null>(null);
+
+    // Sección "Preguntas para el evaluador"
+    const [evaluadorOpen, setEvaluadorOpen] = useState(false);
 
     // Carga inicial y recarga
     const loadEvaluationData = async (): Promise<EvaluacionInstancia | null> => {
@@ -369,7 +382,54 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
                         </Paper>
                     )
                 })}
+
+                {/* Quinta tarjeta: preguntas para el evaluador (sin puntaje, no cambia el estado general) */}
+                {(() => {
+                    const estilo = ESTILO_DATOS_EVALUADOR[estadoDatosEvaluador(evaluacion.datosEvaluador, evaluacion.tipoId)];
+                    return (
+                        <Paper
+                            elevation={0}
+                            role="button"
+                            aria-label="Preguntas para el evaluador"
+                            sx={{
+                                p: 2,
+                                border: '1px solid #eee',
+                                borderRadius: 3,
+                                display: 'flex',
+                                alignItems: 'center',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.08)', borderColor: 'transparent' },
+                            }}
+                            onClick={() => setEvaluadorOpen(true)}
+                        >
+                            <Box sx={{ mr: 2, p: 1.5, borderRadius: '12px', bgcolor: '#fafafa', display: 'flex' }}>
+                                <EditNoteIcon sx={{ color: '#375E9E' }} />
+                            </Box>
+                            <Box sx={{ flexGrow: 1 }}>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                                    Preguntas para el evaluador
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    {evaluacion.tipoId === 'cierre' ? 'Sesiones, tratamiento y observaciones' : 'Tratamiento y observaciones'}
+                                </Typography>
+                                <Chip label={estilo.label} size="small" sx={{ mt: 0.5, bgcolor: estilo.bg, color: estilo.text }} />
+                            </Box>
+                            <ChevronRightIcon sx={{ color: '#999' }} />
+                        </Paper>
+                    );
+                })()}
             </Box>
+
+            <PreguntasEvaluador
+                open={evaluadorOpen}
+                onClose={() => setEvaluadorOpen(false)}
+                evaluacionId={evaluacionId}
+                tipoId={evaluacion.tipoId}
+                datos={evaluacion.datosEvaluador}
+                soloLectura={isReadOnly}
+                onGuardado={(actualizada) => setData((prev) => (prev ? { ...prev, datosEvaluador: actualizada.datosEvaluador } : prev))}
+            />
 
             {/* WIZARD MODAL */}
             <EvaluacionWizard

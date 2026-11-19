@@ -38,3 +38,18 @@ describe("tarjeta Estadísticas en los dashboards", () => {
         expect(html).not.toContain("Estadísticas");
     });
 });
+
+// "Evaluaciones" dejó de ser una sección: se evalúa entrando por Estudiantes (pedido de usuarias, 18/11/2026).
+describe("tarjeta Evaluaciones en los dashboards", () => {
+    it.each([
+        ["equipo_padi", () => createElement(AdminDashboard, { rol: "equipo_padi" })],
+        ["encargado_zona", () => createElement(AdminDashboard, { rol: "encargado_zona" })],
+        ["director", () => createElement(DirectivoDashboard)],
+        ["docente", () => createElement(DocenteDashboard)],
+    ] as const)("%s no tiene tarjeta de Evaluaciones y conserva la de Estudiantes", (rol, crear) => {
+        setUserInStorage({ rol, escuela_id: "e-1" });
+        const html = renderToStaticMarkup(crear());
+        expect(html).not.toMatch(/>(Mis )?Evaluaciones( PADI)?</);
+        expect(html).toMatch(/>(Mis |Gestionar )?Estudiantes</);
+    });
+});

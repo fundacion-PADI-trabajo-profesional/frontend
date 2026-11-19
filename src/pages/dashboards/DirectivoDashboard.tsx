@@ -32,8 +32,8 @@ export default function DirectivoDashboard() {
 
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard
-                        title="Gestionar Estudiantes"
-                        description="Administración de estudiantes de la escuela."
+                        title="Gestionar Alumnos"
+                        description="Administración de alumnos de la escuela."
                         icon={<BackpackIcon />}
                         color="#2196F3"
                         onClick={() => navigate("/estudiantes")}

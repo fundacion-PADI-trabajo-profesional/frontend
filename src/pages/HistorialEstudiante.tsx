@@ -13,7 +13,7 @@ export default function HistorialEstudiante() {
   const estudianteId = searchParams.get("estudianteId") || ""
   const estudianteNombre = searchParams.get("nombre") || ""
   const backTo = searchParams.get("backTo") || "/estudiantes"
-  const backLabel = searchParams.get("backLabel") || "Volver a estudiantes"
+  const backLabel = searchParams.get("backLabel") || "Volver a alumnos"
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

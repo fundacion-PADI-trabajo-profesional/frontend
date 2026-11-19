@@ -84,7 +84,7 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
 
     const handleEvaluar = () => {
         if (selectedStudent) {
-            navigate(`/evaluaciones?estudianteId=${selectedStudent.id}&nombre=${encodeURIComponent(`${selectedStudent.personas.nombre} ${selectedStudent.personas.primer_apellido}`)}&salaId=${selectedStudent.sala_id}&backTo=${encodeURIComponent("/estudiantes")}&backLabel=${encodeURIComponent("Volver a estudiantes")}`);
+            navigate(`/evaluaciones?estudianteId=${selectedStudent.id}&nombre=${encodeURIComponent(`${selectedStudent.personas.nombre} ${selectedStudent.personas.primer_apellido}`)}&salaId=${selectedStudent.sala_id}&backTo=${encodeURIComponent("/estudiantes")}&backLabel=${encodeURIComponent("Volver a alumnos")}`);
         }
         handleMenuClose();
     };
@@ -96,7 +96,7 @@ export default function EstudiantesList({ estudiantes, onAddEstudiante, onEditEs
                 estudianteId: selectedStudent.id,
                 nombre,
                 backTo: "/estudiantes",
-                backLabel: "Volver a estudiantes",
+                backLabel: "Volver a alumnos",
             });
             navigate(`/historial-estudiante?${params.toString()}`);
         }

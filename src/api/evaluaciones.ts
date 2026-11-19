@@ -2,6 +2,7 @@
 
 import { getAuthHeaders } from "./auth"
 import type { TipoEvaluacion } from "../utils/tipo-evaluacion"
+import { esRangoSesiones, type DatosEvaluador } from "../utils/datosEvaluador"
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -95,6 +96,8 @@ export interface EvaluacionInstancia {
   // EL OBJETO IMPORTANTE:
   estudiante?: EstudianteDetalle
   areas?: AreaDetalle[]
+  /** Preguntas para el evaluador (ADR 0020). */
+  datosEvaluador?: DatosEvaluador
 }
 
 export interface CreateEvaluacionPayload {
@@ -117,6 +120,10 @@ interface RawEvaluacionBackend {
   estado_id: string;
   puntaje: number | null;
   fecha_creacion?: string;
+  sesiones_completadas?: string | null;
+  en_tratamiento?: boolean | null;
+  tiene_cud?: boolean | null;
+  observaciones?: string | null;
   estudiantes?: {
     id?: string;
     fecha_baja?: string | null;
@@ -197,7 +204,13 @@ function mapToCamelCase(data: RawEvaluacionBackend): EvaluacionInstancia {
     puntaje: data.puntaje,
     // Corrección de Fecha: Forzamos el parseo correcto
     createdAt: data.fecha_creacion ? new Date(data.fecha_creacion) : new Date(),
-    areas: areasMapped
+    areas: areasMapped,
+    datosEvaluador: {
+      sesionesCompletadas: esRangoSesiones(data.sesiones_completadas) ? data.sesiones_completadas : null,
+      enTratamiento: typeof data.en_tratamiento === "boolean" ? data.en_tratamiento : null,
+      tieneCud: typeof data.tiene_cud === "boolean" ? data.tiene_cud : null,
+      observaciones: data.observaciones || null,
+    },
   };
 }
 
@@ -341,6 +354,28 @@ export async function cambiarTipoEvaluacion(id: string, tipo: TipoEvaluacion): P
   const responseData = await res.json().catch(() => ({}))
   if (!res.ok) {
     throw new EvaluacionApiError(responseData.message || "Error al cambiar el tipo de la evaluación", responseData.error?.code)
+  }
+  return mapToCamelCase(responseData.data as RawEvaluacionBackend)
+}
+
+/**
+ * Guarda las "Preguntas para el evaluador": PUT /evaluaciones/:id/datos-evaluador.
+ * Reemplaza los cuatro campos (null = sin responder). No toca puntajes ni el estado.
+ */
+export async function guardarDatosEvaluador(id: string, datos: DatosEvaluador): Promise<EvaluacionInstancia> {
+  const res = await fetch(`${API_URL}/evaluaciones/${id}/datos-evaluador`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({
+      sesiones_completadas: datos.sesionesCompletadas,
+      en_tratamiento: datos.enTratamiento,
+      tiene_cud: datos.tieneCud,
+      observaciones: datos.observaciones,
+    }),
+  })
+  const responseData = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new EvaluacionApiError(responseData.message || "Error al guardar los datos del evaluador", responseData.error?.code)
   }
   return mapToCamelCase(responseData.data as RawEvaluacionBackend)
 }

@@ -11,6 +11,7 @@ import {
 } from "../../api/aulas";
 
 import { getEstudiantes, type Estudiante } from "../../api/estudiantes";
+import InsigniasContexto from "../estudiantes/InsigniasContexto";
 import { etiquetaDni } from "../../utils/dni";
 
 interface Props {
@@ -183,6 +184,7 @@ export default function EstudiantesAulaView({ aula, onVolver, escuelaNombreProp 
                                     sx={{ py: 2 }}
                                     secondaryAction={
                                         <Stack direction="row" spacing={1} alignItems="center">
+                                            <InsigniasContexto contexto={est.contexto_evaluador} />
                                             <Tooltip title={`Inicial: ${getEstadoLabel(est.evaluaciones_resumen?.inicial)}`}>
                                                 <Box sx={{ width: 14, height: 14, borderRadius: "50%", border: "1.5px solid #bdbdbd", bgcolor: getEstadoColor(est.evaluaciones_resumen?.inicial) }} />
                                             </Tooltip>

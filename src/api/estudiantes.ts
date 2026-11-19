@@ -1,4 +1,5 @@
 import { api, getAuthHeaders } from "./auth"
+import type { ContextoEvaluador } from "../utils/datosEvaluador"
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -70,6 +71,8 @@ export interface Estudiante {
         inicial: string | null
         cierre: string | null
     } | null
+    /** Tratamiento / CUD más reciente respondido en una evaluación (ADR 0020). */
+    contexto_evaluador?: ContextoEvaluador | null
     aula_id?: string | null
 }
 

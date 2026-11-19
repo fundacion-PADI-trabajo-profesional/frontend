@@ -19,6 +19,7 @@ import UploadFileIcon from "@mui/icons-material/UploadFile"
 import { useNavigate } from "react-router-dom"
 import type { Estudiante, EvaluacionAño } from "../../api/estudiantes"
 import { permissions } from "../../utils/permissions"
+import InsigniasContexto, { LeyendaInsignias } from "./InsigniasContexto"
 
 interface Props {
     estudiantes: Estudiante[]
@@ -190,6 +191,7 @@ export default function EstudiantesCompacto({ estudiantes, onAddEstudiante, onEd
                 <Typography sx={{ fontSize: 15, flexGrow: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", mr: 1 }}>
                     {est.personas.primer_apellido}, {est.personas.nombre}
                 </Typography>
+                <Box sx={{ display: "flex", mr: 0.75, flexShrink: 0 }}><InsigniasContexto contexto={est.contexto_evaluador} lado={16} /></Box>
                 <EvalDots historial={est.evaluaciones_historial ?? []} salaId={est.sala_id} allSalaIds={allSalaIds} salaNombresMap={salaNombresMap} />
                 <IconButton size="small" onClick={(e) => handleMenuOpen(e, est)} sx={{ p: 0.25, ml: 0.5 }}>
                     <MoreVertIcon sx={{ fontSize: 16 }} />
@@ -303,6 +305,7 @@ export default function EstudiantesCompacto({ estudiantes, onAddEstudiante, onEd
 
     return (
         <Box sx={{ position: "relative" }}>
+            {grupos.length > 0 && <Box sx={{ mb: 1.5 }}><LeyendaInsignias /></Box>}
             {grupos.length === 0 && (
                 <Paper elevation={0} sx={{ border: "1px solid #e0e0e0", borderRadius: 2, p: 4, textAlign: "center" }}>
                     <Typography variant="body2" color="text.secondary">No hay estudiantes que coincidan con los filtros.</Typography>

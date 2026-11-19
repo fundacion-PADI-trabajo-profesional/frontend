@@ -11,6 +11,7 @@ import BulkUploadForm from "../components/forms/BulkUploadForm"
 import { TextField, InputAdornment } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import SinEscuelaAsignada from "../components/common/SinEscuelaAsignada";
+import InsigniasContexto, { LeyendaInsignias } from "../components/estudiantes/InsigniasContexto";
 
 /**
  * Página principal de Estudiantes.
@@ -260,6 +261,8 @@ export default function Estudiantes() {
                                                         Esta aula está asignada a vos, pero todavía no tiene estudiantes.
                                                     </Alert>
                                                 ) : (
+                                                    <>
+                                                    <Box sx={{ mb: 1 }}><LeyendaInsignias /></Box>
                                                     <Paper elevation={0} sx={{ border: "1px solid #eee", borderRadius: 3 }}>
                                                         <List>
                                                             {aula.estudiantes.map((est, index) => (
@@ -267,7 +270,8 @@ export default function Estudiantes() {
                                                                     key={est.id}
                                                                     divider={index < aula.estudiantes.length - 1}
                                                                     secondaryAction={
-                                                                        <Stack direction="row" spacing={1}>
+                                                                        <Stack direction="row" spacing={1} alignItems="center">
+                                                                            <InsigniasContexto contexto={est.contexto_evaluador} />
                                                                             <Tooltip title={`Inicial: ${getEstadoLabel(est.evaluaciones_resumen?.inicial)}`}>
                                                                                 <Box
                                                                                     sx={{
@@ -330,6 +334,7 @@ export default function Estudiantes() {
                                                             ))}
                                                         </List>
                                                     </Paper>
+                                                    </>
                                                 )}
                                             </Box>
                                         );

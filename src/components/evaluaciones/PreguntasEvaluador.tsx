@@ -99,8 +99,9 @@ export default function PreguntasEvaluador({ open, onClose, evaluacionId, tipoId
             const actualizada = await guardarDatosEvaluador(evaluacionId, {
                 sesionesCompletadas: conSesiones ? form.sesionesCompletadas : null,
                 enTratamiento: form.enTratamiento,
-                // La casilla sin marcar es un "no": al guardar la sección queda respondida.
-                tieneCud: form.tieneCud === true,
+                // Casilla nunca tocada = sin responder (null): no pisa un "tiene CUD" cargado en una evaluación
+                // anterior. Sólo es "no" si alguien la marcó y la desmarcó.
+                tieneCud: form.tieneCud,
                 observaciones: observaciones.trim() === "" ? null : observaciones.trim(),
             });
             onGuardado(actualizada);

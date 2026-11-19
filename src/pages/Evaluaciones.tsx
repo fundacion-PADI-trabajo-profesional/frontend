@@ -33,7 +33,10 @@ export default function Evaluaciones() {
     }
   }, [navigate])
 
-  const backTo = searchParams.get("backTo") || "/home"
+  // Sólo rutas internas: un backTo armado a mano con otra web no debe sacar a la persona de la app.
+  const backToParam = searchParams.get("backTo")
+  const backToInterno = backToParam && backToParam.startsWith("/") && !backToParam.startsWith("//") ? backToParam : null
+  const backTo = backToInterno || "/home"
   const backLabel = searchParams.get("backLabel") || "Volver a inicio"
   const docenteId = searchParams.get("docenteId")
 
@@ -74,8 +77,10 @@ export default function Evaluaciones() {
   const handleVolverALista = () => {
     setEvaluacionSeleccionadaId(null);
     setRefreshKey(prev => prev + 1);
-    // Si se llegó desde otra pantalla (alumnos, aula), se vuelve ahí: el listado general ya no es una sección.
-    navigate(searchParams.get("backTo") || "/evaluaciones", { replace: true });
+    // Si se llegó a evaluar desde otra pantalla (alumnos, aula), se vuelve ahí: el listado general ya no es
+    // una sección. Si se estaba mirando un listado (p. ej. las evaluaciones de un docente), se queda en él.
+    const vinoAEvaluar = ["estudianteId", "evaluarAhora", "crear"].some((clave) => searchParams.get(clave) !== null);
+    if (vinoAEvaluar) navigate(backToInterno || "/evaluaciones", { replace: true });
   };
 
   const handleSuccessForm = (evaluacionId: string) => {

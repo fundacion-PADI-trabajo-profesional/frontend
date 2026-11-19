@@ -15,7 +15,10 @@ Capturas de lo implementado: `PADI/maquetas/capturas-preguntas-evaluador/`.
 - Sección: **todo en una pantalla**.
 
 ## Llamadas de diseño que tomó Claude (Nacho no las vio implementadas todavía)
-- Tratamiento es Sí/No (se puede desmarcar) y CUD una casilla aparte; al guardar, la casilla sin marcar es "no".
+- Tratamiento es Sí/No (se puede desmarcar) y CUD una casilla aparte. La casilla nunca tocada se guarda como
+  "sin responder" (no pisa un CUD cargado en una evaluación anterior); sólo es "no" si se marcó y se desmarcó.
+- La docente recibe tratamiento/CUD sólo de los chicos de sus aulas (`GET /docentes/aulas`); en `GET /estudiantes`
+  (toda la escuela) el backend se los vacía.
 - Nada es obligatorio. Estado de la tarjeta: No iniciada / En Progreso / Completada (completa = tratamiento
   respondido y, en cierre, sesiones). No toca puntaje ni semáforo.
 - El dato de alumnos es el más reciente respondido en cualquier evaluación del chico (lo resuelve el backend).

@@ -204,6 +204,22 @@ describe("getEvaluacionesInstanciasByEstudiante", () => {
     const url = vi.mocked(fetch).mock.calls[0][0] as string;
     expect(url).toContain("estudianteId=est-1");
   });
+
+  it("mapea el avance de carga por área (gruposRespondidos → pautasRespondidas)", async () => {
+    const conAreas = {
+      ...rawEval,
+      evaluaciones_estudiante_area: [
+        { id: "ea-1", area_id: "CL", estado_id: "E", puntaje: null, totalPreguntas: 9, gruposRespondidos: 5, areas: { nombre: "Lenguaje" } },
+        { id: "ea-2", area_id: "SE", estado_id: "N", puntaje: null, areas: { nombre: "Socioemocional" } },
+      ],
+    };
+    vi.mocked(fetch).mockResolvedValue(mockFetchResponse({ data: [conAreas] }));
+
+    const [ev] = await getEvaluacionesInstanciasByEstudiante("est-1");
+
+    expect(ev.areas?.[0]).toMatchObject({ id: "CL", nombre: "Lenguaje", estadoId: "E", totalPreguntas: 9, pautasRespondidas: 5 });
+    expect(ev.areas?.[1]).toMatchObject({ id: "SE", totalPreguntas: 0, pautasRespondidas: undefined });
+  });
 });
 
 describe("getEvaluacionesInstanciasByProfesor", () => {

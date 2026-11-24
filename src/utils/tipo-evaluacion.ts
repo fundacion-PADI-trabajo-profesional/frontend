@@ -28,10 +28,15 @@ export interface SugerenciaTipo {
   tipo: TipoEvaluacion;
   /** Texto corto debajo del selector (situación normal). */
   ayuda: string | null;
-  /** Texto de advertencia (algo raro en el historial; el backend probablemente rechace). */
+  /** Texto para mostrar destacado: la evaluación ya existe, o hay algo raro en el historial. */
   aviso: string | null;
-  /** Evaluación ya creada del tipo que toca: hay que continuar esa, no crear otra. */
+  /** Evaluación ya creada que hay que continuar en vez de crear otra. */
   existenteId: string | null;
+  /**
+   * Tipos que el servidor aceptaría hoy para este alumno. El formulario sólo deja elegir estos, así
+   * la persona no llega a un error del servidor por elegir algo que no se puede crear.
+   */
+  puedeCrear: TipoEvaluacion[];
 }
 
 /** Primer mes (1-12) en que lo que se evalúa es el cierre. Hasta julio se cargan iniciales. */
@@ -41,12 +46,13 @@ const NOMBRE_TIPO: Record<TipoEvaluacion, string> = { inicial: "inicial", cierre
 
 /**
  * Elige el tipo por defecto según la época del año y el historial del alumno en esa sala y ese año.
- * Las evaluaciones de otra sala o de otro año no cuentan.
+ * Las evaluaciones de otra sala o de otro año no cuentan. (ADR 0021)
  *
  * - El tipo que toca lo da la fecha de carga: hasta julio, inicial; de agosto en adelante, cierre
  *   (aunque el alumno no tenga inicial: no se propone una inicial en noviembre).
- * - Si el alumno ya tiene la evaluación del tipo que toca, no se crea otra: se devuelve `existenteId`
- *   para continuar esa (es el caso de dos evaluadores sobre el mismo alumno).
+ * - Si el alumno ya tiene esa evaluación, no se crea otra: se devuelve `existenteId` para continuarla
+ *   (es el caso de dos personas evaluando al mismo alumno).
+ * - `puedeCrear` replica las reglas del servidor: una de cada tipo, y ninguna inicial después del cierre.
  *
  * @param mes Mes (1-12) del día de carga.
  */
@@ -56,58 +62,58 @@ export function tipoPorDefecto(evaluaciones: EvaluacionResumen[], salaId: number
     .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   const iniciales = delCiclo.filter((e) => e.tipoId === "inicial");
   const cierres = delCiclo.filter((e) => e.tipoId === "cierre");
-  const tipo: TipoEvaluacion = mes >= MES_INICIO_CIERRE ? "cierre" : "inicial";
+  const epoca: TipoEvaluacion = mes >= MES_INICIO_CIERRE ? "cierre" : "inicial";
 
-  const delTipo = tipo === "cierre" ? cierres : iniciales;
-  if (delTipo.length > 0) {
-    const existente = delTipo[delTipo.length - 1];
-    return {
-      tipo,
-      ayuda: null,
-      aviso:
-        `Este alumno ya tiene la evaluación ${NOMBRE_TIPO[tipo]} de sala ${salaId} (${formatearFecha(existente.createdAt)}). ` +
-        "Continuá esa en vez de crear otra.",
-      existenteId: existente.id ?? null,
-    };
-  }
+  const yaExiste = (tipo: TipoEvaluacion, existente: EvaluacionResumen, puedeCrear: TipoEvaluacion[]): SugerenciaTipo => ({
+    tipo,
+    ayuda: null,
+    aviso: `Este alumno ya tiene la evaluación ${NOMBRE_TIPO[tipo]} de sala ${salaId}, cargada el ${formatearFecha(existente.createdAt)}.`,
+    existenteId: existente.id ?? null,
+    puedeCrear,
+  });
 
-  if (tipo === "cierre") {
-    if (iniciales.length > 1) {
-      const fechas = iniciales.map((e) => formatearFecha(e.createdAt)).join(", ");
-      return {
-        tipo,
-        ayuda: null,
-        aviso:
-          `Tiene ${iniciales.length} evaluaciones iniciales de sala ${salaId} (${fechas}): una de ellas es probablemente el cierre. ` +
-          "Cambiale el tipo desde el historial en vez de crear otra.",
-        existenteId: null,
-      };
-    }
-    if (iniciales.length === 1) {
-      return {
-        tipo,
-        ayuda: `Ya tiene la inicial de sala ${salaId} (${formatearFecha(iniciales[0].createdAt)})`,
-        aviso: null,
-        existenteId: null,
-      };
-    }
+  // Con el cierre cargado ya no se crea nada más en esa sala y ese año.
+  if (cierres.length > 0) return yaExiste("cierre", cierres[cierres.length - 1], []);
+
+  if (epoca === "inicial") {
+    if (iniciales.length > 0) return yaExiste("inicial", iniciales[iniciales.length - 1], ["cierre"]);
     return {
-      tipo,
-      ayuda: `Primera evaluación de sala ${salaId} de este alumno. De agosto en adelante se carga como cierre`,
+      tipo: "inicial",
+      ayuda: `Primera evaluación de sala ${salaId} de este alumno`,
       aviso: null,
       existenteId: null,
+      puedeCrear: ["inicial", "cierre"],
     };
   }
 
-  if (cierres.length > 0) {
+  if (iniciales.length > 1) {
+    const fechas = iniciales.map((e) => formatearFecha(e.createdAt)).join(", ");
     return {
-      tipo,
+      tipo: "cierre",
       ayuda: null,
-      aviso: `Ya tiene el cierre de sala ${salaId} (${formatearFecha(cierres[0].createdAt)}) y no tiene inicial`,
+      aviso:
+        `Tiene ${iniciales.length} evaluaciones iniciales de sala ${salaId} (${fechas}): una de ellas es probablemente el cierre. ` +
+        "Cambiale el tipo desde el historial en vez de crear otra.",
       existenteId: null,
+      puedeCrear: ["cierre"],
     };
   }
-  return { tipo, ayuda: `Primera evaluación de sala ${salaId} de este alumno`, aviso: null, existenteId: null };
+  if (iniciales.length === 1) {
+    return {
+      tipo: "cierre",
+      ayuda: `Ya tiene la inicial de sala ${salaId} (${formatearFecha(iniciales[0].createdAt)})`,
+      aviso: null,
+      existenteId: null,
+      puedeCrear: ["cierre"],
+    };
+  }
+  return {
+    tipo: "cierre",
+    ayuda: `Primera evaluación de sala ${salaId} de este alumno. De agosto en adelante se carga como cierre`,
+    aviso: null,
+    existenteId: null,
+    puedeCrear: ["inicial", "cierre"],
+  };
 }
 
 /**

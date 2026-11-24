@@ -41,7 +41,7 @@ interface EvaluacionFormProps {
   prefillEstudianteId?: string;
 }
 
-const SIN_SUGERENCIA: SugerenciaTipo = { tipo: "inicial", ayuda: null, aviso: null, existenteId: null };
+const SIN_SUGERENCIA: SugerenciaTipo = { tipo: "inicial", ayuda: null, aviso: null, existenteId: null, puedeCrear: ["inicial", "cierre"] };
 /** Texto del diálogo de confirmación: el tipo solo, en mayúsculas (sin repetir "evaluación"). */
 const TIPO_EN_MAYUSCULAS: Record<TipoEvaluacion, string> = { inicial: "INICIAL", cierre: "CIERRE" };
 /** Año del día de carga, el mismo que el backend lee de `fecha_creacion` (ver fechaLocalISO). */
@@ -61,6 +61,8 @@ export default function EvaluacionForm({ onSuccess, onCancel, profile, prefillEs
   const [confirmarAbierto, setConfirmarAbierto] = useState(false)
   const [sugerencia, setSugerencia] = useState<SugerenciaTipo>(SIN_SUGERENCIA)
   const [cargandoSugerencia, setCargandoSugerencia] = useState(false)
+  // Con una evaluación ya cargada se ofrece continuarla; el alta sólo aparece si la persona la pide.
+  const [crearOtra, setCrearOtra] = useState(false)
 
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [loadingEstudiantes, setLoadingEstudiantes] = useState(true);
@@ -135,6 +137,7 @@ export default function EvaluacionForm({ onSuccess, onCancel, profile, prefillEs
   useEffect(() => {
     const salaNum = Number(formData.salaId);
     setSugerencia(SIN_SUGERENCIA);
+    setCrearOtra(false);
     setFormData((prev) => (prev.tipoId === "inicial" ? prev : { ...prev, tipoId: "inicial" }));
     if (!formData.estudianteId || !salaNum) {
       setCargandoSugerencia(false);
@@ -147,7 +150,9 @@ export default function EvaluacionForm({ onSuccess, onCancel, profile, prefillEs
         if (cancelado) return;
         const r = tipoPorDefecto(evs, salaNum, anioDeCarga(), mesDeCarga());
         setSugerencia(r);
-        setFormData((prev) => ({ ...prev, tipoId: r.tipo }));
+        // El selector arranca en un tipo que se pueda crear (si el que toca ya existe, en el otro).
+        const tipoInicial = r.puedeCrear.includes(r.tipo) ? r.tipo : (r.puedeCrear[0] ?? r.tipo);
+        setFormData((prev) => ({ ...prev, tipoId: tipoInicial }));
       })
       .catch(() => {
         // Sin historial no hay sugerencia: queda "inicial" sin ayuda, nada se bloquea.
@@ -233,8 +238,10 @@ export default function EvaluacionForm({ onSuccess, onCancel, profile, prefillEs
   }
 
   const isLoading = loading || loadingEstudiantes;
-  // Ya hay una evaluación de ese tipo: crear otra sería un duplicado (el backend la rechaza). Se continúa la existente.
-  const yaExisteDeEseTipo = !!sugerencia.existenteId && formData.tipoId === sugerencia.tipo;
+  // Si el alumno ya tiene la evaluación que toca, lo primero que se ofrece es continuarla (ADR 0021).
+  const hayExistente = !!sugerencia.existenteId;
+  const mostrarAlta = !hayExistente || crearOtra;
+  const tipoPermitido = sugerencia.puedeCrear.includes(formData.tipoId);
 
   return (
     <Card>
@@ -363,42 +370,57 @@ export default function EvaluacionForm({ onSuccess, onCancel, profile, prefillEs
               />
             </Grid>
 
-            {/* Tipo de Evaluación: arranca según el historial del alumno; se puede cambiar */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                select
-                label="Tipo de Evaluación"
-                name="tipoId"
-                value={formData.tipoId}
-                onChange={handleChange}
-                disabled={loading || cargandoSugerencia}
-                helperText={cargandoSugerencia ? "Consultando el historial del alumno..." : (sugerencia.ayuda ?? undefined)}
-              >
-                <MenuItem value="inicial">{ETIQUETA_TIPO.inicial}</MenuItem>
-                <MenuItem value="cierre">{ETIQUETA_TIPO.cierre}</MenuItem>
-              </TextField>
-            </Grid>
+            {/* Tipo de Evaluación: arranca según la época y el historial; sólo se puede elegir lo que se puede crear */}
+            {mostrarAlta && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Tipo de Evaluación"
+                  name="tipoId"
+                  value={formData.tipoId}
+                  onChange={handleChange}
+                  disabled={loading || cargandoSugerencia}
+                  helperText={cargandoSugerencia ? "Consultando el historial del alumno..." : (sugerencia.ayuda ?? undefined)}
+                >
+                  <MenuItem value="inicial" disabled={!sugerencia.puedeCrear.includes("inicial")}>{ETIQUETA_TIPO.inicial}</MenuItem>
+                  <MenuItem value="cierre" disabled={!sugerencia.puedeCrear.includes("cierre")}>{ETIQUETA_TIPO.cierre}</MenuItem>
+                </TextField>
+              </Grid>
+            )}
 
-            {sugerencia.aviso && (
+            {hayExistente && (
+              <Grid item xs={12}>
+                <Alert severity="info">
+                  {sugerencia.aviso} Podés seguir cargándola desde acá.
+                  <Box sx={{ mt: 1.5, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2 }}>
+                    <Button
+                      variant="contained"
+                      onClick={() => onSuccess(sugerencia.existenteId as string)}
+                      sx={{ bgcolor: "#A3BE54", color: "#000", textTransform: "none", "&:hover": { bgcolor: "#8bc34a" } }}
+                    >
+                      Continuar esa evaluación
+                    </Button>
+                    <Link component={RouterLink} to={rutaHistorial} underline="always">
+                      Ver historial
+                    </Link>
+                    {!crearOtra && sugerencia.puedeCrear.length > 0 && (
+                      <Link component="button" type="button" underline="always" onClick={() => setCrearOtra(true)}>
+                        Crear la {ETIQUETA_TIPO[sugerencia.puedeCrear[0]].toLowerCase()}
+                      </Link>
+                    )}
+                  </Box>
+                </Alert>
+              </Grid>
+            )}
+
+            {!hayExistente && sugerencia.aviso && (
               <Grid item xs={12}>
                 <Alert severity="warning">
                   {sugerencia.aviso}{" "}
                   <Link component={RouterLink} to={rutaHistorial} underline="always">
                     Ver historial
                   </Link>
-                  {sugerencia.existenteId && (
-                    <Box sx={{ mt: 1 }}>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        onClick={() => onSuccess(sugerencia.existenteId as string)}
-                        sx={{ bgcolor: "#A3BE54", color: "#000", textTransform: "none", "&:hover": { bgcolor: "#8bc34a" } }}
-                      >
-                        Continuar esa evaluación
-                      </Button>
-                    </Box>
-                  )}
                 </Alert>
               </Grid>
             )}
@@ -413,13 +435,14 @@ export default function EvaluacionForm({ onSuccess, onCancel, profile, prefillEs
                   disabled={loading}
                   sx={{ textTransform: "none" }}
                 >
-                  Cancelar
+                  {mostrarAlta ? "Cancelar" : "Volver"}
                 </Button>
+                {mostrarAlta && (
                 <Button
                   type="submit"
                   variant="contained"
                   startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
-                  disabled={loading || cargandoSugerencia || success || yaExisteDeEseTipo}
+                  disabled={loading || cargandoSugerencia || success || !tipoPermitido}
                   sx={{
                     bgcolor: "#A3BE54",
                     color: "#000",
@@ -430,6 +453,7 @@ export default function EvaluacionForm({ onSuccess, onCancel, profile, prefillEs
                 >
                   {loading ? "Guardando..." : "Crear Evaluación"}
                 </Button>
+                )}
               </Box>
             </Grid>
 

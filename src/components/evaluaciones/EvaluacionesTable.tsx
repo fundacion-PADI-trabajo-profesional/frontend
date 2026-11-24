@@ -1,5 +1,6 @@
 import { Box, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, Chip, Button, Stack, Typography } from "@mui/material"
-import type { EvaluacionInstancia } from "../../api/evaluaciones"
+import type { AreaDetalle, EvaluacionInstancia } from "../../api/evaluaciones"
+import AnillosAreas from "./AnillosAreas"
 import { formatearFecha } from "../../utils/fechas"
 
 function getEstadoColor(estado: string) {
@@ -43,6 +44,10 @@ interface Props {
   onCambiarTipo?: (evaluacion: EvaluacionInstancia) => void
   /** Si se muestra "Cambiar tipo" en esa fila (por defecto, siempre que haya onCambiarTipo). */
   puedeCambiarTipo?: (evaluacion: EvaluacionInstancia) => boolean
+  /** Muestra un anillo por área (avance y estado). Pensado para el historial de un alumno. */
+  mostrarAreas?: boolean
+  /** Con `mostrarAreas`: tocar un anillo abre esa área de la evaluación. */
+  onAreaClick?: (evaluacion: EvaluacionInstancia, area: AreaDetalle) => void
 }
 
 export default function EvaluacionesTable({
@@ -52,7 +57,14 @@ export default function EvaluacionesTable({
   onDelete,
   onCambiarTipo,
   puedeCambiarTipo = () => true,
+  mostrarAreas = false,
+  onAreaClick,
 }: Props) {
+  const anillos = (e: EvaluacionInstancia, compacto: boolean) =>
+    mostrarAreas && e.areas && e.areas.length > 0 ? (
+      <AnillosAreas areas={e.areas} compacto={compacto} onAreaClick={onAreaClick ? (area) => onAreaClick(e, area) : undefined} />
+    ) : null
+
   const hayAcciones = !!onDelete || !!onCambiarTipo
 
   const chipEstado = (e: EvaluacionInstancia) => (
@@ -114,8 +126,10 @@ export default function EvaluacionesTable({
               {chipEstado(e)}
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              Sala {e.salaId} · {formatearFecha(e.createdAt)} · Puntaje: {e.puntaje ?? "-"}
+              Sala {e.salaId} · {formatearFecha(e.createdAt)}
+              {e.puntaje !== null && e.puntaje !== undefined ? ` · Puntaje: ${e.puntaje}` : ""}
             </Typography>
+            {mostrarAreas && <Box sx={{ mt: 1.5 }}>{anillos(e, false)}</Box>}
             {(onRowClick || hayAcciones) && (
               <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 1.5 }}>
                 {onRowClick && (
@@ -142,6 +156,7 @@ export default function EvaluacionesTable({
               <TableCell sx={{ fontWeight: 700 }}>Sala</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Tipo</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Estado</TableCell>
+              {mostrarAreas && <TableCell sx={{ fontWeight: 700 }}>Áreas</TableCell>}
               <TableCell align="right" sx={{ fontWeight: 700 }}>Puntaje</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Fecha</TableCell>
               {hayAcciones && <TableCell sx={{ fontWeight: 700 }} align="center">Acciones</TableCell>}
@@ -159,6 +174,7 @@ export default function EvaluacionesTable({
                 <TableCell>{e.salaId}</TableCell>
                 <TableCell>{getTipoLabel(e.tipoId)}</TableCell>
                 <TableCell>{chipEstado(e)}</TableCell>
+                {mostrarAreas && <TableCell>{anillos(e, true)}</TableCell>}
                 <TableCell align="right">{e.puntaje ?? "-"}</TableCell>
                 <TableCell>{formatearFecha(e.createdAt)}</TableCell>
                 {hayAcciones && (

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
     Box,
     Card,
@@ -38,6 +38,8 @@ import { formatearFechaLarga } from "../../utils/fechas";
 interface Props {
     evaluacionId: string
     onBack: () => void
+    /** Área a abrir apenas carga la evaluación (se llegó tocando su anillo en el historial). */
+    areaInicialId?: string
 }
 
 // Helper functions (calcularEdad, getAreaIcon, getStatusColor - mantienen su lógica)
@@ -100,7 +102,7 @@ const getGeneroColor = (genero?: string) => {
 };
 
 
-export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
+export default function EvaluacionDetalle({ evaluacionId, onBack, areaInicialId }: Props) {
     const [loading, setLoading] = useState(true)
     const [data, setData] = useState<EvaluacionInstancia | null>(null)
     const [error, setError] = useState<string | null>(null)
@@ -162,6 +164,17 @@ export default function EvaluacionDetalle({ evaluacionId, onBack }: Props) {
         setSelectedArea({ id: areaId, nombre: areaNombre });
         setWizardOpen(true);
     }
+
+    // Si se llegó tocando un área en el historial, se abre esa área una sola vez, con los datos ya
+    // cargados. Al cerrarla queda la ficha, que es desde donde se vuelve al historial.
+    const areaInicialAbierta = useRef(false);
+    useEffect(() => {
+        if (!areaInicialId || !data || areaInicialAbierta.current) return;
+        areaInicialAbierta.current = true;
+        const area = data.areas?.find((a) => a.id === areaInicialId);
+        if (area) handleAreaClick(area.id, area.nombre, area.estadoId, area.aciertosIndividuales || 0, area.totalPreguntas || 0);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [data, areaInicialId]);
 
     // Abre el wizard para corregir desde la pantalla de revisión
     const handleCorrectFromRevision = () => {

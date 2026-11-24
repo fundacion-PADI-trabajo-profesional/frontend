@@ -69,6 +69,8 @@ export interface AreaDetalle {
   observacion: string | null
   totalPuntosPosibles?: number;
   totalPreguntas?: number;
+  /** Pautas respondidas por completo (avance de carga, no resultado). Llega en el detalle y en el historial de un alumno. */
+  pautasRespondidas?: number;
 }
 
 export interface EstudianteDetalle {
@@ -142,6 +144,7 @@ interface RawEvaluacionBackend {
     estado_id?: string | null;
     puntaje?: number | null;
     totalPreguntas?: number;
+    gruposRespondidos?: number;
     aciertos_individuales?: number;
     areas?: { nombre?: string; descripcion?: string };
     estados_evaluacion?: { descripcion?: string };
@@ -175,6 +178,7 @@ function mapToCamelCase(data: RawEvaluacionBackend): EvaluacionInstancia {
         puntaje: item.puntaje ?? null,
         observacion: null,
         totalPreguntas: item.totalPreguntas ?? 0,
+        pautasRespondidas: item.gruposRespondidos,
         aciertosIndividuales: item.aciertos_individuales ?? 0,
       };
     });

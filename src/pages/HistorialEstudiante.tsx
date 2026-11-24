@@ -19,6 +19,12 @@ export default function HistorialEstudiante() {
   const [error, setError] = useState<string | null>(null)
   const [items, setItems] = useState<EvaluacionInstancia[]>([])
   const [selectedEvaluacionId, setSelectedEvaluacionId] = useState<string | null>(null)
+  // Área a abrir directamente al entrar a la evaluación (cuando se tocó su anillo en el historial).
+  const [areaInicialId, setAreaInicialId] = useState<string | null>(null)
+  const volverAlHistorial = () => {
+    setSelectedEvaluacionId(null)
+    setAreaInicialId(null)
+  }
   const [profile, setProfile] = useState<{ id?: string; rol?: string } | null>(null)
   const [evaluacionACambiar, setEvaluacionACambiar] = useState<EvaluacionInstancia | null>(null)
 
@@ -83,12 +89,13 @@ export default function HistorialEstudiante() {
             backLabel="Volver al historial"
             title={estudianteNombre ? `Detalle de evaluación de ${estudianteNombre}` : "Detalle de evaluación"}
             subtitle="Resultado por área y estado actual de la evaluación"
-            onBack={() => setSelectedEvaluacionId(null)}
+            onBack={volverAlHistorial}
           />
           <Container maxWidth="sm" sx={{ py: 4 }}>
             <EvaluacionDetalle
               evaluacionId={selectedEvaluacionId}
-              onBack={() => setSelectedEvaluacionId(null)}
+              areaInicialId={areaInicialId ?? undefined}
+              onBack={volverAlHistorial}
             />
           </Container>
         </>
@@ -123,6 +130,11 @@ export default function HistorialEstudiante() {
                 <EvaluacionesTable
                   items={items}
                   onRowClick={(evaluacion) => setSelectedEvaluacionId(evaluacion.id)}
+                  mostrarAreas
+                  onAreaClick={(evaluacion, area) => {
+                    setAreaInicialId(area.id)
+                    setSelectedEvaluacionId(evaluacion.id)
+                  }}
                   onDelete={canDelete ? handleDeleteEvaluacion : undefined}
                   onCambiarTipo={setEvaluacionACambiar}
                   puedeCambiarTipo={(evaluacion) => puedeCambiarTipo(profile, evaluacion)}

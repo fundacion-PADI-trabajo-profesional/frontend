@@ -1,54 +1,92 @@
 import { describe, it, expect } from "vitest";
 import { ETIQUETA_TIPO, puedeCambiarTipo, tipoPorDefecto } from "../../src/utils/tipo-evaluacion";
 
-const ev = (tipoId: string, fecha: string, salaId = 4) => ({ salaId, tipoId, createdAt: new Date(`${fecha}T00:00:00Z`) });
+const ev = (tipoId: string, fecha: string, salaId = 4, id?: string) => ({ id, salaId, tipoId, createdAt: new Date(`${fecha}T00:00:00Z`) });
 
 describe("tipoPorDefecto", () => {
-  it("sin evaluaciones: inicial, con ayuda de primera evaluación", () => {
-    expect(tipoPorDefecto([], 4, 2026)).toEqual({
+  // mes 1-12 del día de carga. Hasta julio la época es de iniciales; de agosto en adelante, de cierres.
+  const MARZO = 3;
+  const NOVIEMBRE = 11;
+
+  it("sin evaluaciones, antes de agosto: inicial; se puede crear cualquiera", () => {
+    expect(tipoPorDefecto([], 4, 2026, MARZO)).toEqual({
       tipo: "inicial",
       ayuda: "Primera evaluación de sala 4 de este alumno",
       aviso: null,
+      existenteId: null,
+      puedeCrear: ["inicial", "cierre"],
     });
   });
 
-  it("con una inicial: cierre, con la fecha de la inicial", () => {
-    expect(tipoPorDefecto([ev("inicial", "2026-03-12")], 4, 2026)).toEqual({
+  it("sin evaluaciones, de agosto en adelante: cierre (aunque no tenga inicial)", () => {
+    expect(tipoPorDefecto([], 4, 2026, NOVIEMBRE)).toEqual({
+      tipo: "cierre",
+      ayuda: "Primera evaluación de sala 4 de este alumno. De agosto en adelante se carga como cierre",
+      aviso: null,
+      existenteId: null,
+      puedeCrear: ["inicial", "cierre"],
+    });
+    expect(tipoPorDefecto([], 4, 2026, 8).tipo).toBe("cierre");
+    expect(tipoPorDefecto([], 4, 2026, 7).tipo).toBe("inicial");
+  });
+
+  it("época de cierre, con una inicial: cierre, y la inicial ya no se puede elegir", () => {
+    expect(tipoPorDefecto([ev("inicial", "2026-03-12")], 4, 2026, NOVIEMBRE)).toEqual({
       tipo: "cierre",
       ayuda: "Ya tiene la inicial de sala 4 (12/03/2026)",
       aviso: null,
+      existenteId: null,
+      puedeCrear: ["cierre"],
     });
   });
 
-  it("con inicial y cierre: cierre, con aviso", () => {
-    expect(tipoPorDefecto([ev("inicial", "2026-03-12"), ev("cierre", "2026-10-20")], 4, 2026)).toEqual({
+  it("ya tiene cierre (con o sin inicial, en cualquier época): se continúa ese y no se puede crear nada", () => {
+    const esperado = {
       tipo: "cierre",
       ayuda: null,
-      aviso: "Ya tiene inicial y cierre de sala 4",
+      aviso: "Este alumno ya tiene la evaluación de cierre de sala 4, cargada el 20/10/2026.",
+      existenteId: "c1",
+      puedeCrear: [],
+    };
+    expect(tipoPorDefecto([ev("inicial", "2026-03-12", 4, "i1"), ev("cierre", "2026-10-20", 4, "c1")], 4, 2026, NOVIEMBRE)).toEqual(esperado);
+    expect(tipoPorDefecto([ev("cierre", "2026-10-20", 4, "c1")], 4, 2026, NOVIEMBRE)).toEqual(esperado);
+    expect(tipoPorDefecto([ev("cierre", "2026-02-20", 4, "c1")], 4, 2026, MARZO)).toEqual({
+      ...esperado,
+      aviso: "Este alumno ya tiene la evaluación de cierre de sala 4, cargada el 20/02/2026.",
     });
   });
 
-  it("dos iniciales sin cierre: cierre, con aviso de que una es probablemente el cierre (fechas ascendentes)", () => {
-    const r = tipoPorDefecto([ev("inicial", "2026-10-20"), ev("inicial", "2026-03-12")], 4, 2026);
+  it("época de iniciales, ya tiene inicial: se continúa esa; sólo queda por crear el cierre", () => {
+    expect(tipoPorDefecto([ev("inicial", "2026-03-12", 4, "i1")], 4, 2026, MARZO)).toEqual({
+      tipo: "inicial",
+      ayuda: null,
+      aviso: "Este alumno ya tiene la evaluación inicial de sala 4, cargada el 12/03/2026.",
+      existenteId: "i1",
+      puedeCrear: ["cierre"],
+    });
+  });
+
+  it("época de cierre, dos iniciales sin cierre: cierre, con aviso de que una es probablemente el cierre (fechas ascendentes)", () => {
+    const r = tipoPorDefecto([ev("inicial", "2026-10-20"), ev("inicial", "2026-03-12")], 4, 2026, NOVIEMBRE);
     expect(r.tipo).toBe("cierre");
     expect(r.ayuda).toBeNull();
+    expect(r.existenteId).toBeNull();
+    expect(r.puedeCrear).toEqual(["cierre"]);
     expect(r.aviso).toBe(
       "Tiene 2 evaluaciones iniciales de sala 4 (12/03/2026, 20/10/2026): una de ellas es probablemente el cierre. " +
         "Cambiale el tipo desde el historial en vez de crear otra."
     );
   });
 
-  it("cierre sin inicial: inicial, con aviso (no dice 'primera evaluación')", () => {
-    expect(tipoPorDefecto([ev("cierre", "2026-10-20")], 4, 2026)).toEqual({
-      tipo: "inicial",
-      ayuda: null,
-      aviso: "Ya tiene el cierre de sala 4 (20/10/2026) y no tiene inicial",
-    });
-  });
-
   it("otra sala y otro año no cuentan", () => {
-    const r = tipoPorDefecto([ev("inicial", "2026-03-12", 3), ev("inicial", "2025-03-12", 4)], 4, 2026);
-    expect(r).toEqual({ tipo: "inicial", ayuda: "Primera evaluación de sala 4 de este alumno", aviso: null });
+    const r = tipoPorDefecto([ev("inicial", "2026-03-12", 3), ev("inicial", "2025-03-12", 4)], 4, 2026, MARZO);
+    expect(r).toEqual({
+      tipo: "inicial",
+      ayuda: "Primera evaluación de sala 4 de este alumno",
+      aviso: null,
+      existenteId: null,
+      puedeCrear: ["inicial", "cierre"],
+    });
   });
 
   it("etiquetas del selector", () => {

@@ -139,15 +139,15 @@ export default function Estudiantes() {
 
     const handleEvaluarAhora = () => {
         if (estudianteCreado) {
-            navigate(`/evaluaciones?estudianteId=${estudianteCreado.id}&backTo=${encodeURIComponent("/estudiantes")}&backLabel=${encodeURIComponent("Volver a estudiantes")}`);
+            navigate(`/evaluaciones?estudianteId=${estudianteCreado.id}&backTo=${encodeURIComponent("/estudiantes")}&backLabel=${encodeURIComponent("Volver a alumnos")}`);
         }
     }
 
     // --- Helper para Títulos ---
     const getTitle = () => {
-        if (view === 'form') return selectedForEdit ? 'Modificar datos' : 'Nuevo estudiante';
+        if (view === 'form') return selectedForEdit ? 'Modificar datos' : 'Nuevo alumno';
         if (view === 'success') return 'Completado';
-        return 'Estudiantes';
+        return 'Alumnos';
     }
 
     const getEstadoColor = (estado: string | null | undefined) => {
@@ -176,14 +176,14 @@ export default function Estudiantes() {
                                 onClick={view === "list" ? () => navigate("/home") : handleBackToList}
                                 sx={{ color: "#5c7cfa", textTransform: "none", fontSize: '1rem' }}
                             >
-                                {view === "list" ? "Volver a inicio" : "Volver a estudiantes"}
+                                {view === "list" ? "Volver a inicio" : "Volver a alumnos"}
                             </Button>
                         </Box>
                         <Typography variant="h3" sx={{ fontWeight: 700, mb: 1, fontSize: { xs: '2.25rem', md: '3rem' } }}>
                             {getTitle()}
                         </Typography>
                         <Typography variant="body1" sx={{ color: "#666" }}>
-                            Alta de nuevos estudiantes, edición de datos y gestión de la base de estudiantes por escuela, sala y comisión.
+                            Alta de nuevos alumnos, edición de datos y gestión de la base de alumnos por escuela, sala y comisión.
                         </Typography>
                     </Container>
                 </Box>
@@ -299,7 +299,7 @@ export default function Estudiantes() {
                                                                             <Button
                                                                                 size="small"
                                                                                 onClick={() =>
-                                                                                    navigate(`/evaluaciones?estudianteId=${est.id}&nombre=${encodeURIComponent(`${est.personas.nombre} ${est.personas.primer_apellido}`)}&salaId=${aula.sala_id}&aulaId=${aula.id}&aulaLabel=${encodeURIComponent(`${aula.sala?.grado ?? "?"}° - ${aula.comision} (${aula.turno})`)}&escuelaNombre=${encodeURIComponent(aula.escuela?.nombre ?? "Escuela")}&backTo=${encodeURIComponent("/estudiantes")}&backLabel=${encodeURIComponent("Volver a estudiantes")}`)
+                                                                                    navigate(`/evaluaciones?estudianteId=${est.id}&nombre=${encodeURIComponent(`${est.personas.nombre} ${est.personas.primer_apellido}`)}&salaId=${aula.sala_id}&aulaId=${aula.id}&aulaLabel=${encodeURIComponent(`${aula.sala?.grado ?? "?"}° - ${aula.comision} (${aula.turno})`)}&escuelaNombre=${encodeURIComponent(aula.escuela?.nombre ?? "Escuela")}&backTo=${encodeURIComponent("/estudiantes")}&backLabel=${encodeURIComponent("Volver a alumnos")}`)
                                                                                 }
                                                                             >
                                                                                 Evaluar

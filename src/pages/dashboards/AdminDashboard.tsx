@@ -33,8 +33,8 @@ export default function AdminDashboard({ rol }: Props) {
             <Grid container spacing={3}>
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard
-                        title="Estudiantes"
-                        description="Alta, edición y consulta de la base de datos de estudiantes."
+                        title="Alumnos"
+                        description="Alta, edición y consulta de la base de datos de alumnos."
                         icon={<BackpackIcon />}
                         color="#2196F3"
                         onClick={() => navigate("/estudiantes")}

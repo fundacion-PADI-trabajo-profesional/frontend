@@ -35,8 +35,8 @@ export default function DocenteDashboard() {
             <Grid container spacing={3}>
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard
-                        title="Mis Estudiantes"
-                        description="Listado de estudiantes asignados. Desde acá se evalúa."
+                        title="Mis Alumnos"
+                        description="Listado de alumnos asignados. Desde acá se evalúa."
                         icon={<SchoolIcon />}
                         color="#5c7cfa"
                         onClick={() => navigate("/estudiantes")}

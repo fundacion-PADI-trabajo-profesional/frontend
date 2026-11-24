@@ -155,7 +155,7 @@ export default function EstudiantesCompacto({ estudiantes, onAddEstudiante, onEd
                 ruta += `&aulaId=${aulaId}`;
             }
 
-            ruta += `&backTo=${encodeURIComponent("/estudiantes")}&backLabel=${encodeURIComponent("Volver a estudiantes")}`;
+            ruta += `&backTo=${encodeURIComponent("/estudiantes")}&backLabel=${encodeURIComponent("Volver a alumnos")}`;
             navigate(ruta);
         }
         handleMenuClose()
@@ -164,7 +164,7 @@ export default function EstudiantesCompacto({ estudiantes, onAddEstudiante, onEd
     const handleVerMas = () => {
         if (selectedStudent) {
             const nombre = `${selectedStudent.personas.nombre} ${selectedStudent.personas.primer_apellido}`
-            navigate(`/historial-estudiante?${new URLSearchParams({ estudianteId: selectedStudent.id, nombre, backTo: "/estudiantes", backLabel: "Volver a estudiantes" }).toString()}`)
+            navigate(`/historial-estudiante?${new URLSearchParams({ estudianteId: selectedStudent.id, nombre, backTo: "/estudiantes", backLabel: "Volver a alumnos" }).toString()}`)
         }
         handleMenuClose()
     }

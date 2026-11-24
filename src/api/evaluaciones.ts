@@ -14,10 +14,13 @@ const ESTADO_NO_INICIADA = "N"
  */
 export class EvaluacionApiError extends Error {
   readonly code?: string
-  constructor(message: string, code?: string) {
+  /** Id de la evaluación que ya existe (duplicado), para ofrecer continuarla en vez de crear otra. */
+  readonly existenteId?: string
+  constructor(message: string, code?: string, existenteId?: string) {
     super(message)
     this.name = "EvaluacionApiError"
     this.code = code
+    this.existenteId = existenteId
   }
 }
 
@@ -303,7 +306,13 @@ export async function crearEvaluacionInstancia(
   });
 
   const responseData = await res.json();
-  if (!res.ok) throw new EvaluacionApiError(responseData.message || "Error al crear la evaluación", responseData.error?.code);
+  if (!res.ok) {
+    throw new EvaluacionApiError(
+      responseData.message || "Error al crear la evaluación",
+      responseData.error?.code,
+      responseData.error?.details?.evaluacion_existente?.id,
+    );
+  }
 
   return mapToCamelCase(responseData.data as RawEvaluacionBackend);
 }

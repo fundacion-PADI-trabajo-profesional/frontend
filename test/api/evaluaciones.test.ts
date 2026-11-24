@@ -314,6 +314,26 @@ describe("crearEvaluacionInstancia - error con código", () => {
     expect(err).toBeInstanceOf(EvaluacionApiError);
     expect((err as EvaluacionApiError).code).toBe("TIPO_DUPLICADO");
     expect((err as EvaluacionApiError).message).toBe("Este alumno ya tiene una evaluación inicial");
+    expect((err as EvaluacionApiError).existenteId).toBeUndefined();
+  });
+
+  it("si el servidor informa la evaluación existente, el error trae su id para continuarla", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockFetchResponse(
+        {
+          message: "ya tiene el cierre",
+          error: { code: "TIPO_DUPLICADO", details: { evaluacion_existente: { id: "ev-c", tipo_id: "cierre" } } },
+        },
+        false,
+        400
+      )
+    );
+
+    const err = await crearEvaluacionInstancia({
+      dni: "1", profesor_id: "p", sala_id: 4, tipo_id: "inicial", fecha_creacion: "2026-11-24",
+    }).catch((e: unknown) => e);
+
+    expect((err as EvaluacionApiError).existenteId).toBe("ev-c");
   });
 });
 

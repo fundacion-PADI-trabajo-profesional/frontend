@@ -56,7 +56,7 @@ export default function EvaluacionForm({ onSuccess, onCancel, profile, prefillEs
     tipoId: "inicial" as TipoEvaluacion,
   })
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<{ mensaje: string; verHistorial: boolean } | null>(null)
+  const [error, setError] = useState<{ mensaje: string; verHistorial: boolean; existenteId?: string } | null>(null)
   const [success, setSuccess] = useState(false)
   const [confirmarAbierto, setConfirmarAbierto] = useState(false)
   const [sugerencia, setSugerencia] = useState<SugerenciaTipo>(SIN_SUGERENCIA)
@@ -225,6 +225,7 @@ export default function EvaluacionForm({ onSuccess, onCancel, profile, prefillEs
       setError({
         mensaje: err instanceof Error ? err.message : "Error al crear",
         verHistorial: esDuplicado,
+        existenteId: esDuplicado ? (err as EvaluacionApiError).existenteId : undefined,
       });
     } finally {
       setLoading(false);
@@ -252,6 +253,18 @@ export default function EvaluacionForm({ onSuccess, onCancel, profile, prefillEs
                   Ver la evaluación existente
                 </Link>
               </>
+            )}
+            {error.existenteId && (
+              <Box sx={{ mt: 1 }}>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => onSuccess(error.existenteId as string)}
+                  sx={{ bgcolor: "#A3BE54", color: "#000", textTransform: "none", "&:hover": { bgcolor: "#8bc34a" } }}
+                >
+                  Continuar esa evaluación
+                </Button>
+              </Box>
             )}
           </Alert>
         )}

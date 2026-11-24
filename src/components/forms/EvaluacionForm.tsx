@@ -41,11 +41,12 @@ interface EvaluacionFormProps {
   prefillEstudianteId?: string;
 }
 
-const SIN_SUGERENCIA: SugerenciaTipo = { tipo: "inicial", ayuda: null, aviso: null };
+const SIN_SUGERENCIA: SugerenciaTipo = { tipo: "inicial", ayuda: null, aviso: null, existenteId: null };
 /** Texto del diálogo de confirmación: el tipo solo, en mayúsculas (sin repetir "evaluación"). */
 const TIPO_EN_MAYUSCULAS: Record<TipoEvaluacion, string> = { inicial: "INICIAL", cierre: "CIERRE" };
 /** Año del día de carga, el mismo que el backend lee de `fecha_creacion` (ver fechaLocalISO). */
 const anioDeCarga = () => Number(fechaLocalISO().slice(0, 4));
+const mesDeCarga = () => Number(fechaLocalISO().slice(5, 7));
 
 export default function EvaluacionForm({ onSuccess, onCancel, profile, prefillEstudianteId }: EvaluacionFormProps) {
   const [formData, setFormData] = useState({
@@ -126,7 +127,8 @@ export default function EvaluacionForm({ onSuccess, onCancel, profile, prefillEs
     }
   }, [prefillEstudianteId, estudiantes, prefillAulaId]);
 
-  // Tipo por defecto según el historial del alumno en esa sala y este año.
+  // Tipo por defecto según la época del año (hasta julio inicial, desde agosto cierre) y el historial del
+  // alumno en esa sala y este año. Si ya tiene la evaluación de ese tipo, se ofrece continuar esa.
   // Cada vez que cambia el alumno o la sala se vuelve a "inicial" (nunca se arrastra el tipo del
   // alumno anterior); mientras la consulta está en vuelo, el selector y "Crear" quedan deshabilitados;
   // si llega tarde (ya cambió el alumno), la respuesta se descarta; si falla, queda inicial sin ayuda.
@@ -143,7 +145,7 @@ export default function EvaluacionForm({ onSuccess, onCancel, profile, prefillEs
     getEvaluacionesInstanciasByEstudiante(formData.estudianteId)
       .then((evs) => {
         if (cancelado) return;
-        const r = tipoPorDefecto(evs, salaNum, anioDeCarga());
+        const r = tipoPorDefecto(evs, salaNum, anioDeCarga(), mesDeCarga());
         setSugerencia(r);
         setFormData((prev) => ({ ...prev, tipoId: r.tipo }));
       })
@@ -230,6 +232,8 @@ export default function EvaluacionForm({ onSuccess, onCancel, profile, prefillEs
   }
 
   const isLoading = loading || loadingEstudiantes;
+  // Ya hay una evaluación de ese tipo: crear otra sería un duplicado (el backend la rechaza). Se continúa la existente.
+  const yaExisteDeEseTipo = !!sugerencia.existenteId && formData.tipoId === sugerencia.tipo;
 
   return (
     <Card>
@@ -370,6 +374,18 @@ export default function EvaluacionForm({ onSuccess, onCancel, profile, prefillEs
                   <Link component={RouterLink} to={rutaHistorial} underline="always">
                     Ver historial
                   </Link>
+                  {sugerencia.existenteId && (
+                    <Box sx={{ mt: 1 }}>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={() => onSuccess(sugerencia.existenteId as string)}
+                        sx={{ bgcolor: "#A3BE54", color: "#000", textTransform: "none", "&:hover": { bgcolor: "#8bc34a" } }}
+                      >
+                        Continuar esa evaluación
+                      </Button>
+                    </Box>
+                  )}
                 </Alert>
               </Grid>
             )}
@@ -390,7 +406,7 @@ export default function EvaluacionForm({ onSuccess, onCancel, profile, prefillEs
                   type="submit"
                   variant="contained"
                   startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
-                  disabled={loading || cargandoSugerencia || success}
+                  disabled={loading || cargandoSugerencia || success || yaExisteDeEseTipo}
                   sx={{
                     bgcolor: "#A3BE54",
                     color: "#000",

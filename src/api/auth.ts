@@ -341,6 +341,33 @@ export async function refrescarPerfil(): Promise<PerfilServidor> {
   return perfil;
 }
 
+/** Usuario de la copia local (`padiUser`), con lo mínimo que usan las pantallas para decidir alcance. */
+export type UsuarioLocal = { id?: string; rol?: string; escuela_id?: string; [clave: string]: unknown };
+
+/**
+ * Usuario de la sesión, confirmando contra el servidor el caso "director sin escuela".
+ *
+ * La copia local sólo se refresca al abrir la app: si a una directora le asignan la escuela
+ * después de haber entrado, la copia sigue diciendo que no tiene. Antes de mostrarle "sin
+ * escuela asignada" se le pregunta al servidor y, si ya tiene, se corrige la copia. En el resto
+ * de los casos no hace ningún pedido. Si el servidor no responde, vale la copia local.
+ */
+export async function usuarioConEscuelaVigente(): Promise<UsuarioLocal | null> {
+  const stored = localStorage.getItem("padiUser");
+  if (!stored) return null;
+  const user = JSON.parse(stored) as UsuarioLocal;
+  if (user.rol !== "director" || user.escuela_id) return user;
+
+  try {
+    const perfil = await refrescarPerfil();
+    const actualizado: UsuarioLocal = { ...user, ...perfil, escuela_id: perfil.escuela_id ?? undefined };
+    localStorage.setItem("padiUser", JSON.stringify(actualizado));
+    return actualizado;
+  } catch {
+    return user;
+  }
+}
+
 /**
  * Actualiza el nombre y apellido del perfil del usuario autenticado.
  */

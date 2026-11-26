@@ -15,6 +15,7 @@ import { BuscadorPadi } from "../components/common/SearchBar";
 import BotonNuevo from "../components/common/BotonNuevo"
 import DocenteForm from "../components/forms/DocenteForm"
 import SinEscuelaAsignada from "../components/common/SinEscuelaAsignada"
+import { usuarioConEscuelaVigente } from "../api/auth"
 
 export default function DocentesPage() {
   const [items, setItems] = useState<Docente[]>([])
@@ -55,8 +56,7 @@ export default function DocentesPage() {
     setLoading(true)
     setError(null)
     try {
-      const stored = localStorage.getItem("padiUser")
-      const user = stored ? JSON.parse(stored) : null
+      const user = await usuarioConEscuelaVigente()
       setCurrentRole(user?.rol || "")
 
       if (user?.rol === "director" && !user?.escuela_id) {

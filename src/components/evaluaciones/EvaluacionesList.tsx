@@ -29,6 +29,7 @@ import { puedeCambiarTipo } from "../../utils/tipo-evaluacion"
 import ModalCambiarTipo from "./ModalCambiarTipo"
 import { TextField, MenuItem, Grid } from "@mui/material"
 import SinEscuelaAsignada from "../common/SinEscuelaAsignada"
+import { usuarioConEscuelaVigente } from "../../api/auth"
 
 const TOTAL_AREAS_EVALUACION = 4;
 const ESTADO_NO_INICIADA = "N"
@@ -86,8 +87,7 @@ export default function EvaluacionesList({
     setLoading(true);
     setError(null);
     try {
-      const userStr = localStorage.getItem("padiUser");
-      const user = userStr ? JSON.parse(userStr) : null;
+      const user = await usuarioConEscuelaVigente();
 
       if (!docenteId && user?.rol === "director" && !user?.escuela_id) {
         setNoEscuela(true);

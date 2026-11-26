@@ -37,6 +37,7 @@ import {
 import { getEstudiantes, type Estudiante } from "../../api/estudiantes";
 import { getEscuelas, type Escuela } from "../../api/escuelas";
 import SinEscuelaAsignada from "../../components/common/SinEscuelaAsignada";
+import { usuarioConEscuelaVigente } from "../../api/auth";
 
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 5 }, (_, i) => CURRENT_YEAR - i);
@@ -86,6 +87,17 @@ export default function EstadisticasEscuela() {
         .finally(() => setEscuelasLoading(false));
     }
   }, [esRolSuperior]);
+
+  // "Sin escuela" se confirma con el servidor: la copia local puede ser anterior a la asignación.
+  const [escuelaDirector, setEscuelaDirector] = useState<string | null>(getUserEscuelaId);
+  useEffect(() => {
+    if (rol !== "director" || escuelaDirector) return;
+    let vigente = true;
+    usuarioConEscuelaVigente().then((u) => {
+      if (vigente && u?.escuela_id) setEscuelaDirector(u.escuela_id);
+    });
+    return () => { vigente = false; };
+  }, [rol, escuelaDirector]);
 
   const escuelaParam = esRolSuperior ? escuelaId || undefined : undefined;
   const escuelaReady = !esRolSuperior || !!escuelaId;
@@ -151,7 +163,7 @@ export default function EstadisticasEscuela() {
         backTo={rol === "equipo_padi" ? "/estadisticas/padi" : rol === "encargado_zona" ? "/estadisticas/zona" : "/home"}
       />
 
-      {rol === "director" && !getUserEscuelaId() ? (
+      {rol === "director" && !escuelaDirector ? (
         <SinEscuelaAsignada />
       ) : (
         <>

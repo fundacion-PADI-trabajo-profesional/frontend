@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom"
 import EstudiantesCompacto from "../components/estudiantes/EstudiantesCompacto"
 import EstudianteForm from "../components/forms/EstudianteForm"
 import { getEstudiantes, deleteEstudiante, type Estudiante, type EstudianteCreado } from "../api/estudiantes"
+import { usuarioConEscuelaVigente } from "../api/auth"
 import { getDocenteAulasConEstudiantes, type DocenteAulaConEstudiantes } from "../api/aulas"
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import BulkUploadForm from "../components/forms/BulkUploadForm"
@@ -53,7 +54,7 @@ export default function Estudiantes() {
         setLoading(true)
         setError(null)
         try {
-            const user = JSON.parse(localStorage.getItem("padiUser") || "{}");
+            const user = await usuarioConEscuelaVigente();
             if (user?.rol === "director" && !user?.escuela_id) {
                 setNoEscuela(true)
                 return
